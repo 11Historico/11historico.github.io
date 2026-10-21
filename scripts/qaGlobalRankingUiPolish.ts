@@ -1,5 +1,6 @@
 import type { CareerLocalRankingEntry } from "../src/types/career";
 import {
+  GLOBAL_RANKING_TIMEOUT_MS,
   buildCareerGlobalRankingPayload,
   clearStoredGlobalRankingEndpoint,
   getGlobalRankingEndpointSource,
@@ -138,11 +139,31 @@ async function testSubmitUsesStoredEndpoint(): Promise<void> {
   logOk("Envío global usa endpoint guardado en navegador");
 }
 
+async function testSlowColdStartIsNotCutAtSixSeconds(): Promise<void> {
+  assert(
+    GLOBAL_RANKING_TIMEOUT_MS >= 30000,
+    `La lectura debe aguantar el arranque en frío de Apps Script (medido 30-40 s); límite actual ${GLOBAL_RANKING_TIMEOUT_MS} ms.`,
+  );
+
+  const slow = await loadGlobalRanking({
+    endpoint: "https://script.google.com/macros/s/demo/exec",
+    timeoutMs: 50,
+    fetcher: (_input, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+      }),
+  });
+
+  assert(!slow.ok && slow.status === "network_error", "Una lectura que supera el límite debe acabar como network_error controlado, no colgada.");
+  logOk(`La lectura del ranking aguanta ${GLOBAL_RANKING_TIMEOUT_MS} ms y sigue cortando con error controlado`);
+}
+
 console.log("QA Global Ranking UI Polish");
 
 testEndpointValidation();
 testEndpointStorageOverride();
 await testLoadUsesStoredEndpoint();
 await testSubmitUsesStoredEndpoint();
+await testSlowColdStartIsNotCutAtSixSeconds();
 
 console.log("QA global ranking UI polish OK");

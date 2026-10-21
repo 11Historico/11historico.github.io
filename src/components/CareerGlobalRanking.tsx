@@ -82,7 +82,7 @@ export function CareerGlobalRanking({ onNewCareer, onViewLocalRanking, onBack }:
         {isLoading && (
           <div className="career-global-ranking-empty">
             <strong>Cargando...</strong>
-            <span>Consultando el servicio de ranking global.</span>
+            <span>Consultando el ranking global. La primera carga puede tardar hasta un minuto.</span>
           </div>
         )}
 
