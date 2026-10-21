@@ -79,6 +79,12 @@ jobs:
         run: npm run lint:src
       - name: Build
         run: npm run build
+        env:
+          # URL /exec del ranking global (variable de repositorio, no secreto:
+          # acaba en el JS público de todos modos). Solo en este paso: los QA
+          # anteriores asumen "sin endpoint". Si la variable no existe, queda
+          # vacía y el sitio muestra "Conecta el ranking global" como antes.
+          VITE_GLOBAL_RANKING_ENDPOINT: ${{ vars.VITE_GLOBAL_RANKING_ENDPOINT }}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

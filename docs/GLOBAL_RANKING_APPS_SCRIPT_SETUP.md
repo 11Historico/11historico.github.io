@@ -55,6 +55,15 @@ Opción B — configuración desde la UI:
 
 Esta opción guarda el endpoint solo en `localStorage` del navegador. No modifica `.env.local` ni se sube a GitHub.
 
+Opción C — web publicada en GitHub Pages:
+
+1. En el repositorio: `Settings` → `Secrets and variables` → `Actions` → pestaña `Variables` → `New repository variable`.
+2. Nombre: `VITE_GLOBAL_RANKING_ENDPOINT`. Valor: la URL `/exec`.
+3. El workflow `deploy.yml` la pasa solo al paso `Build`. Si la variable no existe, el sitio publicado muestra "Conecta el ranking global".
+4. Es una variable y no un secreto porque la URL acaba en el JavaScript público de todos modos; el backend se protege recalculando puntuaciones, con límites y bloqueando duplicados.
+
+Nunca hagas `npm run build` en local con el endpoint en `.env.local` y publiques esa carpeta `dist`: la URL queda incrustada en los archivos generados.
+
 ## 5. Prueba rápida
 
 En el navegador:
