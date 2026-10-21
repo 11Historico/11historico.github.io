@@ -3,7 +3,10 @@ import type { CareerGlobalRankingEntry, CareerGlobalRankingSubmitPayload, Career
 export const GLOBAL_RANKING_ENDPOINT = (import.meta.env.VITE_GLOBAL_RANKING_ENDPOINT ?? "").trim();
 export const GLOBAL_RANKING_ENDPOINT_STORAGE_KEY = "futbol11.globalRankingEndpoint.v1";
 export const GLOBAL_RANKING_BACKEND = "google_apps_script";
-export const GLOBAL_RANKING_TIMEOUT_MS = 6000;
+// Lectura (health y Top 100). Apps Script en frío ha llegado a tardar 30-40 s
+// en responder; con 6 s el ranking global parecía roto para casi cualquier
+// jugador.
+export const GLOBAL_RANKING_TIMEOUT_MS = 45000;
 // Apps Script puede tardar en arrancar en frío. Un timeout corto en el envío
 // haría parecer fallida una carrera que el servidor sí llega a guardar.
 export const GLOBAL_RANKING_SUBMIT_TIMEOUT_MS = 20000;

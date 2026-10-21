@@ -7,6 +7,9 @@ import {
   submitGlobalRankingEntry,
 } from "../src/services/globalRankingService";
 
+// Apps Script en frío tarda hasta 30-40 s; con 12 s esta QA fallaba aunque el backend estuviera bien.
+const QA_TIMEOUT_MS = 60000;
+
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
     throw new Error(message);
@@ -56,7 +59,7 @@ function createQaLocalEntry(now = new Date()): CareerLocalRankingEntry {
 }
 
 async function testHealth(endpoint: string): Promise<void> {
-  const result = await checkGlobalRankingHealth({ endpoint, timeoutMs: 12000 });
+  const result = await checkGlobalRankingHealth({ endpoint, timeoutMs: QA_TIMEOUT_MS });
 
   assert(result.ok, `Healthcheck debe responder OK. Recibido: ${result.status} · ${result.message}`);
   assert(result.status === "healthy", `Healthcheck debe devolver status healthy, pero devolvió ${result.status}.`);
@@ -64,7 +67,7 @@ async function testHealth(endpoint: string): Promise<void> {
 }
 
 async function testTopLoad(endpoint: string): Promise<void> {
-  const result = await loadGlobalRanking({ endpoint, timeoutMs: 12000 });
+  const result = await loadGlobalRanking({ endpoint, timeoutMs: QA_TIMEOUT_MS });
 
   assert(result.ok, `Top global debe cargar. Recibido: ${result.status} · ${result.message}`);
   assert(Array.isArray(result.entries), "Top global debe devolver un array de entradas.");
@@ -80,13 +83,13 @@ async function testRealSubmitAndDuplicate(endpoint: string): Promise<void> {
     submittedAt: new Date().toISOString(),
   });
 
-  const firstSubmit = await submitGlobalRankingEntry(payload, { endpoint, timeoutMs: 12000 });
+  const firstSubmit = await submitGlobalRankingEntry(payload, { endpoint, timeoutMs: QA_TIMEOUT_MS });
 
   assert(firstSubmit.ok, `Primer envío real debe ser OK. Recibido: ${firstSubmit.status} · ${firstSubmit.message}`);
   assert(firstSubmit.entry?.careerId === payload.careerId, "El backend debe devolver la carrera enviada.");
   logOk("Envío real al ranking global funciona");
 
-  const ranking = await loadGlobalRanking({ endpoint, timeoutMs: 12000 });
+  const ranking = await loadGlobalRanking({ endpoint, timeoutMs: QA_TIMEOUT_MS });
 
   assert(ranking.ok, `Top global debe cargar tras envío. Recibido: ${ranking.status} · ${ranking.message}`);
   assert(
@@ -95,7 +98,7 @@ async function testRealSubmitAndDuplicate(endpoint: string): Promise<void> {
   );
   logOk("La carrera enviada aparece en el Top global real");
 
-  const duplicateSubmit = await submitGlobalRankingEntry(payload, { endpoint, timeoutMs: 12000 });
+  const duplicateSubmit = await submitGlobalRankingEntry(payload, { endpoint, timeoutMs: QA_TIMEOUT_MS });
 
   assert(!duplicateSubmit.ok, "Reenviar la misma carrera no debe devolver OK.");
   assert(duplicateSubmit.status === "duplicate", `El duplicado debe clasificarse como duplicate, pero fue ${duplicateSubmit.status}.`);
