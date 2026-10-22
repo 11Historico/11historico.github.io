@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.4 — Prueba de flujo completo
+
+- Partida guardada de prueba generada por `npm run e2e:fixture` (`scripts/buildE2eFixture.ts`), con una plantilla débil para que la temporada termine en Game Over.
+- Prueba de Playwright de la carrera completa: desde la partida guardada, avanza por liga, Copa y ruleta hasta el Game Over, y comprueba que la pantalla explica el motivo (objetivo fallido o descenso).
+- Versionado a `v0.25.4` / `0.25.4`.
+
 ## v0.25.3 — Tests: Vitest y Playwright
 
 - Vitest con 25 pruebas unitarias de lógica pura: reparto europeo y reasignación por campeón de Copa, líneas de tiempo de la secuencia de partido, velocidad y motor europeo (eliminatorias sin empate, determinismo, tandas).
