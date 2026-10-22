@@ -75,6 +75,8 @@ jobs:
         run: npm run qa:public-release-ux
       - name: Run share retention QA
         run: npm run qa:share-retention
+      - name: Run saved game resume QA
+        run: npm run qa:saved-game-resume
       - name: Run source lint
         run: npm run lint:src
       - name: Build
