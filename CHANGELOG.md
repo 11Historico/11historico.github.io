@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.3 — Tests: Vitest y Playwright
+
+- Vitest con 25 pruebas unitarias de lógica pura: reparto europeo y reasignación por campeón de Copa, líneas de tiempo de la secuencia de partido, velocidad y motor europeo (eliminatorias sin empate, determinismo, tandas).
+- Playwright con dos pruebas de humo contra el build de producción: la home carga en español sin errores de consola, y el ranking global enlaza la política de privacidad.
+- Ambas pruebas se ejecutan en el workflow de despliegue, después del build.
+- Versionado a `v0.25.3` / `0.25.3`.
+
 ## v0.25.2 — P1 Low Cost
 
 - Idioma del documento en español (`lang="es"`).
