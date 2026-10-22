@@ -57,6 +57,8 @@ jobs:
         run: npm run qa:european-progress-ui
       - name: Run european knockouts QA
         run: npm run qa:european-knockouts
+      - name: Run european knockout extra time QA
+        run: npm run qa:european-knockout-extra-time
       - name: Run european trophies palmares QA
         run: npm run qa:european-trophies-palmares
       - name: Run european rewards prestige QA

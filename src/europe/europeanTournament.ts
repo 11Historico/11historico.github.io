@@ -22,7 +22,9 @@ import { pickEuropeanOpponents, pickSingleEuropeanOpponent } from "./europeanOpp
 import { getEuropeanCompetitionLabel } from "./europeanQualification";
 import type {
   EuropeanCompetition,
+  EuropeanKnockoutDecision,
   EuropeanMatchOutcome,
+  EuropeanPenaltyShootout,
   EuropeanQualificationResult,
   EuropeanSeasonEntry,
   EuropeanTournamentMatch,
@@ -110,6 +112,10 @@ export interface EuropeanMatchResultInput {
   userGoals: number;
   opponentGoals: number;
   result: EuropeanMatchOutcome;
+  decidedBy?: EuropeanKnockoutDecision;
+  regularTimeUserGoals?: number;
+  regularTimeOpponentGoals?: number;
+  penaltyShootout?: EuropeanPenaltyShootout;
 }
 
 function createFollowUpMatch(params: {
@@ -204,6 +210,10 @@ export function applyEuropeanMatchResult(
     userGoals: outcome.userGoals,
     opponentGoals: outcome.opponentGoals,
     result: outcome.result,
+    ...(outcome.decidedBy ? { decidedBy: outcome.decidedBy } : {}),
+    ...(outcome.regularTimeUserGoals !== undefined ? { regularTimeUserGoals: outcome.regularTimeUserGoals } : {}),
+    ...(outcome.regularTimeOpponentGoals !== undefined ? { regularTimeOpponentGoals: outcome.regularTimeOpponentGoals } : {}),
+    ...(outcome.penaltyShootout ? { penaltyShootout: outcome.penaltyShootout } : {}),
   };
 
   const matches = [...tournament.matches];
@@ -267,6 +277,32 @@ export function getEuropeanTournamentPhaseLabel(phase: EuropeanTournamentPhase):
   if (phase === "eliminated") return "Eliminado";
   return "Sin empezar";
 }
+
+/** Semifinal o final a partido único (la fase del PARTIDO, no la del torneo). */
+export function isEuropeanKnockoutMatch(match: Pick<EuropeanTournamentMatch, "phase">): boolean {
+  return match.phase === "semifinal" || match.phase === "final";
+}
+
+/**
+ * Texto de cómo se decidió una eliminatoria: prórroga o penaltis. Devuelve
+ * null si se decidió en los 90' o si el partido no es de eliminatoria.
+ */
+export function getEuropeanMatchDecisionText(match: EuropeanTournamentMatch): string | null {
+  const regular = `${match.regularTimeUserGoals ?? 0}-${match.regularTimeOpponentGoals ?? 0}`;
+  const afterExtraTime = `${match.userGoals ?? 0}-${match.opponentGoals ?? 0}`;
+
+  if (match.decidedBy === "extra_time") {
+    return `Prórroga: 90' ${regular} · 120' ${afterExtraTime}`;
+  }
+
+  if (match.decidedBy === "penalties" && match.penaltyShootout) {
+    return `Penaltis: ${match.penaltyShootout.userScored}-${match.penaltyShootout.opponentScored} (90' ${regular}, prórroga ${afterExtraTime})`;
+  }
+
+  return null;
+}
+
+export const EUROPEAN_KNOCKOUT_TIE_RULE_TEXT = "Si hay empate a los 90 minutos: prórroga de 2×15 min y, si sigue igual, penaltis.";
 
 export function isEuropeanKnockoutPhase(phase: EuropeanTournamentPhase): boolean {
   return phase === "semifinal" || phase === "final" || phase === "completed" || phase === "eliminated";
