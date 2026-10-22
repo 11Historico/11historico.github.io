@@ -44,6 +44,12 @@ import { simulateEuropeanMatch } from "../europe/europeanMatchEngine";
 import { applyEuropeanMatchResult, isEuropeanKnockoutMatch } from "../europe/europeanTournament";
 import type { EuropeanTournamentMatch, EuropeanTournamentState } from "../europe/europeanTypes";
 import EuropeanMatchEvent from "./EuropeanMatchEvent";
+import {
+  MATCH_SEQUENCE_DURATION_MS,
+  MATCH_SEQUENCE_TICK_MS,
+  countGoalsForTeam,
+  getMatchSequenceFrame,
+} from "./matchSequenceTimeline";
 
 import "./LeagueSimulatorView.css";
 
@@ -188,6 +194,93 @@ function TeamWithKit({ teamName }: { teamName: string }) {
   );
 }
 
+function getMatchSequenceTag(result: MatchResult): string {
+  if (result.competition === "cup") return `Copa del Rey · ${result.roundName ?? ""}`.trim();
+  return `LaLiga · Jornada ${result.matchday}`;
+}
+
+function MatchSequence({
+  result,
+  onPlayingChange,
+}: {
+  result: MatchResult;
+  onPlayingChange: (playing: boolean) => void;
+}) {
+  const [elapsedMs, setElapsedMs] = useState(() =>
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? MATCH_SEQUENCE_DURATION_MS : 0,
+  );
+  const frame = getMatchSequenceFrame(result.goalEvents, elapsedMs);
+  const isFinal = frame.stage === "final";
+  const homeGoals = isFinal ? result.homeGoals : countGoalsForTeam(frame.visibleGoals, result.homeTeamName);
+  const awayGoals = isFinal ? result.awayGoals : countGoalsForTeam(frame.visibleGoals, result.awayTeamName);
+
+  useEffect(() => {
+    onPlayingChange(!isFinal);
+  }, [isFinal, onPlayingChange]);
+
+  useEffect(() => {
+    return () => onPlayingChange(false);
+  }, [onPlayingChange]);
+
+  useEffect(() => {
+    if (isFinal) return undefined;
+
+    const intervalId = window.setInterval(() => {
+      setElapsedMs((current) => Math.min(MATCH_SEQUENCE_DURATION_MS, current + MATCH_SEQUENCE_TICK_MS));
+    }, MATCH_SEQUENCE_TICK_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [isFinal]);
+
+  return (
+    <article className={`last-result-card match-sequence ${result.competition === "cup" ? "match-sequence-cup" : "match-sequence-league"}`}>
+      <div className="last-result-top">
+        {isFinal ? (
+          <span className={getResultClass(result)}>{getResultBadge(result)}</span>
+        ) : (
+          <span className="match-sequence-clock">{frame.stage === "preview" ? "Previa" : `${frame.minute}'`}</span>
+        )}
+        <span className="match-sequence-tag">{getMatchSequenceTag(result)}</span>
+      </div>
+
+      <div className="last-result-scoreboard">
+        <ScoreTeam teamName={result.homeTeamName} goals={homeGoals} />
+        <span className="score-separator">-</span>
+        <ScoreTeam teamName={result.awayTeamName} goals={awayGoals} />
+      </div>
+
+      <div className="match-sequence-progress" aria-hidden="true">
+        <span style={{ width: `${(elapsedMs / MATCH_SEQUENCE_DURATION_MS) * 100}%` }} />
+      </div>
+
+      {frame.visibleGoals.length > 0 ? (
+        <ul className="goal-events-list" aria-live="polite">
+          {frame.visibleGoals.map((event, index) => (
+            <li key={`${event.minute}_${event.teamName}_${index}`}>
+              <strong>{event.minute}'</strong>
+              <TeamWithKit teamName={event.teamName} />
+              {event.scorerName && <em>{event.scorerName}</em>}
+              {event.assistName && <small>Asistencia: {event.assistName}</small>}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        isFinal && <p className="empty-league-message">Partido sin goles.</p>
+      )}
+
+      {!isFinal && (
+        <button
+          type="button"
+          className="secondary-league-button match-sequence-skip"
+          onClick={() => setElapsedMs(MATCH_SEQUENCE_DURATION_MS)}
+        >
+          Saltar
+        </button>
+      )}
+    </article>
+  );
+}
+
 function ScoreTeam({ teamName, goals }: { teamName: string; goals: number }) {
   return (
     <span className="score-team">
@@ -241,6 +334,7 @@ export function LeagueSimulatorView({
 
   const [lastResult, setLastResult] = useState<MatchResult | undefined>(undefined);
   const [isAutoSimulating, setIsAutoSimulating] = useState(false);
+  const [isSequencePlaying, setIsSequencePlaying] = useState(false);
   const [pendingWheelOffer, setPendingWheelOfferState] = useState<SeasonLuckWheelOffer | undefined>(
     () => initialPendingSeasonLuckWheelOffer
   );
@@ -462,7 +556,8 @@ export function LeagueSimulatorView({
   }
 
   useEffect(() => {
-    if (!isAutoSimulating) return undefined;
+    // La siguiente jornada espera a que termine la secuencia del partido actual.
+    if (!isAutoSimulating || isSequencePlaying) return undefined;
 
     if (context.state.completed || getPendingCupFixture(context) || pendingEuropeanMatch) {
       const stopTimeoutId = window.setTimeout(() => {
@@ -513,7 +608,7 @@ export function LeagueSimulatorView({
     }, AUTO_SIMULATION_DELAY_MS);
 
     return () => window.clearTimeout(timeoutId);
-  }, [commitContext, context, effectiveTeamRating, finishIfReady, isAutoSimulating, maybeOfferSeasonLuckWheel, pendingEuropeanMatch, selectedPlayers]);
+  }, [commitContext, context, effectiveTeamRating, finishIfReady, isAutoSimulating, isSequencePlaying, maybeOfferSeasonLuckWheel, pendingEuropeanMatch, selectedPlayers]);
 
   function simulateLeagueUntilNextEvent(params: {
     initialContext: UserLeagueSimulationContext;
@@ -763,33 +858,11 @@ export function LeagueSimulatorView({
           )}
 
           {lastResult && (
-            <article className="last-result-card">
-              <div className="last-result-top">
-                <span className={getResultClass(lastResult)}>{getResultBadge(lastResult)}</span>
-                <span>{lastResult.competition === "cup" ? lastResult.roundName : `Jornada ${lastResult.matchday}`}</span>
-              </div>
-
-              <div className="last-result-scoreboard">
-                <ScoreTeam teamName={lastResult.homeTeamName} goals={lastResult.homeGoals} />
-                <span className="score-separator">-</span>
-                <ScoreTeam teamName={lastResult.awayTeamName} goals={lastResult.awayGoals} />
-              </div>
-
-              {lastResult.goalEvents.length > 0 ? (
-                <ul className="goal-events-list">
-                  {lastResult.goalEvents.map((event, index) => (
-                    <li key={`${event.minute}_${event.teamName}_${index}`}>
-                      <strong>{event.minute}'</strong>
-                      <TeamWithKit teamName={event.teamName} />
-                      {event.scorerName && <em>{event.scorerName}</em>}
-                      {event.assistName && <small>Asistencia: {event.assistName}</small>}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="empty-league-message">Partido sin goles.</p>
-              )}
-            </article>
+            <MatchSequence
+              key={`${lastResult.competition}-${lastResult.matchday}-${lastResult.roundName ?? ""}-${lastResult.homeTeamName}-${lastResult.homeGoals}-${lastResult.awayGoals}`}
+              result={lastResult}
+              onPlayingChange={setIsSequencePlaying}
+            />
           )}
 
           <section className="season-stats-card">

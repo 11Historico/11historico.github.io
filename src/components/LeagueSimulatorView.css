@@ -1024,3 +1024,58 @@
 .team-kit-burgos .team-kit-sleeve {
   border-color: rgba(255, 255, 255, 0.98);
 }
+
+/* Secuencia de partido (v0.24.9i, Fase A) */
+.match-sequence-clock {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  font-size: 0.76rem;
+  font-weight: 950;
+  font-variant-numeric: tabular-nums;
+}
+
+.match-sequence-tag {
+  color: #f2d2d7;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: right;
+}
+
+.match-sequence-progress {
+  height: 4px;
+  margin: 0 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.match-sequence-progress span {
+  display: block;
+  height: 100%;
+  background: #ffe08a;
+  transition: width 100ms linear;
+}
+
+.match-sequence-skip {
+  margin-top: 12px;
+  width: 100%;
+}
+
+/* Copa del Rey: granate y oro, distinto de la Liga */
+.match-sequence-cup {
+  border-color: rgba(232, 185, 35, 0.42);
+  background: linear-gradient(160deg, rgba(59, 13, 17, 0.9), rgba(255, 255, 255, 0.06));
+}
+
+.match-sequence-cup .match-sequence-tag {
+  color: #f5d36a;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.match-sequence-cup .match-sequence-progress span {
+  background: #e8b923;
+}
