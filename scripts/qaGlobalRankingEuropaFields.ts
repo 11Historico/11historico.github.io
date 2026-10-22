@@ -133,6 +133,22 @@ function testQaRegisteredInPackageAndWorkflow(): void {
   logOk("QA de campos europeos del ranking registrada en package.json y deploy.yml");
 }
 
+function testInterseasonPalmaresMentionsEuropeanTitles(): void {
+  const reward = readText("src/components/CareerInterseasonReward.tsx");
+
+  assertIncludes(reward, "getEuropeanTrophyBreakdown(trophyCounts).total", "La pantalla entre temporadas debe contar los títulos europeos con el helper compartido.");
+  assertIncludes(reward, "· Europa {", "El detalle del palmarés entre temporadas debe incluir Europa: los puntos de palmarés incluyen títulos europeos que antes no se veían desglosados.");
+  logOk("El palmarés entre temporadas desglosa también los títulos europeos");
+}
+
+function testLocalRankingCopyDoesNotDenyGlobalRanking(): void {
+  const local = readText("src/components/CareerLocalRanking.tsx");
+
+  assertNotIncludes(local, "Sin backend, sin ranking global", "El ranking local no debe decir que no hay ranking global: ya existe.");
+  assertIncludes(local, "usa el ranking global", "El ranking local debe orientar al jugador hacia el ranking global.");
+  logOk("El texto del ranking local ya no niega el ranking global");
+}
+
 console.log("QA Global Ranking Europa Fields");
 testBreakdownComputesEachCompetitionAndTotal();
 testBreakdownIgnoresNationalTrophies();
@@ -142,5 +158,7 @@ testLocalRankingUsesSharedHelperInsteadOfAdHocSum();
 testGlobalRankingRendersEuropeanBreakdown();
 testNoNewFieldsAddedToWirePayload();
 testBackendUntouched();
+testInterseasonPalmaresMentionsEuropeanTitles();
+testLocalRankingCopyDoesNotDenyGlobalRanking();
 testQaRegisteredInPackageAndWorkflow();
 console.log("QA global ranking europa fields OK");

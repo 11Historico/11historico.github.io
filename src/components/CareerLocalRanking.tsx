@@ -51,7 +51,7 @@ export function CareerLocalRanking({
         <p className="eyebrow">Modo carrera Athletic</p>
         <h1>Top local</h1>
         <p className="career-ranking-intro">
-          Mejores carreras guardadas solo en este navegador. Sin backend, sin ranking global y sin enviar datos fuera del dispositivo.
+          Mejores carreras guardadas solo en este navegador: este ranking no envía nada fuera de tu dispositivo. Para compararte con otros jugadores, usa el ranking global.
         </p>
 
         {topEntries.length === 0 ? (
