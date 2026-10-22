@@ -31,19 +31,38 @@ function testLeaguePositionCasesWithoutCopa(): void {
     "Posición 5 sin Copa debe dar Europa League.",
   );
   assert(
-    resolveEuropeanQualification({ leaguePosition: 6, userWonCopa: false }).competition === "europa_league",
-    "Posición 6 sin Copa debe dar Europa League.",
+    resolveEuropeanQualification({ leaguePosition: 6, userWonCopa: false }).competition === "conference_league",
+    "Posición 6 sin Copa externa en Europa debe dar Conference League.",
   );
   assert(
-    resolveEuropeanQualification({ leaguePosition: 7, userWonCopa: false }).competition === "conference_league",
-    "Posición 7 sin Copa debe dar Conference League.",
+    resolveEuropeanQualification({ leaguePosition: 7, userWonCopa: false }).competition === null,
+    "Posición 7 sin reasignación no tiene plaza europea.",
   );
 
   const noEurope = resolveEuropeanQualification({ leaguePosition: 8, userWonCopa: false });
   assert(noEurope.competition === null && !noEurope.qualified, "Posición 8 sin Copa debe dar sin Europa.");
   assert(noEurope.source === "none", "Posición 8 sin Copa debe usar source 'none'.");
 
-  logOk("Reglas de posición de Liga (1-4 Champions, 5-6 Europa League, 7 Conference, 8+ sin Europa)");
+  logOk("Reglas de posición de Liga (1-4 Champions, 5 Europa League, 6 Conference, 7+ sin Europa)");
+
+  const copaWinnerTop5 = resolveEuropeanQualification({ leaguePosition: 6, userWonCopa: false, copaWinnerLeaguePosition: 2 });
+  assert(
+    copaWinnerTop5.competition === "europa_league" && copaWinnerTop5.source === "league_reallocation",
+    "Si el campeón de Copa ya está en Europa por Liga, el 6º recibe la plaza de Copa (Europa League).",
+  );
+  const seventhReallocated = resolveEuropeanQualification({ leaguePosition: 7, userWonCopa: false, copaWinnerLeaguePosition: 3 });
+  assert(
+    seventhReallocated.competition === "conference_league" && seventhReallocated.source === "league_reallocation",
+    "Con campeón de Copa en Europa por Liga, el 7º recibe Conference League.",
+  );
+  const seventhSixthWinner = resolveEuropeanQualification({ leaguePosition: 7, userWonCopa: false, copaWinnerLeaguePosition: 6 });
+  assert(seventhSixthWinner.competition === "conference_league", "Campeón de Copa 6º: el 7º recibe Conference League.");
+  const eighthCopaTop4 = resolveEuropeanQualification({ leaguePosition: 8, userWonCopa: false, copaWinnerLeaguePosition: 1 });
+  assert(eighthCopaTop4.competition === null, "Con campeón de Copa en Champions, el 8º no recibe plaza.");
+  const sixthCopaOutside = resolveEuropeanQualification({ leaguePosition: 6, userWonCopa: false, copaWinnerLeaguePosition: 12 });
+  assert(sixthCopaOutside.competition === "conference_league", "Campeón de Copa fuera de Europa: el 6º recibe Conference.");
+
+  logOk("Reasignación de la plaza de Copa por campeón externo ya clasificado en Europa");
 }
 
 function testCopaCasesUpgradeMinimumToEuropaLeague(): void {
@@ -51,7 +70,7 @@ function testCopaCasesUpgradeMinimumToEuropaLeague(): void {
   assert(fromNone.competition === "europa_league" && fromNone.qualified, "Posición 8 + Copa debe dar Europa League.");
   assert(fromNone.source === "copa_winner", "Posición 8 + Copa debe usar source 'copa_winner'.");
 
-  const fromConference = resolveEuropeanQualification({ leaguePosition: 7, userWonCopa: true });
+  const fromConference = resolveEuropeanQualification({ leaguePosition: 7, userWonCopa: true, copaWinnerLeaguePosition: 3 });
   assert(
     fromConference.competition === "europa_league",
     "Posición 7 + Copa debe mejorar de Conference a Europa League.",

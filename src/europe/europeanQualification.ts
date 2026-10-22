@@ -2,21 +2,28 @@
 //
 // Europa Career Foundation (v0.24.0a) — reglas puras de clasificación europea.
 //
-// Reglas de Liga (fijas):
+// Reglas de Liga (v0.24.9h, reparto real de LaLiga: 7 plazas europeas):
 //   1º-4º  -> Champions League
-//   5º-6º  -> Europa League
-//   7º     -> Conference League
-//   8º o peor -> sin Europa
+//   5º     -> Europa League
+//   6º     -> Conference League
+//   7º o peor -> sin Europa, salvo reasignación (ver abajo)
 //
-// Regla de Copa del Rey:
+// Reasignación por campeón de Copa externo (no el usuario):
+//   La plaza de Copa es de Europa League. Si el campeón ya está en Europa por
+//   Liga (1º-5º), esa plaza pasa al 6º (Europa League) y el 7º recibe la
+//   Conference. Si el campeón queda 6º, conserva la plaza de Copa y el 7º
+//   recibe la Conference. Si el campeón está fuera de Europa, la plaza de Copa
+//   es suya y la tabla base no cambia.
+//   Sin posición conocida del campeón se asume que está fuera de Europa.
+//
+// Regla de Copa del Rey del usuario:
 //   Ganar la Copa garantiza como mínimo Europa League. Si la plaza de Liga ya
 //   es igual o mejor (Champions o Europa League), la Copa no cambia nada. Si
 //   la plaza de Liga es peor (Conference o ninguna), la Copa la mejora hasta
 //   Europa League.
 //
-// Esta fase NO simula reasignación por campeón de Copa externo al usuario
-// (fuentes "copa_runner_up_reallocation" y "league_reallocation" quedan
-// reservadas para una fase futura con datos fiables de campeón de Copa).
+// Fuentes: prensa deportiva (Goal, BeIN Sports, Wikipedia de la Copa del Rey).
+// No se ha encontrado el reglamento oficial de LaLiga/UEFA en fuentes abiertas.
 
 import type {
   EuropeanCompetition,
@@ -26,7 +33,14 @@ import type {
 export interface ResolveEuropeanQualificationInput {
   leaguePosition: number;
   userWonCopa: boolean;
+  /** Posición final en Liga del campeón de Copa externo. Ausente o null = fuera de Europa por Liga. */
+  copaWinnerLeaguePosition?: number | null;
   seasonNumber?: number;
+}
+
+export interface LeagueCompetitionSpot {
+  competition: EuropeanCompetition;
+  reallocated: boolean;
 }
 
 const COMPETITION_PRIORITY: Record<EuropeanCompetition, number> = {
@@ -71,18 +85,31 @@ export function isEuropeanQualified(input: { qualified: boolean } | null | undef
   return Boolean(input?.qualified);
 }
 
-function getLeaguePositionCompetition(leaguePosition: number): EuropeanCompetition | null {
-  if (leaguePosition >= 1 && leaguePosition <= 4) return "champions_league";
-  if (leaguePosition === 5 || leaguePosition === 6) return "europa_league";
-  if (leaguePosition === 7) return "conference_league";
+/** Plaza europea que da la Liga a una posición, con la reasignación de la Copa externa. */
+export function getLeagueCompetitionSpot(
+  leaguePosition: number,
+  copaWinnerLeaguePosition?: number | null,
+): LeagueCompetitionSpot | null {
+  const copaWinnerInEuropeByLeague = copaWinnerLeaguePosition != null && copaWinnerLeaguePosition >= 1 && copaWinnerLeaguePosition <= 5;
+  const copaWinnerInTopSix = copaWinnerLeaguePosition != null && copaWinnerLeaguePosition >= 1 && copaWinnerLeaguePosition <= 6;
+
+  if (leaguePosition >= 1 && leaguePosition <= 4) return { competition: "champions_league", reallocated: false };
+  if (leaguePosition === 5) return { competition: "europa_league", reallocated: false };
+  if (leaguePosition === 6) {
+    return copaWinnerInEuropeByLeague
+      ? { competition: "europa_league", reallocated: true }
+      : { competition: "conference_league", reallocated: false };
+  }
+  if (leaguePosition === 7 && copaWinnerInTopSix) return { competition: "conference_league", reallocated: true };
   return null;
 }
 
 export function resolveEuropeanQualification(
   input: ResolveEuropeanQualificationInput,
 ): EuropeanQualificationResult {
-  const { leaguePosition, userWonCopa } = input;
-  const leagueCompetition = getLeaguePositionCompetition(leaguePosition);
+  const { leaguePosition, userWonCopa, copaWinnerLeaguePosition } = input;
+  const leagueSpot = getLeagueCompetitionSpot(leaguePosition, copaWinnerLeaguePosition);
+  const leagueCompetition = leagueSpot?.competition ?? null;
   const leaguePriority = leagueCompetition ? COMPETITION_PRIORITY[leagueCompetition] : NO_QUALIFICATION_PRIORITY;
   const copaGuaranteedPriority = COMPETITION_PRIORITY.europa_league;
 
@@ -102,14 +129,18 @@ export function resolveEuropeanQualification(
     };
   }
 
-  if (leagueCompetition) {
+  if (leagueSpot) {
+    const { competition, reallocated } = leagueSpot;
+
     return {
       qualified: true,
-      competition: leagueCompetition,
-      source: "league_position",
-      label: `Clasificado a ${getEuropeanCompetitionLabel(leagueCompetition)}`,
-      shortLabel: getEuropeanCompetitionShortLabel(leagueCompetition),
-      explanation: `Clasificado a ${getEuropeanCompetitionLabel(leagueCompetition)} por posición final en Liga (${leaguePosition}.º).`,
+      competition,
+      source: reallocated ? "league_reallocation" : "league_position",
+      label: `Clasificado a ${getEuropeanCompetitionLabel(competition)}`,
+      shortLabel: getEuropeanCompetitionShortLabel(competition),
+      explanation: reallocated
+        ? `Clasificado a ${getEuropeanCompetitionLabel(competition)} por reasignación de la plaza de Copa del Rey (${leaguePosition}.º en Liga).`
+        : `Clasificado a ${getEuropeanCompetitionLabel(competition)} por posición final en Liga (${leaguePosition}.º).`,
       priority: leaguePriority,
     };
   }

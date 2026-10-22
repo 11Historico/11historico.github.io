@@ -31,6 +31,8 @@ export interface CareerSeasonResult {
   wonSupercopa: boolean;
   isRelegated: boolean;
   europeanQualification: EuropeanCompetition;
+  /** Posición en Liga del campeón de Copa externo (null si ganó el usuario o no se conoce). */
+  copaWinnerLeaguePosition?: number | null;
 }
 
 export interface CareerObjectiveResult {
