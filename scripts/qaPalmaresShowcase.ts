@@ -20,6 +20,8 @@ function read(path: string): string {
 function testPalmaresTrophyCaseSupportsCareerCounts(): void {
   const component = read("src/components/PalmaresTrophyCase.tsx");
 
+  assert(!component.includes("Pendiente de Europa Career"), "Una vitrina vacía no debe mostrar texto interno de desarrollo.");
+  assert(component.includes("Sin ${trophy.label} ganada todavía"), "Las vitrinas vacías deben decir qué trofeo falta.");
   assert(component.includes("CareerTrophyCounts"), "PalmaresTrophyCase debe aceptar CareerTrophyCounts.");
   assert(component.includes("trophyCounts?: CareerTrophyCounts"), "La vitrina debe tener prop opcional trophyCounts.");
   assert(component.includes("buildCareerTrophies"), "La vitrina debe construir trofeos acumulados de carrera.");

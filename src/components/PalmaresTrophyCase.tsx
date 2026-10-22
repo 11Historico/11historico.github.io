@@ -61,7 +61,7 @@ function getCareerTrophyNote(trophy: TrophyCount): string {
   if (trophy.id === "liga") return "Sin Liga ganada todavía";
   if (trophy.id === "copa_del_rey") return "Sin Copa ganada todavía";
 
-  return "Pendiente de Europa Career";
+  return `Sin ${trophy.label} ganada todavía`;
 }
 
 function getTrophyNote(trophy: TrophyCount, summary: FinalGameSummary, variant: "single-game" | "career"): string {
