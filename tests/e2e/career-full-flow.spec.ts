@@ -1,0 +1,85 @@
+import { readFileSync } from "node:fs";
+import { expect, test, type Page } from "@playwright/test";
+
+// Partida guardada de prueba (npm run e2e:fixture). Ver scripts/buildE2eFixture.ts.
+const SAVE_KEY = "once_historico_zurigorri_saved_game_v1";
+const fixture = readFileSync(new URL("./fixtures/career-weak.json", import.meta.url), "utf8");
+
+// Botones que hacen avanzar la carrera, por orden de prioridad. Se descarta la ruleta
+// (No jugar) para que la prueba sea determinista.
+const ADVANCE_BUTTONS = [
+  /^Saltar$/,
+  /^Continuar$/,
+  /^Continuar temporada$/,
+  /^Continuar carrera$/,
+  /^No jugar$/,
+  /^Simular partido de Copa$/,
+  /^Simular Copa y terminar temporada$/,
+  /^Saltar hasta próximo evento$/,
+];
+
+async function advanceOnce(page: Page): Promise<boolean> {
+  // La ruleta de temporada es un modal que tapa la pantalla: se resuelve primero.
+  const wheel = page.locator(".season-wheel-overlay");
+  if (await wheel.isVisible()) {
+    const decline = wheel.getByRole("button", { name: "No jugar" });
+    if (await decline.isVisible()) {
+      await decline.click();
+      return true;
+    }
+    await wheel.getByRole("button", { name: "Continuar temporada" }).click();
+    return true;
+  }
+
+  for (const name of ADVANCE_BUTTONS) {
+    const button = page.getByRole("button", { name }).first();
+    if ((await button.count()) > 0 && (await button.isVisible()) && (await button.isEnabled())) {
+      await button.click();
+      return true;
+    }
+  }
+
+  return false;
+}
+
+test("carrera completa desde la partida guardada hasta el Game Over", async ({ page }) => {
+  test.setTimeout(240_000);
+
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  await page.goto("/");
+  await page.evaluate(([key, value]) => window.localStorage.setItem(key, value), [SAVE_KEY, fixture]);
+  await page.reload();
+
+  await page.getByRole("button", { name: "Continuar" }).click();
+
+  const gameOver = page.getByText(/game over/i).first();
+  let stalls = 0;
+
+  for (let step = 0; step < 400; step += 1) {
+    if (await gameOver.isVisible()) break;
+
+    const advanced = await advanceOnce(page);
+    stalls = advanced ? 0 : stalls + 1;
+
+    // Sin botones de avance durante varios intentos seguidos: la carrera está atascada.
+    if (stalls >= 10) {
+      const buttons = await page.getByRole("button").allInnerTexts();
+      const text = (await page.locator("body").innerText()).slice(0, 400);
+      throw new Error(`La carrera no ofrece ningún paso de avance.
+Botones: ${buttons.join(" | ")}
+Texto: ${text}`);
+    }
+
+    if (advanced) {
+      await page.waitForTimeout(150);
+    }
+  }
+
+  await expect(gameOver).toBeVisible();
+  const body = await page.locator("body").innerText();
+  // El Game Over puede deberse a objetivo fallido o a descenso: la pantalla debe decir cuál.
+  expect(body, "La pantalla de Game Over debe explicar el motivo").toMatch(/Objetivo fallido|Descenso/);
+  expect(pageErrors).toEqual([]);
+});
