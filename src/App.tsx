@@ -38,6 +38,7 @@ import {
 import { createEuropeanTournamentForQualification } from "./europe/europeanTournament";
 import { awardEuropeanTrophyToCareer } from "./career/europeanTrophies";
 import { awardEuropeanPrestigeToCareer } from "./career/europeanPrestige";
+import { shouldResumeInterseasonReward } from "./career/resumeScreen";
 import type { EuropeanPrestigeReward } from "./career/europeanPrestige";
 
 import { getPlayerIdentityKey, resolvePlayerSlotPlacement } from "./domain/positionRules";
@@ -682,7 +683,7 @@ export default function App() {
     setReplacementOriginalFormation(undefined);
     setCoachBeforeReward(undefined);
     setLastSelection(undefined);
-    setScreen(loadedGame.phase);
+    setScreen(shouldResumeInterseasonReward(loadedGame) ? "career_interseason_reward" : loadedGame.phase);
   }
 
   function handleSelectFormation(formation: Formation) {
