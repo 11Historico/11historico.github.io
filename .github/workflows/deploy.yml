@@ -61,6 +61,8 @@ jobs:
         run: npm run qa:european-knockout-extra-time
       - name: Run match sequence QA
         run: npm run qa:match-sequence
+      - name: Run european match sequence QA
+        run: npm run qa:european-match-sequence
       - name: Run european trophies palmares QA
         run: npm run qa:european-trophies-palmares
       - name: Run european rewards prestige QA

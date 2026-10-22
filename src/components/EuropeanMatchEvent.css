@@ -380,3 +380,82 @@
     width: 100%;
   }
 }
+
+/* Secuencia de partido europeo (v0.24.9j, Fase B) */
+.european-match-sequence {
+  display: grid;
+  gap: 10px;
+}
+
+.european-match-sequence-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.european-match-sequence-clock {
+  display: inline-flex;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  font-size: 0.76rem;
+  font-weight: 950;
+  font-variant-numeric: tabular-nums;
+}
+
+.european-match-sequence-live {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: right;
+}
+
+.european-match-sequence-live-score {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.european-match-sequence-live-score strong {
+  font-size: 1.6rem;
+  color: #ffffff;
+}
+
+.european-match-sequence-live-score span {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.european-match-sequence-skip {
+  justify-self: end;
+  min-height: 40px;
+}
+
+.european-match-sequence-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.european-match-sequence-progress span {
+  display: block;
+  height: 100%;
+  background: #ffe08a;
+  transition: width 100ms linear;
+}
+
+.european-match-event-card-champions .european-match-sequence-progress span {
+  background: #9ec5ff;
+}
+
+.european-match-event-card-europa .european-match-sequence-progress span {
+  background: #ffb969;
+}
+
+.european-match-event-card-conference .european-match-sequence-progress span {
+  background: #5fe1a0;
+}
