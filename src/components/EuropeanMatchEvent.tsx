@@ -19,6 +19,7 @@ import {
 } from "../europe/europeanTournament";
 import type { EuropeanCompetition, EuropeanTournamentMatch, EuropeanTournamentState } from "../europe/europeanTypes";
 import EuropeanProgressPanel from "./EuropeanProgressPanel";
+import { CompetitionIcon } from "./CompetitionIcon";
 import {
   EUROPEAN_SEQUENCE_TICK_MS,
   getEuropeanSequenceDurationMs,
@@ -209,7 +210,12 @@ export function EuropeanMatchEvent({
             {phaseLabel} · Jornada europea {match.matchday}
           </p>
         </div>
-        <span className="european-match-event-badge">{getCompetitionBadge(match.competition)}</span>
+        <span className="european-match-event-badge">
+          <CompetitionIcon
+            kind={match.competition === "champions_league" ? "champions" : match.competition === "europa_league" ? "europa" : "conference"}
+          />
+          {getCompetitionBadge(match.competition)}
+        </span>
       </div>
 
       <p className="european-match-event-narrative">{getPhaseNarrative(tournament, match)}</p>

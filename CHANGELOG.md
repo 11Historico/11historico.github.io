@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.8 — Iconos por competición
+
+- Iconos propios para LaLiga, Copa del Rey, Supercopa, Champions League, Europa League y Conference League (`CompetitionIcon`), sin logos ni símbolos oficiales.
+- Aparecen en la cabecera de los partidos de Liga y Copa, en la tarjeta de Copa y en el distintivo de la noche europea.
+- Pruebas unitarias de renderizado (`tests/unit/competitionIcon.test.tsx`); Vitest incluye ahora archivos `.tsx`.
+- Versionado a `v0.25.8` / `0.25.8`.
+
 ## v0.25.7 — Corte de App.tsx: draft y validación del equipo
 
 - Extraídas de `src/App.tsx` a `src/app/`: el sorteo de temporadas del draft (`draftSeasons.ts`) y la validación y saneado del equipo (`teamValidation.ts`). Sin cambio de comportamiento.

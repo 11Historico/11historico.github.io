@@ -44,6 +44,7 @@ import { simulateEuropeanMatch } from "../europe/europeanMatchEngine";
 import { applyEuropeanMatchResult, isEuropeanKnockoutMatch } from "../europe/europeanTournament";
 import type { EuropeanTournamentMatch, EuropeanTournamentState } from "../europe/europeanTypes";
 import EuropeanMatchEvent from "./EuropeanMatchEvent";
+import { CompetitionIcon } from "./CompetitionIcon";
 import {
   MATCH_SEQUENCE_TICK_MS,
   countGoalsForTeam,
@@ -269,7 +270,10 @@ function MatchSequence({
         ) : (
           <span className="match-sequence-clock">{frame.stage === "preview" ? "Previa" : `${frame.minute}'`}</span>
         )}
-        <span className="match-sequence-tag">{getMatchSequenceTag(result)}</span>
+        <span className="match-sequence-tag">
+          <CompetitionIcon kind={result.competition === "cup" ? "copa" : "liga"} />
+          {getMatchSequenceTag(result)}
+        </span>
       </div>
 
       <div className="last-result-scoreboard">
@@ -858,7 +862,10 @@ export function LeagueSimulatorView({
 
           {pendingCupFixture && (
             <section className="cup-event-card">
-              <span>Copa del Rey</span>
+              <span>
+                <CompetitionIcon kind="copa" />
+                Copa del Rey
+              </span>
               <h2>{pendingCupFixture.roundName}</h2>
               <p>
                 Rival: {getCupRivalDisplayName(pendingCupFixture.rivalTeamId)} · Partido {pendingCupFixture.venue === "home" ? "en San Mamés" : "fuera de casa"}
