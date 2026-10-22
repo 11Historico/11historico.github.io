@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.9 — Enlace de reto
+
+- Botón "Copiar enlace de reto" en la pantalla de fin de carrera. El enlace lleva solo puntuación, temporadas, mejor posición y palmarés: sin nick ni fechas.
+- Al abrir un enlace de reto, la home muestra la marca a superar. Cerrar el aviso quita el parámetro de la barra de direcciones.
+- Los valores del enlace se validan con límites; los enlaces mal formados se ignoran.
+- Pruebas unitarias (`tests/unit/challengeLink.test.ts`) y de navegador (aviso, cierre y URL).
+- Versionado a `v0.25.9` / `0.25.9`.
+
 ## v0.25.8 — Iconos por competición
 
 - Iconos propios para LaLiga, Copa del Rey, Supercopa, Champions League, Europa League y Conference League (`CompetitionIcon`), sin logos ni símbolos oficiales.

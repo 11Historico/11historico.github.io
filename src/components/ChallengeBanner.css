@@ -1,0 +1,37 @@
+.challenge-banner {
+  display: grid;
+  gap: 10px;
+  margin: 0 auto 16px;
+  max-width: 760px;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 224, 138, 0.42);
+  border-radius: 22px;
+  background: rgba(255, 224, 138, 0.1);
+  color: #ffffff;
+}
+
+.challenge-banner-eyebrow {
+  display: block;
+  color: #ffe08a;
+  font-size: 0.74rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.challenge-banner-info strong {
+  display: block;
+  font-size: 1.4rem;
+}
+
+.challenge-banner-info p,
+.challenge-banner-info small,
+.challenge-banner-hint {
+  margin: 4px 0 0;
+  color: #f2d2d7;
+  line-height: 1.4;
+}
+
+.challenge-banner .secondary-home-button {
+  justify-self: start;
+}

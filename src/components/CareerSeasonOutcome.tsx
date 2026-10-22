@@ -4,6 +4,7 @@ import type { CareerAchievement } from "../career/shareRetention";
 import type { CareerLocalRankingEntry, CareerObjectiveResult, CareerSeasonResult, CareerTrophyCounts } from "../types/career";
 import type { EuropeanCareerState, EuropeanQualificationResult, EuropeanTournamentState } from "../europe/europeanTypes";
 import { calculateCareerArcadeScore, getFinalCareerTrophyCounts } from "../career/careerRanking";
+import { buildChallengeLink, getChallengeSummary } from "../career/challengeLink";
 import {
   buildCareerShareText,
   getCareerAchievements,
@@ -133,18 +134,33 @@ function CareerGameOverArcadeSummary({
 
 function CareerShareRetentionPanel({
   shareText,
+  challengeLink,
   achievements,
   rankingPosition,
   isNewRecord,
   rankingSaved,
 }: {
   shareText: string;
+  challengeLink?: string;
   achievements: CareerAchievement[];
   rankingPosition?: number;
   isNewRecord: boolean;
   rankingSaved: boolean;
 }) {
   const [shareStatus, setShareStatus] = useState("");
+  const [challengeStatus, setChallengeStatus] = useState("");
+  async function handleCopyChallenge() {
+    if (!challengeLink) return;
+
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(challengeLink);
+      setChallengeStatus("Enlace de reto copiado.");
+    } catch {
+      setChallengeStatus("No se pudo copiar el enlace. Revisa la barra de direcciones.");
+    }
+  }
+
   async function handleShareCareer() {
     try {
       if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
@@ -193,6 +209,14 @@ function CareerShareRetentionPanel({
       <button type="button" className="primary-home-button" onClick={handleShareCareer}>
         Compartir mi carrera
       </button>
+      {challengeLink && (
+        <>
+          <button type="button" className="secondary-home-button" onClick={handleCopyChallenge}>
+            Copiar enlace de reto
+          </button>
+          <p role="status" aria-live="polite">{challengeStatus}</p>
+        </>
+      )}
       <p role="status" aria-live="polite">{shareStatus}</p>
     </section>
   );
@@ -237,6 +261,9 @@ export function CareerSeasonOutcome({
     rankingPosition,
   });
   const careerShareText = rankingEntry ? buildCareerShareText(rankingEntry) : undefined;
+  const challengeLinkUrl = rankingEntry
+    ? buildChallengeLink(getChallengeSummary(rankingEntry), `${window.location.origin}${window.location.pathname}`)
+    : undefined;
 
   return (
     <main className={`career-outcome-screen ${survived ? "career-outcome-success" : "career-outcome-game-over"}`}>
@@ -308,6 +335,7 @@ export function CareerSeasonOutcome({
             {careerShareText && (
               <CareerShareRetentionPanel
                 shareText={careerShareText}
+                challengeLink={challengeLinkUrl}
                 achievements={achievements}
                 rankingPosition={rankingPosition}
                 isNewRecord={newPersonalRecord}
