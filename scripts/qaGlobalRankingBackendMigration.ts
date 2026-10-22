@@ -40,6 +40,7 @@ function testNewColumnsAppendedAfterExistingHeaders(): void {
     "trophyCounts", "bestLeaguePosition", "lastSeasonLabel", "lastLeaguePosition", "gameVersion",
     "createdAt", "submittedAt", "serverReceivedAt",
     "championsTitles", "ligaTitles", "europaLeagueTitles", "copaTitles", "conferenceTitles", "supercopaTitles",
+    "oculto",
   ];
 
   assert(headerNames.length === expected.length, `HEADERS debe tener ${expected.length} columnas, tiene ${headerNames.length}.`);
@@ -48,6 +49,15 @@ function testNewColumnsAppendedAfterExistingHeaders(): void {
   });
 
   logOk("Las 6 columnas de títulos por competición se añaden al final de HEADERS, sin desplazar las existentes");
+}
+
+function testHiddenRowsAreFilteredOut(): void {
+  const backend = readText("apps-script/globalRankingBackend.gs");
+
+  assertIncludes(backend, "function isHiddenRow_(row)", "Debe existir el filtro de filas ocultas.");
+  assertIncludes(backend, ".filter((row) => !isHiddenRow_(row))", "readEntries_ debe excluir las filas ocultas antes de convertirlas.");
+  assertIncludes(backend, ".concat(trophyCountsToColumns_(entry.trophyCounts), [''])", "Las filas nuevas deben dejar vacía la columna oculto (visible por defecto).");
+  logOk("La columna de moderación oculta filas sin borrar datos y las nuevas filas quedan visibles");
 }
 
 function testTextColumnIndicesUnchanged(): void {
@@ -127,6 +137,7 @@ function testQaRegisteredInPackageAndWorkflow(): void {
 
 console.log("QA Global Ranking Backend Migration");
 testNewColumnsAppendedAfterExistingHeaders();
+testHiddenRowsAreFilteredOut();
 testTextColumnIndicesUnchanged();
 testTrophyCountsColumnStillWiredCompatible();
 testClientFacingResponseUnchanged();

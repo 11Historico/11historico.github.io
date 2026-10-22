@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.25.2 — P1 Low Cost
+
+- Idioma del documento en español (`lang="es"`).
+- Vista previa en redes: Open Graph y Twitter Cards con imagen de 1200×630 (`public/og-image.png`).
+- Dependabot para dependencias npm y acciones de GitHub.
+- Nota de privacidad publicada en `privacidad.html` y enlazada desde el ranking global.
+- Foco visible en todos los controles por teclado.
+- Moderación del ranking global: columna `oculto` en la hoja. Las filas marcadas no aparecen en el ranking sin borrar datos. Requiere redesplegar el script de Apps Script.
+- Versionado a `v0.25.2` / `0.25.2`.
+
 ## v0.25.1 — Tech Cleanup
 
 - Resuelve los hallazgos de `npm audit` sin cambios de versión mayor (Vite pasa de 8.1.2 a 8.3.5 dentro de la misma mayor). `npm audit` reporta 0 vulnerabilidades.

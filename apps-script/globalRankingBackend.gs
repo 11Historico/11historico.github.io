@@ -68,6 +68,9 @@ const HEADERS = [
   'copaTitles',
   'conferenceTitles',
   'supercopaTitles',
+  // v0.25.2: moderación. Escribe SÍ (o TRUE) en esta columna para ocultar una
+  // fila del ranking global sin borrar sus datos. Las filas vacías son visibles.
+  'oculto',
 ];
 
 function doGet(event) {
@@ -323,8 +326,19 @@ function readEntries_(sheet) {
 
   return sheet.getRange(2, 1, lastRow - 1, HEADERS.length)
     .getValues()
+    .filter((row) => !isHiddenRow_(row))
     .map(rowToEntry_)
     .filter(Boolean);
+}
+
+// v0.25.2: columna de moderación "oculto" (ver HEADERS).
+const HIDDEN_COLUMN_INDEX = HEADERS.indexOf('oculto');
+
+function isHiddenRow_(row) {
+  const value = row[HIDDEN_COLUMN_INDEX];
+  if (value === true) return true;
+
+  return ['SI', 'SÍ', 'TRUE', '1'].indexOf(String(value).trim().toUpperCase()) !== -1;
 }
 
 function getTopEntries_(limit) {
@@ -358,7 +372,7 @@ function toRow_(entry) {
     entry.createdAt,
     entry.submittedAt,
     entry.serverReceivedAt,
-  ].concat(trophyCountsToColumns_(entry.trophyCounts));
+  ].concat(trophyCountsToColumns_(entry.trophyCounts), ['']);
 }
 
 // v0.24.5b: mismo orden que las columnas añadidas al final de HEADERS.

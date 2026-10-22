@@ -41,3 +41,11 @@ input,
 select {
   font: inherit;
 }
+
+/* v0.25.2: foco visible en todos los controles por teclado. Anillo dorado con halo
+   oscuro para que se vea tanto sobre botones blancos como sobre fondos oscuros. */
+:focus-visible {
+  outline: 3px solid #ffe08a;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.55);
+}
