@@ -261,7 +261,7 @@ export default function SeasonLuckWheelModal({
                 <span
                   key={`${segment.resultType}-${index}`}
                   className={`season-wheel-prize ${getPrizeClass(segment.group)}`}
-                  style={{ transform: `rotate(${index * (360 / offer.prizeSegments.length)}deg)` }}
+                  style={{ transform: `rotate(${index * (360 / offer.prizeSegments.length) - 90}deg)` }}
                 >
                   {getSegmentShortParts(segment).map((part) => (
                     <span key={part}>{part}</span>
