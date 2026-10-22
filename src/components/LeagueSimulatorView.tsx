@@ -33,6 +33,7 @@ import {
 import { applyDifficultyToTeamRating } from "../career/teamPower";
 import {
   applySeasonLuckWheelRatingDelta,
+  buildAcceptedSeasonLuckWheelState,
   buildSeasonLuckWheelOffer,
   type SeasonLuckWheelOffer,
   type SeasonLuckWheelResolvedResult,
@@ -506,22 +507,7 @@ export function LeagueSimulatorView({
   }
 
   function handleResolveSeasonLuckWheel(result: SeasonLuckWheelResolvedResult) {
-    const nextState: SeasonLuckWheelState = {
-      seasonId: result.seasonId,
-      used: true,
-      triggerEvent: result.triggerEvent,
-      offeredAt: new Date().toISOString(),
-      accepted: true,
-      resultGroup: result.resultGroup,
-      resultType: result.resultType,
-      ratingDelta: result.ratingDelta,
-      precisionPosition: result.precisionPosition,
-      precisionZoneId: result.precisionZone.id,
-      appearanceText: result.appearanceText,
-      resultText: result.resultText,
-      requiresPlayerChange: result.requiresPlayerChange,
-      requiresCoachChange: result.requiresCoachChange,
-    };
+    const nextState = buildAcceptedSeasonLuckWheelState(result, new Date().toISOString());
     const nextContext = {
       ...context,
       seasonLuckWheel: nextState,
