@@ -6,6 +6,7 @@ import {
   sanitizeGlobalRankingNick,
   sortCareerGlobalRanking,
   submitGlobalRankingEntry,
+  GLOBAL_RANKING_ENDPOINT,
   getGlobalRankingBackendLabel,
   validateGlobalRankingNick,
   validateGlobalRankingPayload,
@@ -111,8 +112,11 @@ function testPayloadContract(): void {
 }
 
 function testAppsScriptBackendLabel(): void {
-  assert((awaitedBackendLabel()) === "Backend pendiente", "Sin endpoint debe indicar backend pendiente.");
-  logOk("Backend global pendiente queda identificado");
+  // El endpoint se incrusta al compilar desde .env.local: el QA comprueba la rama que
+  // corresponde a la configuración real, sin depender de que el archivo no exista.
+  const expected = GLOBAL_RANKING_ENDPOINT.length > 0 ? "Apps Script · env" : "Backend pendiente";
+  assert(awaitedBackendLabel() === expected, `La etiqueta del backend debe ser "${expected}" con esta configuración.`);
+  logOk("La etiqueta del backend global coincide con la configuración de compilación");
 }
 
 function awaitedBackendLabel(): string {

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.1 — Tech Cleanup
+
+- Resuelve los hallazgos de `npm audit` sin cambios de versión mayor (Vite pasa de 8.1.2 a 8.3.5 dentro de la misma mayor). `npm audit` reporta 0 vulnerabilidades.
+- Separa los datos históricos de plantillas en su propio fragmento: el bundle principal baja de 792 kB a 485 kB y desaparece el aviso de Vite de 500 kB.
+- Añade `qa:bundle-chunking`, que impide quitar esa separación sin aviso.
+- Hace `qa:global-ranking` independiente del `.env.local` local: la etiqueta del backend se comprueba según la configuración de compilación.
+- Versionado a `v0.25.1` / `0.25.1`.
+
 ## v0.25.0 — Stable Public Release
 
 Primera versión pública estable del juego con Europa Career completa y la secuencia de partido en Liga, Copa y Europa.

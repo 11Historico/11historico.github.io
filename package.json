@@ -1,7 +1,7 @@
 {
   "name": "futbol11",
   "private": true,
-  "version": "0.25.0",
+  "version": "0.25.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -15,7 +15,7 @@
     "qa:formation-reward": "vite build --ssr scripts/qaFormationReward.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaFormationReward.js",
     "qa:career-ranking": "vite build --ssr scripts/qaCareerLocalRanking.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaCareerLocalRanking.js",
     "qa:version": "vite build --ssr scripts/qaVersionConsistency.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaVersionConsistency.js",
-    "qa:tech-debt": "npm run qa:version && npm run qa:tech-health-baseline && npm run qa:mobile-viewport && npm run qa:hooks-simulation-deps && npm run qa:release-stabilization && npm run qa:agentjacking && npm run qa:formation-reward && npm run qa:career-ranking && npm run qa:global-ranking && npm run qa:global-ranking-ui && npm run qa:team-power && npm run qa:season-luck-wheel && npm run qa:season-luck-wheel-ui && npm run qa:palmares-showcase && npm run qa:luck-wheel-real-rewards && npm run qa:european-qualification && npm run qa:european-qualification-ui && npm run qa:european-persistence && npm run qa:european-tournament && npm run qa:european-match-engine && npm run qa:european-calendar && npm run qa:european-matchday-ui && npm run qa:european-progress-ui && npm run qa:european-knockouts && npm run qa:european-knockout-extra-time && npm run qa:match-sequence && npm run qa:european-match-sequence && npm run qa:match-playback-speed && npm run qa:european-trophies-palmares && npm run qa:european-rewards-prestige && npm run qa:european-balance && npm run qa:global-ranking-europa-fields && npm run qa:global-ranking-backend-migration && npm run qa:european-mobile-polish && npm run qa:european-visual-polish && npm run qa:public-release-ux && npm run qa:share-retention && npm run qa:saved-game-resume",
+    "qa:tech-debt": "npm run qa:version && npm run qa:tech-health-baseline && npm run qa:mobile-viewport && npm run qa:hooks-simulation-deps && npm run qa:release-stabilization && npm run qa:agentjacking && npm run qa:formation-reward && npm run qa:career-ranking && npm run qa:global-ranking && npm run qa:global-ranking-ui && npm run qa:team-power && npm run qa:season-luck-wheel && npm run qa:season-luck-wheel-ui && npm run qa:palmares-showcase && npm run qa:luck-wheel-real-rewards && npm run qa:european-qualification && npm run qa:european-qualification-ui && npm run qa:european-persistence && npm run qa:european-tournament && npm run qa:european-match-engine && npm run qa:european-calendar && npm run qa:european-matchday-ui && npm run qa:european-progress-ui && npm run qa:european-knockouts && npm run qa:european-knockout-extra-time && npm run qa:match-sequence && npm run qa:european-match-sequence && npm run qa:match-playback-speed && npm run qa:bundle-chunking && npm run qa:european-trophies-palmares && npm run qa:european-rewards-prestige && npm run qa:european-balance && npm run qa:global-ranking-europa-fields && npm run qa:global-ranking-backend-migration && npm run qa:european-mobile-polish && npm run qa:european-visual-polish && npm run qa:public-release-ux && npm run qa:share-retention && npm run qa:saved-game-resume",
     "qa:global-ranking": "vite build --ssr scripts/qaGlobalRankingFoundation.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaGlobalRankingFoundation.js",
     "qa:global-ranking-backend": "vite build --ssr scripts/qaGlobalRankingFoundation.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaGlobalRankingFoundation.js",
     "qa:team-power": "vite build --ssr scripts/qaTeamPower.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaTeamPower.js",
@@ -45,6 +45,7 @@
     "qa:match-sequence": "vite build --ssr scripts/qaMatchSequence.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaMatchSequence.js",
     "qa:european-match-sequence": "vite build --ssr scripts/qaEuropeanMatchSequence.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaEuropeanMatchSequence.js",
     "qa:match-playback-speed": "vite build --ssr scripts/qaMatchPlaybackSpeed.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaMatchPlaybackSpeed.js",
+    "qa:bundle-chunking": "vite build --ssr scripts/qaBundleChunking.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaBundleChunking.js",
     "qa:european-trophies-palmares": "vite build --ssr scripts/qaEuropeanTrophiesPalmares.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaEuropeanTrophiesPalmares.js",
     "qa:european-rewards-prestige": "vite build --ssr scripts/qaEuropeanRewardsPrestige.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaEuropeanRewardsPrestige.js",
     "qa:european-balance": "vite build --ssr scripts/qaEuropeanBalance.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaEuropeanBalance.js",

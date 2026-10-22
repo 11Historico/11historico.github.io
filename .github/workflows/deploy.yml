@@ -65,6 +65,8 @@ jobs:
         run: npm run qa:european-match-sequence
       - name: Run match playback speed QA
         run: npm run qa:match-playback-speed
+      - name: Run bundle chunking QA
+        run: npm run qa:bundle-chunking
       - name: Run european trophies palmares QA
         run: npm run qa:european-trophies-palmares
       - name: Run european rewards prestige QA
