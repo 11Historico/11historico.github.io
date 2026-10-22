@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.7 — Corte de App.tsx: draft y validación del equipo
+
+- Extraídas de `src/App.tsx` a `src/app/`: el sorteo de temporadas del draft (`draftSeasons.ts`) y la validación y saneado del equipo (`teamValidation.ts`). Sin cambio de comportamiento.
+- `src/App.tsx` pasa de 1841 a 1679 líneas.
+- Pruebas unitarias de los módulos nuevos (`tests/unit/appModules.test.ts`).
+- Versionado a `v0.25.7` / `0.25.7`.
+
 ## v0.25.6 — Explicación de la falta de plaza europea
 
 - La tarjeta "Sin billete europeo" de fin de temporada explica por qué no hay plaza: la posición del equipo y, si aplica, cómo el campeón de Copa ya clasificado por Liga desplazó la plaza al 6.º y la Conference al 7.º.

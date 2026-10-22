@@ -41,14 +41,12 @@ import { awardEuropeanPrestigeToCareer } from "./career/europeanPrestige";
 import { shouldResumeInterseasonReward } from "./career/resumeScreen";
 import type { EuropeanPrestigeReward } from "./career/europeanPrestige";
 
-import { getPlayerIdentityKey, resolvePlayerSlotPlacement } from "./domain/positionRules";
+import { resolvePlayerSlotPlacement } from "./domain/positionRules";
 
-import { getAvailableAthleticSeasons } from "./data/athleticSeasons";
-import {
-  DEFAULT_EASY_MODE_SEASON_RANGE_ID,
-  getAthleticSeasonsForEasyModeRange,
-} from "./data/easyModeSeasonRanges";
+import { DEFAULT_EASY_MODE_SEASON_RANGE_ID } from "./data/easyModeSeasonRanges";
 
+import { createRandomPlayerRoundSeasons, getDraftSeasonPool, pickRandomSeason } from "./app/draftSeasons";
+import { TOTAL_PLAYER_ROUNDS, sanitizeSelectedPlayers, validateSelectedTeam } from "./app/teamValidation";
 import GameHome from "./components/GameHome";
 import PhaseProgress from "./components/PhaseProgress";
 import FormationSelector from "./components/FormationSelector";
@@ -100,7 +98,6 @@ import {
 
 import "./App.css";
 
-const TOTAL_PLAYER_ROUNDS = 11;
 
 
 function createEmptyCareerTrophyCounts(): CareerTrophyCounts {
@@ -202,65 +199,6 @@ type AppScreen =
   | "season_reveal"
   | GamePhase;
 
-function getSeasonYearNumber(season: SeasonId): number {
-  const [startYear] = season.split("/");
-  const parsed = Number(startYear);
-
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function getSeasonDecadeBucket(season: SeasonId): number {
-  const year = getSeasonYearNumber(season);
-
-  return Math.floor(year / 10) * 10;
-}
-
-function pickRandomSeason(
-  seasons: SeasonId[],
-  excludedSeasons: Set<SeasonId> = new Set(),
-  previousSeason?: SeasonId
-): SeasonId {
-  if (seasons.length === 0) {
-    throw new Error("No hay temporadas disponibles en athleticSeasons.ts");
-  }
-
-  const eligibleSeasons = seasons.filter((season) => !excludedSeasons.has(season));
-  const uniquePool = eligibleSeasons.length > 0 ? eligibleSeasons : seasons;
-
-  const previousDecade = previousSeason ? getSeasonDecadeBucket(previousSeason) : undefined;
-  const variedPool = previousDecade === undefined
-    ? uniquePool
-    : uniquePool.filter((season) => getSeasonDecadeBucket(season) !== previousDecade);
-
-  const pool = variedPool.length > 0 ? variedPool : uniquePool;
-  const index = Math.floor(Math.random() * pool.length);
-
-  return pool[index];
-}
-
-function createRandomPlayerRoundSeasons(totalRounds: number, seasons: SeasonId[] = getAvailableAthleticSeasons()): SeasonId[] {
-  const usedSeasons = new Set<SeasonId>();
-  const selectedSeasons: SeasonId[] = [];
-
-  for (let roundIndex = 0; roundIndex < totalRounds; roundIndex += 1) {
-    const previousSeason = selectedSeasons[selectedSeasons.length - 1];
-    const nextSeason = pickRandomSeason(seasons, usedSeasons, previousSeason);
-    selectedSeasons.push(nextSeason);
-    usedSeasons.add(nextSeason);
-  }
-
-  return selectedSeasons;
-}
-
-function getDraftSeasonPool(params: {
-  difficulty: GameDifficulty;
-  easyModeSeasonRangeId: EasyModeSeasonRangeId;
-}): SeasonId[] {
-  return params.difficulty === "normal"
-    ? getAthleticSeasonsForEasyModeRange(params.easyModeSeasonRangeId)
-    : getAvailableAthleticSeasons();
-}
-
 function createGameId(): string {
   return `game_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
@@ -294,106 +232,6 @@ function buildCareerSeasonResult(
 }
 
 
-interface TeamValidationResult {
-  valid: boolean;
-  errors: string[];
-}
-
-
-function validateSelectedTeam(params: {
-  formation?: Formation;
-  selectedPlayers: SelectedPlayer[];
-  expectedPlayerCount?: number;
-}): TeamValidationResult {
-  const { formation, selectedPlayers, expectedPlayerCount = TOTAL_PLAYER_ROUNDS } = params;
-  const errors: string[] = [];
-
-  if (!formation) {
-    errors.push("No hay formación seleccionada.");
-    return { valid: false, errors };
-  }
-
-  if (selectedPlayers.length !== expectedPlayerCount) {
-    errors.push(`El once debe tener ${expectedPlayerCount}/${TOTAL_PLAYER_ROUNDS} jugadores para este paso y tiene ${selectedPlayers.length}.`);
-  }
-
-  if (selectedPlayers.length > TOTAL_PLAYER_ROUNDS) {
-    errors.push(`El once tiene demasiados jugadores: ${selectedPlayers.length}/${TOTAL_PLAYER_ROUNDS}.`);
-  }
-
-  const seenNames = new Map<string, string>();
-  const seenSlots = new Map<string, string>();
-
-  for (const selected of selectedPlayers) {
-    const normalizedName = getPlayerIdentityKey(selected.playerSeason);
-    const previousName = seenNames.get(normalizedName);
-
-    if (previousName) {
-      errors.push(`Jugador repetido: ${selected.playerSeason.name}.`);
-    } else {
-      seenNames.set(normalizedName, selected.playerSeason.name);
-    }
-
-    const previousSlot = seenSlots.get(selected.slotId);
-
-    if (previousSlot) {
-      errors.push(
-        `Puesto ocupado dos veces: ${selected.slotId} (${previousSlot} y ${selected.playerSeason.name}).`
-      );
-    } else {
-      seenSlots.set(selected.slotId, selected.playerSeason.name);
-    }
-
-    const slot = formation.slots.find((item) => item.id === selected.slotId);
-
-    if (!slot) {
-      errors.push(`Puesto no encontrado en la formación: ${selected.slotId}.`);
-      continue;
-    }
-
-    const placement = resolvePlayerSlotPlacement(selected.playerSeason, slot);
-
-    if (!placement.canPlace) {
-      errors.push(
-        placement.reason ?? `${selected.playerSeason.name} no puede ocupar ${slot.label}.`
-      );
-    }
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors,
-  };
-}
-
-function sanitizeSelectedPlayers(params: {
-  formation?: Formation;
-  selectedPlayers: SelectedPlayer[];
-}): SelectedPlayer[] {
-  const { formation, selectedPlayers } = params;
-
-  if (!formation) return [];
-
-  const usedNames = new Set<string>();
-  const usedSlots = new Set<string>();
-  const cleaned: SelectedPlayer[] = [];
-
-  for (const selected of selectedPlayers) {
-    const normalizedName = getPlayerIdentityKey(selected.playerSeason);
-    const slot = formation.slots.find((item) => item.id === selected.slotId);
-
-    if (!slot) continue;
-    if (usedNames.has(normalizedName)) continue;
-    if (usedSlots.has(selected.slotId)) continue;
-    if (!resolvePlayerSlotPlacement(selected.playerSeason, slot).canPlace) continue;
-
-    usedNames.add(normalizedName);
-    usedSlots.add(selected.slotId);
-    cleaned.push(selected);
-  }
-
-  return cleaned;
-}
 
 export default function App() {
   const savedGame = useMemo(() => loadGameState(), []);
