@@ -1079,3 +1079,41 @@
 .match-sequence-cup .match-sequence-progress span {
   background: #e8b923;
 }
+
+/* Velocidad de reproducción (v0.24.9k, Fase C) */
+.playback-speed-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.playback-speed-control > span {
+  color: #f2d2d7;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.playback-speed-option {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.playback-speed-option-active {
+  border-color: #ffe08a;
+  background: #ffe08a;
+  color: #451600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .match-sequence-progress span {
+    transition: none;
+  }
+}

@@ -45,11 +45,17 @@ import { applyEuropeanMatchResult, isEuropeanKnockoutMatch } from "../europe/eur
 import type { EuropeanTournamentMatch, EuropeanTournamentState } from "../europe/europeanTypes";
 import EuropeanMatchEvent from "./EuropeanMatchEvent";
 import {
-  MATCH_SEQUENCE_DURATION_MS,
   MATCH_SEQUENCE_TICK_MS,
   countGoalsForTeam,
+  getMatchSequenceDurationMs,
   getMatchSequenceFrame,
 } from "./matchSequenceTimeline";
+import {
+  MATCH_PLAYBACK_SPEED_OPTIONS,
+  getMatchPlaybackMultiplier,
+  setMatchPlaybackSpeed,
+  useMatchPlaybackSpeed,
+} from "./matchPlaybackSpeed";
 
 import "./LeagueSimulatorView.css";
 
@@ -194,6 +200,27 @@ function TeamWithKit({ teamName }: { teamName: string }) {
   );
 }
 
+function PlaybackSpeedControl() {
+  const speed = useMatchPlaybackSpeed();
+
+  return (
+    <div className="playback-speed-control" role="group" aria-label="Velocidad de la simulación">
+      <span>Velocidad</span>
+      {MATCH_PLAYBACK_SPEED_OPTIONS.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          className={speed === option.value ? "playback-speed-option playback-speed-option-active" : "playback-speed-option"}
+          aria-pressed={speed === option.value}
+          onClick={() => setMatchPlaybackSpeed(option.value)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function getMatchSequenceTag(result: MatchResult): string {
   if (result.competition === "cup") return `Copa del Rey · ${result.roundName ?? ""}`.trim();
   return `LaLiga · Jornada ${result.matchday}`;
@@ -206,10 +233,12 @@ function MatchSequence({
   result: MatchResult;
   onPlayingChange: (playing: boolean) => void;
 }) {
+  const playbackMultiplier = getMatchPlaybackMultiplier(useMatchPlaybackSpeed());
+  const durationMs = getMatchSequenceDurationMs(playbackMultiplier);
   const [elapsedMs, setElapsedMs] = useState(() =>
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? MATCH_SEQUENCE_DURATION_MS : 0,
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? durationMs : 0,
   );
-  const frame = getMatchSequenceFrame(result.goalEvents, elapsedMs);
+  const frame = getMatchSequenceFrame(result.goalEvents, elapsedMs, playbackMultiplier);
   const isFinal = frame.stage === "final";
   const homeGoals = isFinal ? result.homeGoals : countGoalsForTeam(frame.visibleGoals, result.homeTeamName);
   const awayGoals = isFinal ? result.awayGoals : countGoalsForTeam(frame.visibleGoals, result.awayTeamName);
@@ -226,11 +255,11 @@ function MatchSequence({
     if (isFinal) return undefined;
 
     const intervalId = window.setInterval(() => {
-      setElapsedMs((current) => Math.min(MATCH_SEQUENCE_DURATION_MS, current + MATCH_SEQUENCE_TICK_MS));
+      setElapsedMs((current) => Math.min(durationMs, current + MATCH_SEQUENCE_TICK_MS));
     }, MATCH_SEQUENCE_TICK_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [isFinal]);
+  }, [durationMs, isFinal]);
 
   return (
     <article className={`last-result-card match-sequence ${result.competition === "cup" ? "match-sequence-cup" : "match-sequence-league"}`}>
@@ -250,7 +279,7 @@ function MatchSequence({
       </div>
 
       <div className="match-sequence-progress" aria-hidden="true">
-        <span style={{ width: `${(elapsedMs / MATCH_SEQUENCE_DURATION_MS) * 100}%` }} />
+        <span style={{ width: `${(elapsedMs / durationMs) * 100}%` }} />
       </div>
 
       {frame.visibleGoals.length > 0 ? (
@@ -272,7 +301,7 @@ function MatchSequence({
         <button
           type="button"
           className="secondary-league-button match-sequence-skip"
-          onClick={() => setElapsedMs(MATCH_SEQUENCE_DURATION_MS)}
+          onClick={() => setElapsedMs(durationMs)}
         >
           Saltar
         </button>
@@ -335,6 +364,7 @@ export function LeagueSimulatorView({
   const [lastResult, setLastResult] = useState<MatchResult | undefined>(undefined);
   const [isAutoSimulating, setIsAutoSimulating] = useState(false);
   const [isSequencePlaying, setIsSequencePlaying] = useState(false);
+  const playbackMultiplier = getMatchPlaybackMultiplier(useMatchPlaybackSpeed());
   const [pendingWheelOffer, setPendingWheelOfferState] = useState<SeasonLuckWheelOffer | undefined>(
     () => initialPendingSeasonLuckWheelOffer
   );
@@ -605,10 +635,10 @@ export function LeagueSimulatorView({
       if (shouldStop) {
         setIsAutoSimulating(false);
       }
-    }, AUTO_SIMULATION_DELAY_MS);
+    }, AUTO_SIMULATION_DELAY_MS * playbackMultiplier);
 
     return () => window.clearTimeout(timeoutId);
-  }, [commitContext, context, effectiveTeamRating, finishIfReady, isAutoSimulating, isSequencePlaying, maybeOfferSeasonLuckWheel, pendingEuropeanMatch, selectedPlayers]);
+  }, [commitContext, context, effectiveTeamRating, finishIfReady, isAutoSimulating, isSequencePlaying, maybeOfferSeasonLuckWheel, pendingEuropeanMatch, playbackMultiplier, selectedPlayers]);
 
   function simulateLeagueUntilNextEvent(params: {
     initialContext: UserLeagueSimulationContext;
@@ -786,6 +816,7 @@ export function LeagueSimulatorView({
             <div>
               <h2>{pendingCupFixture ? "Toca Copa del Rey" : pendingEuropeanMatch ? "Noche europea" : context.state.completed ? "Liga terminada" : "Próximo paso"}</h2>
               <p>{isAutoSimulating ? `${leagueProgressLabel} · Simulación automática en marcha.` : diagnosis}</p>
+              <PlaybackSpeedControl />
             </div>
 
             {pendingCupFixture ? (
