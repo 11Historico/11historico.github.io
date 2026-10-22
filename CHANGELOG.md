@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.6 — Explicación de la falta de plaza europea
+
+- La tarjeta "Sin billete europeo" de fin de temporada explica por qué no hay plaza: la posición del equipo y, si aplica, cómo el campeón de Copa ya clasificado por Liga desplazó la plaza al 6.º y la Conference al 7.º.
+- La explicación se genera en `resolveEuropeanQualification` (`getNoEuropeanQualificationExplanation`), con pruebas unitarias. La regla no cambia.
+- La prueba de flujo completo comprueba que la tarjeta muestra la posición del equipo.
+- Versionado a `v0.25.6` / `0.25.6`.
+
 ## v0.25.5 — Marcas europeas de la tabla final
 
 - La clasificación final marca las plazas europeas con el mismo reparto que el juego: 5.º Europa League, 6.º Conference, y la reasignación cuando el campeón de Copa ya está en Europa por Liga.
