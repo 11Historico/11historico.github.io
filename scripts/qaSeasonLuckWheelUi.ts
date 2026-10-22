@@ -41,6 +41,7 @@ function testModalSupportsRequiredFlow(): void {
   assert(component.includes("declineSeasonLuckWheel"), "El modal debe permitir rechazar sin efecto.");
   assert(component.includes("SEASON_LUCK_WHEEL_PRIZE_SEGMENTS"), "El modal debe mostrar los premios definidos por el motor.");
   assert(component.includes("season-wheel-disc-shell"), "El puntero fijo debe vivir fuera del disco que gira.");
+  assert(component.includes("(360 / offer.prizeSegments.length) - 90}deg"), "Cada etiqueta debe quedar centrada sobre su quesito (la caja nace a 3 en punto).");
   assert(component.includes("key={`${segment.resultType}-${index}`}"), "Los segmentos repetidos deben tener key estable con índice.");
   assert(component.includes("getSegmentShortParts"), "Los quesitos deben usar etiquetas ultracortas y nítidas.");
   assert(component.includes("getSegmentLegendLabel"), "El modal debe explicar etiquetas cortas con una leyenda de premios.");
