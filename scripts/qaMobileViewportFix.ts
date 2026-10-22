@@ -14,7 +14,7 @@ type PackageLockJson = {
 
 const ROOT = process.cwd();
 const CURRENT_PUBLIC_VERSION = APP_VERSION;
-const CURRENT_PACKAGE_VERSION = "0.24.9-a.0";
+const CURRENT_PACKAGE_VERSION = "0.25.0";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
@@ -57,7 +57,7 @@ function testVersionMetadata(): void {
   const packageLock = readJson<PackageLockJson>("package-lock.json");
 
   assert(APP_VERSION === CURRENT_PUBLIC_VERSION, `APP_VERSION debe ser ${CURRENT_PUBLIC_VERSION}, pero es ${APP_VERSION}.`);
-  assert(APP_VERSION_NAME === "Share & Retention Hotfix", `APP_VERSION_NAME inesperado: ${APP_VERSION_NAME}.`);
+  assert(APP_VERSION_NAME === "Stable Public Release", `APP_VERSION_NAME inesperado: ${APP_VERSION_NAME}.`);
   assert(APP_STATUS.includes("Europa Career") && APP_STATUS.includes("clasificación"), "APP_STATUS debe describir la base de Europa Career y su clasificación.");
   assert(packageJson.version === CURRENT_PACKAGE_VERSION, `package.json debe usar ${CURRENT_PACKAGE_VERSION}, pero usa ${packageJson.version}.`);
   assert(packageLock.version === packageJson.version, "package-lock.json version debe coincidir con package.json.");

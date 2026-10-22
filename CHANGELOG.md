@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.25.0 — Stable Public Release
+
+Primera versión pública estable del juego con Europa Career completa y la secuencia de partido en Liga, Copa y Europa.
+
+- Secuencia de partido en Liga y Copa: previa, reloj de 0' a 90', goles en su minuto y resultado final, con botón Saltar (PR #24).
+- Secuencia de partido en Europa: previa, 90', prórroga y penaltis cuando los hubo, marcador revelado por tramos y resultado final (PR #25).
+- Velocidad de la secuencia Lento / Normal / Rápido, guardada en el navegador, y movimiento reducido respetado; contraste de la paleta comprobado (PR #26).
+- Empate en semifinal o final europea: prórroga 2×15 min y, si sigue igual, penaltis; nunca queda empate en eliminatorias (PR #20).
+- Reparto europeo real de LaLiga: 7 plazas (4 Champions, 2 Europa League, 1 Conference) con reasignación cuando el campeón de Copa ya está en Europa por Liga. Aplicado al Game Over y a la clasificación europea jugable (PR #23).
+- Ruleta de la temporada: la etiqueta de cada quesito queda centrada en su premio, de modo que el premio aplicado coincide con el señalado (PR #21).
+- Vitrina de palmarés: las vitrinas vacías de Champions, Europa League y Conference dicen qué trofeo falta (PR #22).
+- Ranking global: tiempo de espera de 45 s para arranques en frío de Apps Script; variable de endpoint pasada al build de GitHub Pages (PRs #16 y #17).
+- Carrera: al recargar en la pantalla de recompensa de intertemporada, la recompensa se retoma sin perderse (PR #18).
+- Textos del palmarés y del ranking local corregidos (PR #19).
+- Versionado a `v0.25.0` / `0.25.0` en código, package.json, package-lock y QA de consistencia.
+
 ## v0.24.9a — Share & Retention Hotfix
 
 - Alinea la versión visible y las entradas nuevas del ranking con la fase publicada.
