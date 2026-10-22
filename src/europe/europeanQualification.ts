@@ -155,3 +155,30 @@ export function resolveEuropeanQualification(
     priority: NO_QUALIFICATION_PRIORITY,
   };
 }
+
+export interface FinalTableEuropeanSpot extends LeagueCompetitionSpot {
+  /** La plaza la da ser campeón de Copa (no la posición de Liga). */
+  viaCopa: boolean;
+}
+
+/**
+ * Plaza europea que se muestra en la tabla final. Usa el mismo reparto que el juego
+ * (getLeagueCompetitionSpot) y añade el campeón de Copa: si no estaba ya en Champions o
+ * Europa League por Liga, su plaza de Copa es de Europa League.
+ */
+export function getFinalTableEuropeanSpot(
+  position: number,
+  cupWinnerLeaguePosition: number | null,
+): FinalTableEuropeanSpot | null {
+  const spot = getLeagueCompetitionSpot(position, cupWinnerLeaguePosition);
+
+  if (position === cupWinnerLeaguePosition) {
+    if (spot?.competition === "champions_league" || spot?.competition === "europa_league") {
+      return { ...spot, viaCopa: false };
+    }
+
+    return { competition: "europa_league", reallocated: false, viaCopa: true };
+  }
+
+  return spot ? { ...spot, viaCopa: false } : null;
+}

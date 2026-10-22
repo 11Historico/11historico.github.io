@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.5 — Marcas europeas de la tabla final
+
+- La clasificación final marca las plazas europeas con el mismo reparto que el juego: 5.º Europa League, 6.º Conference, y la reasignación cuando el campeón de Copa ya está en Europa por Liga.
+- Antes, la tabla marcaba siempre al 6.º como Europa League y podía mostrar Conference en el 8.º, contradiciendo al Game Over.
+- La regla vive en una sola función (`getFinalTableEuropeanSpot`), con pruebas unitarias.
+- Versionado a `v0.25.5` / `0.25.5`.
+
 ## v0.25.4 — Prueba de flujo completo
 
 - Partida guardada de prueba generada por `npm run e2e:fixture` (`scripts/buildE2eFixture.ts`), con una plantilla débil para que la temporada termine en Game Over.
