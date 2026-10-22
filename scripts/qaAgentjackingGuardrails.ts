@@ -67,7 +67,7 @@ function walkTextFiles(dir: string, results: string[] = []): string[] {
 
 function testVersionMetadata(): void {
   assert(APP_VERSION === CURRENT_PUBLIC_VERSION, `APP_VERSION debe ser ${CURRENT_PUBLIC_VERSION}, pero es ${APP_VERSION}.`);
-  assert(APP_VERSION_NAME === "Share & Retention Hotfix", `APP_VERSION_NAME inesperado: ${APP_VERSION_NAME}.`);
+  assert(APP_VERSION_NAME === "Stable Public Release", `APP_VERSION_NAME inesperado: ${APP_VERSION_NAME}.`);
   assert(APP_STATUS.includes("Europa Career") && APP_STATUS.includes("clasificación"), "APP_STATUS debe mencionar la base de Europa Career.");
   logOk("appVersion.ts apunta a la fase actual");
 }
