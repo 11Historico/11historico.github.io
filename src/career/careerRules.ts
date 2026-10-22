@@ -1,3 +1,4 @@
+import { getLeagueCompetitionSpot } from "../europe/europeanQualification";
 import type { Formation } from "../types/game";
 import type {
   CareerObjectiveResult,
@@ -23,6 +24,7 @@ export const CAREER_PALMARES_POINTS: CareerTrophyCounts = {
 export function getEuropeanQualification(
   leaguePosition: number,
   wonCopa: boolean,
+  copaWinnerLeaguePosition?: number | null,
 ): EuropeanCompetition {
   if (leaguePosition >= 1 && leaguePosition <= 4) return "champions";
 
@@ -34,15 +36,13 @@ export function getEuropeanQualification(
   // mostraba sin plaza europea.
   if (wonCopa) return "europa_league";
 
-  // Umbrales de posición: deben coincidir con `getLeaguePositionCompetition`
-  // en src/europe/europeanQualification.ts ("Reglas de Liga (fijas): 1º-4º
-  // Champions, 5º-6º Europa League, 7º Conference League"), que es el módulo
-  // que de verdad decide el torneo europeo jugable. Antes 6º daba
-  // "conference" aquí, en vez de "europa_league" como en ese módulo.
-  if (leaguePosition === 5 || leaguePosition === 6) return "europa_league";
-  if (leaguePosition === 7) return "conference";
-
-  return "none";
+  // Mismo reparto que `getLeagueCompetitionSpot` en src/europe/europeanQualification.ts,
+  // que es el módulo que decide el torneo europeo jugable.
+  const spot = getLeagueCompetitionSpot(leaguePosition, copaWinnerLeaguePosition);
+  if (!spot) return "none";
+  if (spot.competition === "champions_league") return "champions";
+  if (spot.competition === "europa_league") return "europa_league";
+  return "conference";
 }
 
 function getCareerObjectiveSuccessReason(result: CareerSeasonResult): string {

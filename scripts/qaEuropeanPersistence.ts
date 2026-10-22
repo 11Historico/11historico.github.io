@@ -17,8 +17,13 @@ function logOk(message: string): void {
   console.log(`✓ ${message}`);
 }
 
-function buildEntry(seasonNumber: number, leaguePosition: number, userWonCopa: boolean): EuropeanSeasonEntry {
-  const result = resolveEuropeanQualification({ leaguePosition, userWonCopa, seasonNumber });
+function buildEntry(
+  seasonNumber: number,
+  leaguePosition: number,
+  userWonCopa: boolean,
+  copaWinnerLeaguePosition?: number | null,
+): EuropeanSeasonEntry {
+  const result = resolveEuropeanQualification({ leaguePosition, userWonCopa, copaWinnerLeaguePosition, seasonNumber });
 
   return {
     seasonNumber,
@@ -55,7 +60,7 @@ function testFourthPositionStoresChampions(): void {
 }
 
 function testSeventhPositionStoresConference(): void {
-  const state = appendEuropeanQualification(createEmptyEuropeanCareerState(), buildEntry(0, 7, false));
+  const state = appendEuropeanQualification(createEmptyEuropeanCareerState(), buildEntry(0, 7, false, 3));
   const latest = getLatestEuropeanQualification(state);
 
   assert(latest?.competition === "conference_league", "7º puesto debe guardar Conference League.");

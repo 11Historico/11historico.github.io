@@ -266,12 +266,20 @@ function createGameId(): string {
 }
 
 
+function getExternalCopaWinnerLeaguePosition(summary: FinalGameSummary): number | null {
+  if (summary.cupTrophyWon || !summary.cupChampionTeamId || !summary.table) return null;
+
+  const index = summary.table.findIndex((row) => row.teamId === summary.cupChampionTeamId);
+  return index >= 0 ? index + 1 : null;
+}
+
 function buildCareerSeasonResult(
   summary: FinalGameSummary,
   seasonLabel = CAREER_INITIAL_SEASON_LABEL,
   wonSupercopa = false,
 ): CareerSeasonResult {
   const wonCopa = Boolean(summary.cupTrophyWon);
+  const copaWinnerLeaguePosition = getExternalCopaWinnerLeaguePosition(summary);
 
   return {
     seasonLabel,
@@ -280,7 +288,8 @@ function buildCareerSeasonResult(
     wonCopa,
     wonSupercopa,
     isRelegated: summary.leaguePosition >= CAREER_RELEGATION_POSITION,
-    europeanQualification: getEuropeanQualification(summary.leaguePosition, wonCopa),
+    europeanQualification: getEuropeanQualification(summary.leaguePosition, wonCopa, copaWinnerLeaguePosition),
+    copaWinnerLeaguePosition,
   };
 }
 
@@ -535,6 +544,7 @@ export default function App() {
     return resolveEuropeanQualification({
       leaguePosition: careerSeasonResult.leaguePosition,
       userWonCopa: careerSeasonResult.wonCopa,
+      copaWinnerLeaguePosition: careerSeasonResult.copaWinnerLeaguePosition,
       seasonNumber: careerCompletedSeasons,
     });
   }, [careerSeasonResult, careerCompletedSeasons]);
@@ -900,6 +910,7 @@ export default function App() {
       const europeanResult = resolveEuropeanQualification({
         leaguePosition: seasonResult.leaguePosition,
         userWonCopa: seasonResult.wonCopa,
+        copaWinnerLeaguePosition: seasonResult.copaWinnerLeaguePosition,
         seasonNumber: careerCompletedSeasons,
       });
       const europeanEntry: EuropeanSeasonEntry = {
