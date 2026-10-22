@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.10 — Estado de la ruleta de temporada
+
+- La conversión del resultado de la ruleta en el estado guardado de la carrera (`buildAcceptedSeasonLuckWheelState`) sale de `LeagueSimulatorView` a `src/career/seasonLuckWheel.ts`, con pruebas unitarias.
+- Sin cambio de comportamiento. `src/App.tsx` no cambia en esta versión.
+- Versionado a `v0.25.10` / `0.25.10`.
+
 ## v0.25.9 — Enlace de reto
 
 - Botón "Copiar enlace de reto" en la pantalla de fin de carrera. El enlace lleva solo puntuación, temporadas, mejor posición y palmarés: sin nick ni fechas.

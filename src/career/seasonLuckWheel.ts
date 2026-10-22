@@ -454,3 +454,26 @@ export function applySeasonLuckWheelRatingDelta(teamRating: TeamRating, ratingDe
       : teamRating.weaknesses,
   };
 }
+
+/** Estado guardado en la carrera cuando el jugador acepta la ruleta y gira. */
+export function buildAcceptedSeasonLuckWheelState(
+  result: SeasonLuckWheelResolvedResult,
+  offeredAt: string,
+): SeasonLuckWheelState {
+  return {
+    seasonId: result.seasonId,
+    used: true,
+    triggerEvent: result.triggerEvent,
+    offeredAt,
+    accepted: true,
+    resultGroup: result.resultGroup,
+    resultType: result.resultType,
+    ratingDelta: result.ratingDelta,
+    precisionPosition: result.precisionPosition,
+    precisionZoneId: result.precisionZone.id,
+    appearanceText: result.appearanceText,
+    resultText: result.resultText,
+    requiresPlayerChange: result.requiresPlayerChange,
+    requiresCoachChange: result.requiresCoachChange,
+  };
+}

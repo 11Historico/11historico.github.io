@@ -21,8 +21,8 @@ const modal = read("src/components/SeasonLuckWheelModal.tsx");
 const packageJson = JSON.parse(read("package.json")) as { scripts?: Record<string, string>; version?: string };
 const version = read("src/config/appVersion.ts");
 
-assertIncludes(version, 'APP_VERSION = "v0.25.9"', "versionado app");
-assertIncludes(packageJson.version ?? "", "0.25.9", "versionado package");
+assertIncludes(version, 'APP_VERSION = "v0.25.10"', "versionado app");
+assertIncludes(packageJson.version ?? "", "0.25.10", "versionado package");
 assertIncludes(packageJson.scripts?.["qa:tech-debt"] ?? "", "qa:luck-wheel-real-rewards", "qa integrada en tech-debt");
 
 assertIncludes(careerTypes, '"luck_wheel_player"', "tipo CareerRewardFlow jugador ruleta");
@@ -32,8 +32,9 @@ assertIncludes(leagueSimulator, "onSeasonLuckWheelPlayerChange", "LeagueSimulato
 assertIncludes(leagueSimulator, "onSeasonLuckWheelCoachChange", "LeagueSimulator callback entrenador");
 assertIncludes(leagueSimulator, "result.requiresPlayerChange", "LeagueSimulator detecta premio jugador");
 assertIncludes(leagueSimulator, "result.requiresCoachChange", "LeagueSimulator detecta premio entrenador");
-assertIncludes(leagueSimulator, "requiresPlayerChange: result.requiresPlayerChange", "LeagueSimulator persiste flag jugador");
-assertIncludes(leagueSimulator, "requiresCoachChange: result.requiresCoachChange", "LeagueSimulator persiste flag entrenador");
+assertIncludes(leagueSimulator, "buildAcceptedSeasonLuckWheelState(", "LeagueSimulator usa el constructor de estado de ruleta");
+assertIncludes(read("src/career/seasonLuckWheel.ts"), "requiresPlayerChange: result.requiresPlayerChange", "El estado de ruleta persiste flag jugador");
+assertIncludes(read("src/career/seasonLuckWheel.ts"), "requiresCoachChange: result.requiresCoachChange", "El estado de ruleta persiste flag entrenador");
 
 assertIncludes(app, "function handleSeasonLuckWheelPlayerChange", "App maneja premio jugador");
 assertIncludes(app, "function handleSeasonLuckWheelCoachChange", "App maneja premio entrenador");
