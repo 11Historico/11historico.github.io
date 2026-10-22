@@ -63,6 +63,8 @@ jobs:
         run: npm run qa:match-sequence
       - name: Run european match sequence QA
         run: npm run qa:european-match-sequence
+      - name: Run match playback speed QA
+        run: npm run qa:match-playback-speed
       - name: Run european trophies palmares QA
         run: npm run qa:european-trophies-palmares
       - name: Run european rewards prestige QA

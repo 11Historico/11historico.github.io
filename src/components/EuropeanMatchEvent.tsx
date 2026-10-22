@@ -25,6 +25,7 @@ import {
   getEuropeanSequenceFrame,
   getEuropeanSequenceScore,
 } from "./europeanMatchSequenceTimeline";
+import { getMatchPlaybackMultiplier, useMatchPlaybackSpeed } from "./matchPlaybackSpeed";
 
 import "./EuropeanMatchEvent.css";
 
@@ -109,11 +110,12 @@ function getKnockoutLossText(match: EuropeanTournamentMatch): string {
 }
 
 function EuropeanMatchSequence({ match }: { match: EuropeanTournamentMatch }) {
-  const durationMs = getEuropeanSequenceDurationMs(match);
+  const playbackMultiplier = getMatchPlaybackMultiplier(useMatchPlaybackSpeed());
+  const durationMs = getEuropeanSequenceDurationMs(match, playbackMultiplier);
   const [elapsedMs, setElapsedMs] = useState(() =>
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? durationMs : 0,
   );
-  const frame = getEuropeanSequenceFrame(match, elapsedMs);
+  const frame = getEuropeanSequenceFrame(match, elapsedMs, playbackMultiplier);
   const isFinal = frame.stage === "final";
   const score = getEuropeanSequenceScore(match, frame.scoreBasis);
   const leftGoals = score ? (match.isHome ? score.userGoals : score.opponentGoals) : null;

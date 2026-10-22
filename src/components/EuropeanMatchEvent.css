@@ -459,3 +459,9 @@
 .european-match-event-card-conference .european-match-sequence-progress span {
   background: #5fe1a0;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .european-match-sequence-progress span {
+    transition: none;
+  }
+}

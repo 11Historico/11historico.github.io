@@ -36,18 +36,18 @@ function hasExtraTime(decidedBy: EuropeanKnockoutDecision | undefined): boolean 
   return decidedBy === "extra_time" || decidedBy === "penalties";
 }
 
-export function getEuropeanSequenceSegments(match: MatchDecision): EuropeanSequenceSegment[] {
+export function getEuropeanSequenceSegments(match: MatchDecision, multiplier = 1): EuropeanSequenceSegment[] {
   const stages: Array<{ stage: EuropeanSequenceStage; durationMs: number }> = [
-    { stage: "preview", durationMs: EUROPEAN_SEQUENCE_PREVIEW_MS },
-    { stage: "regular", durationMs: EUROPEAN_SEQUENCE_REGULAR_MS },
+    { stage: "preview", durationMs: EUROPEAN_SEQUENCE_PREVIEW_MS * multiplier },
+    { stage: "regular", durationMs: EUROPEAN_SEQUENCE_REGULAR_MS * multiplier },
   ];
 
   if (hasExtraTime(match.decidedBy)) {
-    stages.push({ stage: "extra_time", durationMs: EUROPEAN_SEQUENCE_EXTRA_MS });
+    stages.push({ stage: "extra_time", durationMs: EUROPEAN_SEQUENCE_EXTRA_MS * multiplier });
   }
 
   if (match.decidedBy === "penalties") {
-    stages.push({ stage: "penalties", durationMs: EUROPEAN_SEQUENCE_PENALTIES_MS });
+    stages.push({ stage: "penalties", durationMs: EUROPEAN_SEQUENCE_PENALTIES_MS * multiplier });
   }
 
   let startMs = 0;
@@ -58,15 +58,15 @@ export function getEuropeanSequenceSegments(match: MatchDecision): EuropeanSeque
   });
 }
 
-export function getEuropeanSequenceDurationMs(match: MatchDecision): number {
-  const segments = getEuropeanSequenceSegments(match);
+export function getEuropeanSequenceDurationMs(match: MatchDecision, multiplier = 1): number {
+  const segments = getEuropeanSequenceSegments(match, multiplier);
   const last = segments[segments.length - 1];
   return last.startMs + last.durationMs;
 }
 
-export function getEuropeanSequenceFrame(match: MatchDecision, elapsedMs: number): EuropeanSequenceFrame {
-  const segments = getEuropeanSequenceSegments(match);
-  const durationMs = getEuropeanSequenceDurationMs(match);
+export function getEuropeanSequenceFrame(match: MatchDecision, elapsedMs: number, multiplier = 1): EuropeanSequenceFrame {
+  const segments = getEuropeanSequenceSegments(match, multiplier);
+  const durationMs = getEuropeanSequenceDurationMs(match, multiplier);
 
   if (elapsedMs >= durationMs) {
     return { stage: "final", clockLabel: "", scoreBasis: "final" };

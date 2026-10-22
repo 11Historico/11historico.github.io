@@ -73,7 +73,7 @@ function testLeagueSimulatorHookDeps(): void {
   assert(source.includes("const commitContext = useCallback"), "commitContext debe estar memoizado.");
   assert(source.includes("const maybeOfferSeasonLuckWheel = useCallback"), "maybeOfferSeasonLuckWheel debe estar memoizado.");
   assert(source.includes("const finishIfReady = useCallback"), "finishIfReady debe estar memoizado.");
-  assert(source.includes("commitContext, context, effectiveTeamRating, finishIfReady, isAutoSimulating, isSequencePlaying, maybeOfferSeasonLuckWheel, pendingEuropeanMatch, selectedPlayers"), "El efecto de auto-simulación debe declarar dependencias reales.");
+  assert(source.includes("commitContext, context, effectiveTeamRating, finishIfReady, isAutoSimulating, isSequencePlaying, maybeOfferSeasonLuckWheel, pendingEuropeanMatch, playbackMultiplier, selectedPlayers"), "El efecto de auto-simulación debe declarar dependencias reales.");
   assert(!source.includes("setIsAutoSimulating(false);\n      return undefined;"), "El efecto de auto-simulación no debe hacer setState síncrono y salir.");
   logOk("LeagueSimulatorView declara dependencias reales y reduce closures obsoletos");
 }

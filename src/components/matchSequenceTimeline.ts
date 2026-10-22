@@ -21,21 +21,27 @@ export interface MatchSequenceFrame {
   visibleGoals: GoalEvent[];
 }
 
-export function getMatchSequenceFrame(goalEvents: GoalEvent[], elapsedMs: number): MatchSequenceFrame {
-  const sortedGoals = [...goalEvents].sort((a, b) => a.minute - b.minute);
+export function getMatchSequenceDurationMs(multiplier = 1): number {
+  return MATCH_SEQUENCE_DURATION_MS * multiplier;
+}
 
-  if (elapsedMs >= MATCH_SEQUENCE_DURATION_MS) {
+export function getMatchSequenceFrame(goalEvents: GoalEvent[], elapsedMs: number, multiplier = 1): MatchSequenceFrame {
+  const sortedGoals = [...goalEvents].sort((a, b) => a.minute - b.minute);
+  const previewMs = MATCH_SEQUENCE_PREVIEW_MS * multiplier;
+  const playMs = MATCH_SEQUENCE_PLAY_MS * multiplier;
+
+  if (elapsedMs >= previewMs + playMs) {
     return { stage: "final", minute: MATCH_MINUTES, visibleGoals: sortedGoals };
   }
 
-  if (elapsedMs < MATCH_SEQUENCE_PREVIEW_MS) {
+  if (elapsedMs < previewMs) {
     return { stage: "preview", minute: 0, visibleGoals: [] };
   }
 
   // El reloj llega como mínimo a 90' y, si hay descuento, hasta el último gol.
   // Se reparte en lastMinute + 1 tramos para que el último minuto sí se muestre antes del final.
   const lastMinute = Math.max(MATCH_MINUTES, ...sortedGoals.map((goal) => goal.minute));
-  const playProgress = (elapsedMs - MATCH_SEQUENCE_PREVIEW_MS) / MATCH_SEQUENCE_PLAY_MS;
+  const playProgress = (elapsedMs - previewMs) / playMs;
   const minute = Math.min(lastMinute, Math.floor(playProgress * (lastMinute + 1)));
 
   return {
