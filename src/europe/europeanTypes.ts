@@ -69,6 +69,14 @@ export interface EuropeanOpponent {
   tier: EuropeanCompetition;
 }
 
+/** Cómo se decidió una eliminatoria a partido único (semifinal o final). */
+export type EuropeanKnockoutDecision = "regular_time" | "extra_time" | "penalties";
+
+export interface EuropeanPenaltyShootout {
+  userScored: number;
+  opponentScored: number;
+}
+
 export interface EuropeanTournamentMatch {
   id: string;
   seasonNumber: number;
@@ -78,9 +86,16 @@ export interface EuropeanTournamentMatch {
   opponent: EuropeanOpponent;
   isHome: boolean;
   status: EuropeanMatchStatus;
+  /** Marcador final del partido (tras la prórroga si la hubo; sin penaltis). */
   userGoals?: number;
   opponentGoals?: number;
   result?: EuropeanMatchOutcome;
+  /** Solo en semifinal/final: cómo se decidió. Ausente en partidos anteriores a v0.24.9f. */
+  decidedBy?: EuropeanKnockoutDecision;
+  /** Marcador a los 90' cuando hubo prórroga o penaltis. */
+  regularTimeUserGoals?: number;
+  regularTimeOpponentGoals?: number;
+  penaltyShootout?: EuropeanPenaltyShootout;
 }
 
 export interface EuropeanTournamentState {

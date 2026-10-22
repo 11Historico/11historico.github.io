@@ -33,9 +33,10 @@ function getMatchScore(match: EuropeanTournamentMatch): string {
 
 function getMatchOutcomeLabel(match: EuropeanTournamentMatch): string {
   if (match.status !== "played") return "Por jugar";
-  if (match.result === "win") return "Victoria";
+  const suffix = match.decidedBy === "extra_time" ? " (prórroga)" : match.decidedBy === "penalties" && match.penaltyShootout ? ` (p. ${match.penaltyShootout.userScored}-${match.penaltyShootout.opponentScored})` : "";
+  if (match.result === "win") return `Victoria${suffix}`;
   if (match.result === "draw") return "Empate";
-  return "Derrota";
+  return `Derrota${suffix}`;
 }
 
 function getMatchClass(match: EuropeanTournamentMatch, currentMatchId?: string | null): string {

@@ -9,6 +9,8 @@
 
 import { getEuropeanCompetitionLabel } from "../europe/europeanQualification";
 import {
+  EUROPEAN_KNOCKOUT_TIE_RULE_TEXT,
+  getEuropeanMatchDecisionText,
   getEuropeanTournamentPhaseLabel,
   getEuropeanTournamentSummary,
   isEuropeanKnockoutPhase,
@@ -134,6 +136,7 @@ export function EuropeanMatchEvent({
           <span>Partido único</span>
           <strong>{summary.knockoutStageText}</strong>
           <p>{summary.stakesText}</p>
+          <p>{EUROPEAN_KNOCKOUT_TIE_RULE_TEXT}</p>
           <div className="european-match-event-knockout-outcomes">
             <small>{getKnockoutWinText(match)}</small>
             <small>{getKnockoutLossText(match)}</small>
@@ -166,6 +169,7 @@ export function EuropeanMatchEvent({
             </strong>
             <span>{getResultLabel(match)}</span>
           </div>
+          {getEuropeanMatchDecisionText(match) && <small>{getEuropeanMatchDecisionText(match)}</small>}
         </div>
       )}
 
