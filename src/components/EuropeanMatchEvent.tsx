@@ -7,6 +7,8 @@
 // los títulos europeos sí se suman al palmarés, al cerrar la temporada
 // (ver src/career/europeanTrophies.ts).
 
+import { useEffect, useState } from "react";
+
 import { getEuropeanCompetitionLabel } from "../europe/europeanQualification";
 import {
   EUROPEAN_KNOCKOUT_TIE_RULE_TEXT,
@@ -17,6 +19,12 @@ import {
 } from "../europe/europeanTournament";
 import type { EuropeanCompetition, EuropeanTournamentMatch, EuropeanTournamentState } from "../europe/europeanTypes";
 import EuropeanProgressPanel from "./EuropeanProgressPanel";
+import {
+  EUROPEAN_SEQUENCE_TICK_MS,
+  getEuropeanSequenceDurationMs,
+  getEuropeanSequenceFrame,
+  getEuropeanSequenceScore,
+} from "./europeanMatchSequenceTimeline";
 
 import "./EuropeanMatchEvent.css";
 
@@ -100,6 +108,79 @@ function getKnockoutLossText(match: EuropeanTournamentMatch): string {
   return "Derrota: sin puntos en fase inicial";
 }
 
+function EuropeanMatchSequence({ match }: { match: EuropeanTournamentMatch }) {
+  const durationMs = getEuropeanSequenceDurationMs(match);
+  const [elapsedMs, setElapsedMs] = useState(() =>
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? durationMs : 0,
+  );
+  const frame = getEuropeanSequenceFrame(match, elapsedMs);
+  const isFinal = frame.stage === "final";
+  const score = getEuropeanSequenceScore(match, frame.scoreBasis);
+  const leftGoals = score ? (match.isHome ? score.userGoals : score.opponentGoals) : null;
+  const rightGoals = score ? (match.isHome ? score.opponentGoals : score.userGoals) : null;
+
+  useEffect(() => {
+    if (isFinal) return undefined;
+
+    const intervalId = window.setInterval(() => {
+      setElapsedMs((current) => Math.min(durationMs, current + EUROPEAN_SEQUENCE_TICK_MS));
+    }, EUROPEAN_SEQUENCE_TICK_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [durationMs, isFinal]);
+
+  const progressPercent = Math.min(100, (elapsedMs / durationMs) * 100);
+  const liveText = frame.stage === "preview"
+    ? "Previa europea"
+    : frame.stage === "extra_time"
+      ? "Prórroga: 2×15 min"
+      : frame.stage === "penalties"
+        ? "Tanda de penaltis en curso"
+        : "Partido en juego";
+
+  return (
+    <div className={`european-match-sequence european-match-sequence-${frame.stage}`}>
+      {isFinal ? (
+        <>
+          <span className="european-match-event-result-label">Resultado europeo</span>
+          <div className={getResultClass(match)}>
+            <strong>
+              {leftGoals}
+              {" - "}
+              {rightGoals}
+            </strong>
+            <span>{getResultLabel(match)}</span>
+          </div>
+          {getEuropeanMatchDecisionText(match) && <small>{getEuropeanMatchDecisionText(match)}</small>}
+        </>
+      ) : (
+        <>
+          <div className="european-match-sequence-top">
+            <span className="european-match-sequence-clock">{frame.clockLabel}</span>
+            <span className="european-match-sequence-live">{liveText}</span>
+          </div>
+          <div className="european-match-sequence-live-score" aria-live="polite">
+            <strong>{leftGoals ?? "–"}</strong>
+            <span>-</span>
+            <strong>{rightGoals ?? "–"}</strong>
+          </div>
+          <button
+            type="button"
+            className="secondary-league-button european-match-sequence-skip"
+            onClick={() => setElapsedMs(durationMs)}
+          >
+            Saltar
+          </button>
+        </>
+      )}
+
+      <div className="european-match-sequence-progress" aria-hidden="true">
+        <span style={{ width: `${progressPercent}%` }} />
+      </div>
+    </div>
+  );
+}
+
 export function EuropeanMatchEvent({
   tournament,
   match,
@@ -160,16 +241,7 @@ export function EuropeanMatchEvent({
 
       {isPlayed && (
         <div className="european-match-event-result">
-          <span className="european-match-event-result-label">Resultado europeo</span>
-          <div className={getResultClass(match)}>
-            <strong>
-              {match.isHome ? match.userGoals : match.opponentGoals}
-              {" - "}
-              {match.isHome ? match.opponentGoals : match.userGoals}
-            </strong>
-            <span>{getResultLabel(match)}</span>
-          </div>
-          {getEuropeanMatchDecisionText(match) && <small>{getEuropeanMatchDecisionText(match)}</small>}
+          <EuropeanMatchSequence key={match.id} match={match} />
         </div>
       )}
 
