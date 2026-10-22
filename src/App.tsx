@@ -48,6 +48,8 @@ import { DEFAULT_EASY_MODE_SEASON_RANGE_ID } from "./data/easyModeSeasonRanges";
 import { createRandomPlayerRoundSeasons, getDraftSeasonPool, pickRandomSeason } from "./app/draftSeasons";
 import { TOTAL_PLAYER_ROUNDS, sanitizeSelectedPlayers, validateSelectedTeam } from "./app/teamValidation";
 import GameHome from "./components/GameHome";
+import ChallengeBanner from "./components/ChallengeBanner";
+import { CHALLENGE_QUERY_PARAM, parseChallenge, type ChallengeSummary } from "./career/challengeLink";
 import PhaseProgress from "./components/PhaseProgress";
 import FormationSelector from "./components/FormationSelector";
 import SeasonReveal from "./components/SeasonReveal";
@@ -233,9 +235,16 @@ function buildCareerSeasonResult(
 
 
 
+function readChallengeFromUrl(): string | null {
+  if (typeof window === "undefined") return null;
+
+  return new URLSearchParams(window.location.search).get(CHALLENGE_QUERY_PARAM);
+}
+
 export default function App() {
   const savedGame = useMemo(() => loadGameState(), []);
   const [screen, setScreen] = useState<AppScreen>("home");
+  const [challenge, setChallenge] = useState<ChallengeSummary | null>(() => parseChallenge(readChallengeFromUrl()));
   const [isCareerMode, setIsCareerMode] = useState<boolean>(() => savedGame?.isCareerMode ?? false);
   const [careerSeasonResult, setCareerSeasonResult] = useState<CareerSeasonResult | undefined>(() => savedGame?.careerSeasonResult);
   const [careerObjectiveResult, setCareerObjectiveResult] = useState<CareerObjectiveResult | undefined>(() => savedGame?.careerObjectiveResult);
@@ -1318,6 +1327,14 @@ export default function App() {
     setCareerLocalRanking([]);
   }
 
+  function handleDismissChallenge() {
+    setChallenge(null);
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete(CHALLENGE_QUERY_PARAM);
+    window.history.replaceState(null, "", url.toString());
+  }
+
   function handleCopyShareText(shareText: string) {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       void navigator.clipboard.writeText(shareText);
@@ -1406,7 +1423,9 @@ export default function App() {
       )}
 
       {screen === "home" && (
-        <GameHome
+        <>
+          {challenge && <ChallengeBanner challenge={challenge} onDismiss={handleDismissChallenge} />}
+          <GameHome
           hasSavedGame={hasSavedGameState()}
           difficulty={difficulty}
           onDifficultyChange={setDifficulty}
@@ -1417,7 +1436,8 @@ export default function App() {
           onCareerPreview={handleOpenCareerPreview}
           onViewLocalRanking={handleOpenLocalRanking}
           onViewGlobalRanking={handleOpenGlobalRanking}
-        />
+          />
+        </>
       )}
 
       {screen === "career_preview" && (
