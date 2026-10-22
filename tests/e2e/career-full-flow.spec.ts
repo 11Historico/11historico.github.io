@@ -81,5 +81,7 @@ Texto: ${text}`);
   const body = await page.locator("body").innerText();
   // El Game Over puede deberse a objetivo fallido o a descenso: la pantalla debe decir cuál.
   expect(body, "La pantalla de Game Over debe explicar el motivo").toMatch(/Objetivo fallido|Descenso/);
+  // La tarjeta europea explica por qué no hay plaza, con la posición del equipo.
+  await expect(page.locator(".european-qualification-narrative")).toContainText(/Quedaste \d+\.º/);
   expect(pageErrors).toEqual([]);
 });

@@ -39,7 +39,7 @@ function getNarrative(result: EuropeanQualificationResult): string {
   if (result.competition === "conference_league") {
     return "El Athletic jugará la Conference League la próxima temporada.";
   }
-  return "El Athletic no se ha clasificado para competición europea esta temporada.";
+  return result.explanation || "El Athletic no se ha clasificado para competición europea esta temporada.";
 }
 
 export function EuropeanQualificationCard({ result }: EuropeanQualificationCardProps) {

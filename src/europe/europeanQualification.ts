@@ -104,6 +104,29 @@ export function getLeagueCompetitionSpot(
   return null;
 }
 
+/** Explica por qué un Athletic sin plaza europea se queda fuera, según el reparto y el campeón de Copa. */
+export function getNoEuropeanQualificationExplanation(
+  leaguePosition: number,
+  copaWinnerLeaguePosition?: number | null,
+): string {
+  const winner = copaWinnerLeaguePosition ?? null;
+  const cupRule = "Para entrar necesitabas quedar entre los 7 primeros";
+
+  if (winner !== null && winner >= 1 && winner <= 5) {
+    return `Quedaste ${leaguePosition}.º. El campeón de Copa ya estaba en Europa por Liga, así que su plaza de Copa pasó al 6.º (Europa League) y la Conference al 7.º. ${cupRule}.`;
+  }
+
+  if (winner === 6) {
+    return `Quedaste ${leaguePosition}.º. El campeón de Copa, 6.º en Liga, conserva su plaza de Copa y la Conference pasó al 7.º. ${cupRule}.`;
+  }
+
+  if (winner !== null) {
+    return `Quedaste ${leaguePosition}.º. El campeón de Copa no estaba en Europa por Liga, así que su plaza de Copa fue para él. Europa por Liga: 1.º-4.º Champions, 5.º Europa League y 6.º Conference. Para entrar necesitabas quedar entre los 6 primeros.`;
+  }
+
+  return `Quedaste ${leaguePosition}.º. Europa por Liga: 1.º-4.º Champions, 5.º Europa League y 6.º Conference.`;
+}
+
 export function resolveEuropeanQualification(
   input: ResolveEuropeanQualificationInput,
 ): EuropeanQualificationResult {
@@ -151,7 +174,7 @@ export function resolveEuropeanQualification(
     source: "none",
     label: "Sin clasificación europea",
     shortLabel: "Sin Europa",
-    explanation: "El Athletic no se ha clasificado para competición europea esta temporada.",
+    explanation: getNoEuropeanQualificationExplanation(leaguePosition, copaWinnerLeaguePosition),
     priority: NO_QUALIFICATION_PRIORITY,
   };
 }

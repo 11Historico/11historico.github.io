@@ -60,7 +60,7 @@ function testPackageLockMatchesPackageJson(): void {
 }
 
 function testAppVersionMetadata(): void {
-  assert(APP_VERSION === "v0.25.5", `APP_VERSION debe ser v0.25.5, pero es ${APP_VERSION}`);
+  assert(APP_VERSION === "v0.25.6", `APP_VERSION debe ser v0.25.6, pero es ${APP_VERSION}`);
   assert(APP_VERSION_NAME.trim().length > 0, "APP_VERSION_NAME no puede estar vacío.");
   assert(APP_STATUS.trim().length > 0, "APP_STATUS no puede estar vacío.");
   assertNoMojibake("APP_VERSION_NAME", APP_VERSION_NAME);
