@@ -1,6 +1,7 @@
 import type { Formation, SelectedCoach, SelectedPlayer } from "../types/game";
 import type { CareerObjectiveResult, CareerPromotionTransition, CareerSeasonResult, CareerSupercopaQualification, CareerTrophyCounts } from "../types/career";
 import { calculatePalmaresScore, canUnlockCareerFormationChange, getCareerFormationChangeUnlockReason } from "../career/careerRules";
+import { getEuropeanTrophyBreakdown } from "../career/careerRanking";
 import type { EuropeanPrestigeReward } from "../career/europeanPrestige";
 
 import "./CareerInterseasonReward.css";
@@ -169,7 +170,7 @@ export function CareerInterseasonReward({
           <article>
             <span>Palmarés</span>
             <strong>{palmaresScore} pts</strong>
-            <small>Ligas {trophyCounts.liga} · Copas {trophyCounts.copa} · Supercopas {trophyCounts.supercopa}</small>
+            <small>Ligas {trophyCounts.liga} · Copas {trophyCounts.copa} · Supercopas {trophyCounts.supercopa} · Europa {getEuropeanTrophyBreakdown(trophyCounts).total}</small>
           </article>
         </div>
 
