@@ -67,6 +67,8 @@ jobs:
         run: npm run qa:match-playback-speed
       - name: Run bundle chunking QA
         run: npm run qa:bundle-chunking
+      - name: Run P1 low-cost QA
+        run: npm run qa:p1-low-cost
       - name: Run european trophies palmares QA
         run: npm run qa:european-trophies-palmares
       - name: Run european rewards prestige QA

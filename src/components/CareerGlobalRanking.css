@@ -181,3 +181,13 @@
     text-align: right;
   }
 }
+
+.career-global-ranking-privacy {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: 0.82rem;
+}
+
+.career-global-ranking-privacy a {
+  color: #ffe08a;
+}

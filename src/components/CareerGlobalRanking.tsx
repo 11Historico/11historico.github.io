@@ -143,6 +143,10 @@ export function CareerGlobalRanking({ onNewCareer, onViewLocalRanking, onBack }:
             Volver
           </button>
         </div>
+
+        <p className="career-global-ranking-privacy">
+          <a href="privacidad.html">Política de privacidad del ranking global</a>
+        </p>
       </section>
     </main>
   );
