@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 import {
   SEASON_LUCK_WHEEL_PRECISION_ZONES,
@@ -123,6 +123,13 @@ export default function SeasonLuckWheelModal({
   onResolve,
 }: SeasonLuckWheelModalProps) {
   const [stage, setStage] = useState<"offer" | "playing" | "resolved">("offer");
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // El foco va al diálogo en cada etapa (no al botón de parar): así una pulsación de Enter
+  // no detiene la flecha sin querer. Tab recorre los botones del diálogo.
+  useEffect(() => {
+    dialogRef.current?.focus();
+  }, [stage]);
   const [position, setPosition] = useState(0.5);
   const [result, setResult] = useState<SeasonLuckWheelResolvedResult | undefined>();
   const directionRef = useRef(1);
@@ -240,7 +247,28 @@ export default function SeasonLuckWheelModal({
   }
 
   return (
-    <div className="season-wheel-overlay" role="dialog" aria-modal="true" aria-labelledby="season-wheel-title">
+    <div
+      className="season-wheel-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="season-wheel-title"
+      tabIndex={-1}
+      ref={dialogRef}
+      onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+        if (event.key !== "Tab") return;
+        const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"));
+        const first = buttons[0];
+        const last = buttons[buttons.length - 1];
+        if (!first || !last) return;
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }}
+    >
       <section className="season-wheel-modal">
         <div className="season-wheel-header">
           <span className="season-wheel-eyebrow">Ruleta de la temporada</span>

@@ -60,8 +60,8 @@ export function PhaseProgress({ phase, playerProgress }: PhaseProgressProps) {
 
   return (
     <nav className="phase-progress" aria-label="Progreso de la partida">
+      <span className="phase-version-pill">{APP_VERSION}</span>
       <div className="phase-progress-inner">
-        <span className="phase-version-pill">{APP_VERSION}</span>
         {PHASES.map((item, index) => {
           const isActive = index === activeIndex;
           const isDone = index < activeIndex;

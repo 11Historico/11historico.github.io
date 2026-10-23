@@ -10,7 +10,6 @@ const ADVANCE_BUTTONS = [
   /^Saltar$/,
   /^Continuar$/,
   /^Continuar temporada$/,
-  /^Continuar carrera$/,
   /^No jugar$/,
   /^Simular partido de Copa$/,
   /^Simular Copa y terminar temporada$/,
@@ -51,7 +50,9 @@ test("una temporada superada ofrece el reto con la marca actual", async ({ page 
   await page.reload();
   await page.getByRole("button", { name: "Continuar" }).click();
 
-  const survived = page.getByRole("heading", { name: "Temporada superada" });
+  // Exacto: el encabezado de decisiones entre temporadas empieza igual y no muestra el reto.
+  // No se pulsa "Continuar carrera": desde la pantalla de resultado llevaría a la de decisiones.
+  const survived = page.getByRole("heading", { name: "Temporada superada", exact: true });
   let stalls = 0;
 
   for (let step = 0; step < 400; step += 1) {
