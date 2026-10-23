@@ -56,6 +56,16 @@ export function isAnalyticsEnabled(): boolean {
   return ANALYTICS_HOST.length > 0;
 }
 
+/**
+ * Carga el script al arrancar: GoatCounter cuenta la visita de la página en cuanto se carga.
+ * Sin VITE_ANALYTICS_HOST no hace nada.
+ */
+export function initAnalytics(): void {
+  if (!isAnalyticsEnabled() || typeof window === "undefined") return;
+
+  loadScript();
+}
+
 export function trackEvent(event: AnalyticsEvent): void {
   if (!isAnalyticsEnabled() || typeof window === "undefined") return;
 
