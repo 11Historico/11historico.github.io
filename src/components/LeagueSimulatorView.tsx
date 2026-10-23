@@ -790,7 +790,7 @@ export function LeagueSimulatorView({
           <p className="eyebrow">LaLiga 25/26 + Copa del Rey</p>
           <h1>Simulación de temporada</h1>
           <p>
-            Partida rápida: simula Liga y Copa con ritmo partido a partido. Puedes dejar correr
+            {isCareerMode ? "Carrera" : "Partida rápida"}: simula Liga y Copa con ritmo partido a partido. Puedes dejar correr
             la simulación automática o saltar hasta el próximo evento.
           </p>
         </div>
