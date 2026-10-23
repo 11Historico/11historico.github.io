@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.25 — Versión en una sola fuente
+
+- `APP_VERSION` se deriva de `package.json` (`src/config/appVersion.ts`). Ya no hay que escribirla a mano.
+- Los QA de versión comparan con `package.json` en vez de un literal. Se mantiene la comprobación de formato semver.
+- Para subir de versión: `npm version <x.y.z> --no-git-tag-version` (actualiza `package.json` y `package-lock.json`), y después README, CHANGELOG, documento de fase y `CURRENT_RELEASE_DOC`.
+- Versionado a `v0.25.25` / `0.25.25`.
+
 ## v0.25.24 — QA de CI en una sola compilación
 
 - El workflow de despliegue ejecuta los 29 QA en un único paso (`npm run qa:ci`, script `scripts/runQaSuite.mjs`) en vez de 29 pasos, cada uno con su compilación. Local: de unos 38 s a 1 s; las 166 comprobaciones son idénticas.
