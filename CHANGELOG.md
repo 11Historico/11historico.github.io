@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.25.17 — Portada reordenada
+
+- Los botones de la portada se agrupan en tres bloques: empezar (Jugar carrera, Partida rápida, Continuar), explorar (Cómo funciona, Ver ranking, Ranking local) y compartir.
+- "Continuar" solo aparece si hay una partida guardada.
+- La dificultad se mueve encima de "Jugar carrera".
+- El objetivo de la carrera aparece en la cabecera.
+- Fondo con marcas de campo, iconos de competición en las tarjetas de la portada e iconos en los botones.
+- Versionado a `v0.25.17` / `0.25.17`.
+
 ## v0.25.16 — Visitas contadas desde la portada
 
 - La analítica se inicializa al arrancar la aplicación, para que cada visita a la portada cuente como página vista. Antes, el script solo se cargaba con el primer evento.
