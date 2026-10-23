@@ -1,3 +1,7 @@
+.season-wheel-overlay:focus {
+  outline: none;
+}
+
 .season-wheel-overlay {
   position: fixed;
   inset: 0;

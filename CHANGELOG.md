@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.27 — Barra de fases y foco en la ruleta
+
+- La barra de fases ya no mete la versión dentro de la cuadrícula: en escritorio las seis fases quedan en una fila, sin que "Resultado" baje a otra línea.
+- En móvil, el borde derecho de la barra se desvanece para indicar que hay más pasos.
+- La ruleta de temporada recibe el foco al abrirse y cambia de etapa; Tab se queda dentro del diálogo. No se enfoca "Parar flecha", para que Enter no detenga la flecha sin querer.
+- Prueba e2e de temporada superada: se espera el encabezado exacto y no se pulsa "Continuar carrera" desde la pantalla de resultado (carrera de la prueba inestable).
+- Versionado a `v0.25.27` / `0.25.27`.
+
 ## v0.25.26 — Carga diferida de pantallas
 
 - Las pantallas que no se ven al abrir el juego (liga, resumen final, carrera, rankings y pickers) se cargan con `React.lazy` y `Suspense`.
