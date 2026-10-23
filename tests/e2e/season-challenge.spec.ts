@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { seedRandomness } from "./seedRandomness";
 import { expect, test, type Page } from "@playwright/test";
 
 // Partida guardada con equipo fuerte (npm run e2e:fixture): la temporada se supera.
@@ -44,6 +45,7 @@ test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test("una temporada superada ofrece el reto con la marca actual", async ({ page }) => {
   test.setTimeout(240_000);
 
+  await seedRandomness(page, 2);
   await page.goto("/");
   await page.evaluate(([key, value]) => window.localStorage.setItem(key, value), [SAVE_KEY, fixture]);
   await page.reload();
