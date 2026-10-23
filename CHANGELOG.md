@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.13 — Base de analítica sin cookies (desactivada)
+
+- Módulo `src/services/analytics.ts` con dos eventos: `career_start` y `game_over`. Sin `VITE_ANALYTICS_HOST` en la compilación, no carga ningún script ni envía nada.
+- Contacto para peticiones de borrado en la nota de privacidad: ikeritu@hotmail.com.
+- La nota de privacidad sigue diciendo que no hay analítica, que es cierto mientras no se active.
+- Versionado a `v0.25.13` / `0.25.13`.
+
 ## v0.25.12 — Enlace de reto tras una temporada superada
 
 - Al superar una temporada, el resumen ofrece "Reta a otros jugadores" con la marca actual (puntuación y temporadas) y un botón para copiar el enlace de reto.
