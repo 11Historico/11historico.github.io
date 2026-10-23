@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.14 — Analítica sin cookies: activación (pendiente de confirmar)
+
+- Activación de GoatCounter para dos eventos: inicio de carrera y Game Over. Requiere definir `VITE_ANALYTICS_HOST` en GitHub.
+- La nota de privacidad describe la medición de uso y el proveedor. Queda un hueco marcado `[REVISAR]` hasta confirmar su política; el QA impide publicarla con ese hueco.
+- Versionado a `v0.25.14` / `0.25.14`.
+
 ## v0.25.13 — Base de analítica sin cookies (desactivada)
 
 - Módulo `src/services/analytics.ts` con dos eventos: `career_start` y `game_over`. Sin `VITE_ANALYTICS_HOST` en la compilación, no carga ningún script ni envía nada.
