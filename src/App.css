@@ -200,6 +200,13 @@ button:not(:disabled):hover {
   font-size: clamp(2rem, 5vw, 4.2rem);
   line-height: 0.95;
   letter-spacing: -0.05em;
+  text-wrap: balance;
+}
+
+.career-preview-screen button:focus-visible,
+.career-preview-screen a:focus-visible {
+  outline: 3px solid #ffe08a;
+  outline-offset: 3px;
 }
 
 .career-preview-card p {

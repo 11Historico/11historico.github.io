@@ -1451,7 +1451,7 @@ export default function App() {
             <p className="eyebrow">Modo carrera Athletic</p>
             <h1>Sobrevive temporada a temporada</h1>
             <p>
-              Empiezas en 2025/26 con tu once histórico. Cada temporada tienes que cumplir el objetivo para seguir en carrera.
+              Empiezas en {CAREER_INITIAL_SEASON_LABEL} con tu once histórico. Cada temporada tienes que cumplir el objetivo para seguir en carrera.
             </p>
             <p className="career-preview-difficulty">
               Dificultad: <strong>{DIFFICULTY_OPTIONS.find((option) => option.id === difficulty)?.label ?? "Normal"}</strong>
@@ -1495,8 +1495,16 @@ export default function App() {
             </div>
 
             <div className="career-preview-actions">
-              <button type="button" className="primary-home-button" onClick={handleStartCareer}>
-                Empezar carrera 2025/26
+              <button
+                type="button"
+                className="primary-home-button"
+                onClick={() => {
+                  if (!hasSavedGameState() || window.confirm("Ya tienes una partida guardada. Si empiezas una carrera nueva, se borrará. ¿Quieres continuar?")) {
+                    handleStartCareer();
+                  }
+                }}
+              >
+                Empezar carrera {CAREER_INITIAL_SEASON_LABEL}
               </button>
               <button type="button" className="secondary-home-button" onClick={handleOpenLocalRanking}>
                 Ver ranking local
