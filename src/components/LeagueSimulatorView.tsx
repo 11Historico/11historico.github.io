@@ -31,6 +31,7 @@ import {
   USER_TEAM_NAME,
 } from "../simulation/leagueTable";
 import { applyDifficultyToTeamRating } from "../career/teamPower";
+import { applyCareerRivalProgression } from "../career/careerRules";
 import {
   applySeasonLuckWheelRatingDelta,
   buildAcceptedSeasonLuckWheelState,
@@ -70,6 +71,7 @@ interface LeagueSimulatorViewProps {
   teamRating: TeamRating;
   isCareerMode?: boolean;
   leagueRivals?: RivalTeam[];
+  careerCompletedSeasons?: number;
   initialContext?: UserLeagueSimulationContext;
   onContextChange?: (context: UserLeagueSimulationContext) => void;
   onSeasonLuckWheelPlayerChange?: (context: UserLeagueSimulationContext) => void;
@@ -352,6 +354,7 @@ export function LeagueSimulatorView({
   teamRating,
   isCareerMode = false,
   leagueRivals,
+  careerCompletedSeasons = 0,
   initialContext,
   onContextChange,
   onSeasonLuckWheelPlayerChange,
@@ -363,7 +366,7 @@ export function LeagueSimulatorView({
   onPendingSeasonLuckWheelOfferChange,
 }: LeagueSimulatorViewProps) {
   const [context, setContext] = useState<UserLeagueSimulationContext>(
-    () => normalizeLeagueContext(initialContext, selectedCoach, leagueRivals)
+    () => normalizeLeagueContext(initialContext, selectedCoach, leagueRivals && applyCareerRivalProgression(leagueRivals, careerCompletedSeasons))
   );
 
   const [lastResult, setLastResult] = useState<MatchResult | undefined>(undefined);

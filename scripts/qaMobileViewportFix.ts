@@ -14,7 +14,7 @@ type PackageLockJson = {
 
 const ROOT = process.cwd();
 const CURRENT_PUBLIC_VERSION = APP_VERSION;
-const CURRENT_PACKAGE_VERSION = "0.25.21";
+const CURRENT_PACKAGE_VERSION = "0.25.22";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
