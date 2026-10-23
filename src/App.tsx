@@ -48,6 +48,8 @@ import { DEFAULT_EASY_MODE_SEASON_RANGE_ID } from "./data/easyModeSeasonRanges";
 import { createRandomPlayerRoundSeasons, getDraftSeasonPool, pickRandomSeason } from "./app/draftSeasons";
 import { TOTAL_PLAYER_ROUNDS, sanitizeSelectedPlayers, validateSelectedTeam } from "./app/teamValidation";
 import GameHome from "./components/GameHome";
+import { DIFFICULTY_OPTIONS } from "./config/difficultyOptions";
+import CompetitionIcon from "./components/CompetitionIcon";
 import ChallengeBanner from "./components/ChallengeBanner";
 import { trackEvent } from "./services/analytics";
 import { CHALLENGE_QUERY_PARAM, parseChallenge, type ChallengeSummary } from "./career/challengeLink";
@@ -1449,37 +1451,65 @@ export default function App() {
             <p className="eyebrow">Modo carrera Athletic</p>
             <h1>Sobrevive temporada a temporada</h1>
             <p>
-              Base preparada para el futuro modo carrera: empieza en 2025/26,
-              clasifica a Europa o gana la Copa, y evita el descenso para seguir vivo.
+              Empiezas en {CAREER_INITIAL_SEASON_LABEL} con tu once histórico. Cada temporada tienes que cumplir el objetivo para seguir en carrera.
+            </p>
+            <p className="career-preview-difficulty">
+              Dificultad: <strong>{DIFFICULTY_OPTIONS.find((option) => option.id === difficulty)?.label ?? "Normal"}</strong>
+              <button type="button" className="career-preview-link" onClick={() => setScreen("home")}>
+                Cambiar
+              </button>
             </p>
 
             <div className="career-preview-grid">
               <article>
+                <div className="career-preview-icons" aria-hidden="true">
+                  <CompetitionIcon kind="copa" />
+                  <CompetitionIcon kind="europa" />
+                </div>
                 <strong>Objetivo</strong>
                 <span>Clasifícate para Europa o gana la Copa del Rey. Si no, Game Over.</span>
               </article>
               <article>
+                <div className="career-preview-icons" aria-hidden="true">
+                  <CompetitionIcon kind="supercopa" />
+                  <CompetitionIcon kind="europa" />
+                </div>
                 <strong>Entre temporadas</strong>
                 <span>Cambiar un jugador o cambiar entrenador. Si ganas título o Supercopa + Europa, podrás ajustar formación compatible.</span>
               </article>
               <article>
+                <div className="career-preview-icons" aria-hidden="true">
+                  <CompetitionIcon kind="liga" />
+                  <CompetitionIcon kind="copa" />
+                </div>
                 <strong>Progresión</strong>
                 <span>Los rivales subirán poco a poco y la Copa será cada año más exigente.</span>
               </article>
               <article>
-                <strong>Ranking arcade</strong>
-                <span>Top 100 global futuro por temporadas superadas y puntos de palmarés.</span>
+                <div className="career-preview-icons" aria-hidden="true">
+                  <CompetitionIcon kind="champions" />
+                </div>
+                <strong>Ranking</strong>
+                <span>Ranking local y global: ordena por temporadas superadas y puntos de palmarés.</span>
               </article>
             </div>
 
             <div className="career-preview-actions">
-              <button type="button" className="primary-home-button" onClick={handleStartCareer}>
-                Empezar carrera 2025/26
+              <button
+                type="button"
+                className="primary-home-button"
+                onClick={() => {
+                  if (!hasSavedGameState() || window.confirm("Ya tienes una partida guardada. Si empiezas una carrera nueva, se borrará. ¿Quieres continuar?")) {
+                    handleStartCareer();
+                  }
+                }}
+              >
+                Empezar carrera {CAREER_INITIAL_SEASON_LABEL}
               </button>
-              <button type="button" className="career-home-button" onClick={handleOpenLocalRanking}>
+              <button type="button" className="secondary-home-button" onClick={handleOpenLocalRanking}>
                 Ver ranking local
               </button>
-              <button type="button" className="secondary-home-button" onClick={() => setScreen("home")}>
+              <button type="button" className="career-preview-link career-preview-back" onClick={() => setScreen("home")}>
                 Volver
               </button>
             </div>

@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.25.20 — Pantalla de entrada a la carrera: seguridad y accesibilidad
+
+- "Empezar carrera" pide confirmación si hay una partida guardada, porque la borra al empezar.
+- La temporada inicial sale de `CAREER_INITIAL_SEASON_LABEL`, no de texto fijo.
+- El título se reparte mejor en líneas (`text-wrap: balance`).
+- Foco de teclado visible en los botones de la pantalla de carrera.
+- Versionado a `v0.25.20` / `0.25.20`.
+
+## v0.25.19 — Pantalla de entrada a la carrera
+
+- Texto revisado: se quita "futuro modo carrera" y "Top 100 global futuro", porque el modo ya existe.
+- Muestra la dificultad elegida en la portada, con un enlace "Cambiar".
+- "Ver ranking local" recupera su estilo de botón; "Volver" pasa a enlace discreto.
+- Iconos de competición en las tarjetas y título más pequeño en móvil.
+- Versionado a `v0.25.19` / `0.25.19`.
+
 ## v0.25.18 — Fondo de estadio en la portada
 
 - La portada usa una ilustración vectorial original de un estadio (`src/assets/home-stadium.svg`) como fondo, con un velo oscuro para mantener el texto legible. No reproduce ningún estadio real.
