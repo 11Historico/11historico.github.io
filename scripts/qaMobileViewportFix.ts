@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { APP_STATUS, APP_VERSION, APP_VERSION_NAME, CURRENT_RELEASE_DOC, CURRENT_RELEASE_TAG } from "../src/config/appVersion";
+import pkgMeta from "../package.json";
 
 type PackageJson = {
   version?: string;
@@ -14,7 +15,7 @@ type PackageLockJson = {
 
 const ROOT = process.cwd();
 const CURRENT_PUBLIC_VERSION = APP_VERSION;
-const CURRENT_PACKAGE_VERSION = "0.25.24";
+const CURRENT_PACKAGE_VERSION = pkgMeta.version;
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
