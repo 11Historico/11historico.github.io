@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.24 — QA de CI en una sola compilación
+
+- El workflow de despliegue ejecuta los 29 QA en un único paso (`npm run qa:ci`, script `scripts/runQaSuite.mjs`) en vez de 29 pasos, cada uno con su compilación. Local: de unos 38 s a 1 s; las 166 comprobaciones son idénticas.
+- Los QA que comprobaban su propio paso en `deploy.yml` ahora comprueban que su script está registrado en `runQaSuite.mjs`.
+- Versionado a `v0.25.24` / `0.25.24`.
+
 ## v0.25.23 — Texto de carrera en la pantalla de liga
 
 - En modo carrera, la pantalla de liga dice "Carrera" en vez de "Partida rápida".

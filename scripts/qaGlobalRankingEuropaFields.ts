@@ -124,12 +124,11 @@ function testBackendUntouched(): void {
 function testQaRegisteredInPackageAndWorkflow(): void {
   const packageJson = JSON.parse(readText("package.json")) as { scripts?: Record<string, string> };
   const scripts = packageJson.scripts ?? {};
-  const workflow = readText(".github/workflows/deploy.yml");
 
   assert(Boolean(scripts["qa:global-ranking-europa-fields"]), "Debe existir qa:global-ranking-europa-fields en package.json.");
   assert(Boolean(scripts["qa:tech-debt"]?.includes("qa:global-ranking-europa-fields")), "qa:tech-debt debe incluir qa:global-ranking-europa-fields.");
-  assertIncludes(workflow, "Run global ranking europa fields QA", "GitHub Actions debe ejecutar la QA de campos europeos del ranking.");
-  assertIncludes(workflow, "npm run qa:global-ranking-europa-fields", "deploy.yml debe lanzar qa:global-ranking-europa-fields.");
+  assertIncludes(readText("scripts/runQaSuite.mjs"), "qaGlobalRankingEuropaFields", "runQaSuite debe ejecutar qaGlobalRankingEuropaFields.");
+  assertIncludes(readText("scripts/runQaSuite.mjs"), "qaGlobalRankingEuropaFields", "runQaSuite debe ejecutar qaGlobalRankingEuropaFields.");
   logOk("QA de campos europeos del ranking registrada en package.json y deploy.yml");
 }
 

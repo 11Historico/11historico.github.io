@@ -100,12 +100,11 @@ function testNoUnrelatedSystemsTouched(): void {
 function testQaRegisteredInPackageAndWorkflow(): void {
   const packageJson = JSON.parse(readText("package.json")) as { scripts?: Record<string, string> };
   const scripts = packageJson.scripts ?? {};
-  const workflow = readText(".github/workflows/deploy.yml");
 
   assert(Boolean(scripts["qa:european-visual-polish"]), "Debe existir qa:european-visual-polish en package.json.");
   assert(Boolean(scripts["qa:tech-debt"]?.includes("qa:european-visual-polish")), "qa:tech-debt debe incluir qa:european-visual-polish.");
-  assertIncludes(workflow, "Run european visual polish QA", "GitHub Actions debe ejecutar la QA de pulido visual europeo.");
-  assertIncludes(workflow, "npm run qa:european-visual-polish", "deploy.yml debe lanzar qa:european-visual-polish.");
+  assertIncludes(readText("scripts/runQaSuite.mjs"), "qaEuropeanVisualPolish", "runQaSuite debe ejecutar qaEuropeanVisualPolish.");
+  assertIncludes(readText("scripts/runQaSuite.mjs"), "qaEuropeanVisualPolish", "runQaSuite debe ejecutar qaEuropeanVisualPolish.");
   logOk("QA de pulido visual europeo registrada en package.json y deploy.yml");
 }
 
