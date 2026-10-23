@@ -1,6 +1,6 @@
 // src/App.tsx
 
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 
 import type {
   EasyModeSeasonRangeId,
@@ -56,18 +56,7 @@ import { CHALLENGE_QUERY_PARAM, parseChallenge, type ChallengeSummary } from "./
 import PhaseProgress from "./components/PhaseProgress";
 import FormationSelector from "./components/FormationSelector";
 import SeasonReveal from "./components/SeasonReveal";
-import PlayerRound from "./components/PlayerRound";
-import CoachRound from "./components/CoachRound";
 import TeamSummary from "./components/TeamSummary";
-import LeagueSimulatorView from "./components/LeagueSimulatorView";
-import FinalSummary from "./components/FinalSummary";
-import CareerSeasonOutcome from "./components/CareerSeasonOutcome";
-import CareerInterseasonReward from "./components/CareerInterseasonReward";
-import CareerPlayerReplacementPicker from "./components/CareerPlayerReplacementPicker";
-import CareerSupercopa from "./components/CareerSupercopa";
-import CareerFormationChangePicker from "./components/CareerFormationChangePicker";
-import CareerLocalRanking from "./components/CareerLocalRanking";
-import CareerGlobalRanking from "./components/CareerGlobalRanking";
 
 import {
   clearSavedGameState,
@@ -102,6 +91,18 @@ import {
 } from "./career/supercopaRules";
 
 import "./App.css";
+
+const LeagueSimulatorView = lazy(() => import("./components/LeagueSimulatorView"));
+const FinalSummary = lazy(() => import("./components/FinalSummary"));
+const CareerSeasonOutcome = lazy(() => import("./components/CareerSeasonOutcome"));
+const CareerInterseasonReward = lazy(() => import("./components/CareerInterseasonReward"));
+const CareerGlobalRanking = lazy(() => import("./components/CareerGlobalRanking"));
+const CareerLocalRanking = lazy(() => import("./components/CareerLocalRanking"));
+const CareerSupercopa = lazy(() => import("./components/CareerSupercopa"));
+const CareerFormationChangePicker = lazy(() => import("./components/CareerFormationChangePicker"));
+const CareerPlayerReplacementPicker = lazy(() => import("./components/CareerPlayerReplacementPicker"));
+const PlayerRound = lazy(() => import("./components/PlayerRound"));
+const CoachRound = lazy(() => import("./components/CoachRound"));
 
 
 
@@ -1366,369 +1367,371 @@ export default function App() {
   ].includes(screen);
 
   return (
-    <div className="app-shell">
-      {shouldShowProgress && (
-        <PhaseProgress
-          phase={phase}
-          playerProgress={{
-            selected: selectedPlayers.length,
-            total: TOTAL_PLAYER_ROUNDS,
-          }}
-        />
-      )}
-
-      {shouldShowProgress && teamValidationErrors.length > 0 && (
-        <section className="team-validation-banner">
-          <div>
-            <strong>Revisa tu once antes de continuar</strong>
-            <ul>
-              {teamValidationErrors.slice(0, 4).map((error) => (
-                <li key={error}>{error}</li>
-              ))}
-            </ul>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (!selectedFormation) return;
-
-              const cleanedPlayers = sanitizeSelectedPlayers({
-                formation: selectedFormation,
-                selectedPlayers,
-              });
-
-              setSelectedPlayers(cleanedPlayers);
-              setCurrentRoundIndex(cleanedPlayers.length);
-              setPhase("player_selection");
-              setScreen("season_reveal");
-              setTeamValidationErrors([]);
+    <Suspense fallback={<main className="career-preview-screen" role="status"><p>Cargando…</p></main>}>
+      <div className="app-shell">
+        {shouldShowProgress && (
+          <PhaseProgress
+            phase={phase}
+            playerProgress={{
+              selected: selectedPlayers.length,
+              total: TOTAL_PLAYER_ROUNDS,
             }}
-          >
-            Limpiar duplicados
-          </button>
-        </section>
-      )}
-
-      {screen === "career_local_ranking" && (
-        <CareerLocalRanking
-          entries={careerLocalRanking}
-          onNewCareer={handleStartCareer}
-          onClearRanking={handleClearLocalRanking}
-          onBack={() => setScreen("home")}
-        />
-      )}
-
-      {screen === "career_global_ranking" && (
-        <CareerGlobalRanking
-          onNewCareer={handleStartCareer}
-          onViewLocalRanking={handleOpenLocalRanking}
-          onBack={() => setScreen("home")}
-        />
-      )}
-
-      {screen === "home" && (
-        <>
-          {challenge && <ChallengeBanner challenge={challenge} onDismiss={handleDismissChallenge} />}
-          <GameHome
-          hasSavedGame={hasSavedGameState()}
-          difficulty={difficulty}
-          onDifficultyChange={setDifficulty}
-          easyModeSeasonRangeId={easyModeSeasonRangeId}
-          onEasyModeSeasonRangeChange={setEasyModeSeasonRangeId}
-          onNewGame={handleNewGame}
-          onContinueGame={handleContinueGame}
-          onCareerPreview={handleOpenCareerPreview}
-          onViewLocalRanking={handleOpenLocalRanking}
-          onViewGlobalRanking={handleOpenGlobalRanking}
           />
-        </>
-      )}
+        )}
 
-      {screen === "career_preview" && (
-        <main className="career-preview-screen">
-          <section className="career-preview-card">
-            <p className="eyebrow">Modo carrera Athletic</p>
-            <h1>Sobrevive temporada a temporada</h1>
-            <p>
-              Empiezas en {CAREER_INITIAL_SEASON_LABEL} con tu once histórico. Cada temporada tienes que cumplir el objetivo para seguir en carrera.
-            </p>
-            <p className="career-preview-difficulty">
-              Dificultad: <strong>{DIFFICULTY_OPTIONS.find((option) => option.id === difficulty)?.label ?? "Normal"}</strong>
-              <button type="button" className="career-preview-link" onClick={() => setScreen("home")}>
-                Cambiar
-              </button>
-            </p>
-
-            <div className="career-preview-grid">
-              <article>
-                <div className="career-preview-icons" aria-hidden="true">
-                  <CompetitionIcon kind="copa" />
-                  <CompetitionIcon kind="europa" />
-                </div>
-                <strong>Objetivo</strong>
-                <span>Clasifícate para Europa o gana la Copa del Rey. Si no, Game Over.</span>
-              </article>
-              <article>
-                <div className="career-preview-icons" aria-hidden="true">
-                  <CompetitionIcon kind="supercopa" />
-                  <CompetitionIcon kind="europa" />
-                </div>
-                <strong>Entre temporadas</strong>
-                <span>Cambiar un jugador o cambiar entrenador. Si ganas título o Supercopa + Europa, podrás ajustar formación compatible.</span>
-              </article>
-              <article>
-                <div className="career-preview-icons" aria-hidden="true">
-                  <CompetitionIcon kind="liga" />
-                  <CompetitionIcon kind="copa" />
-                </div>
-                <strong>Progresión</strong>
-                <span>Cada temporada superada, los rivales son un poco más fuertes, y bajan los tres peores de Liga y suben tres de Segunda. Siempre tienes que llegar a Europa o ganar la Copa.</span>
-              </article>
-              <article>
-                <div className="career-preview-icons" aria-hidden="true">
-                  <CompetitionIcon kind="champions" />
-                </div>
-                <strong>Ranking</strong>
-                <span>Ranking local y global: ordena por temporadas superadas y puntos de palmarés.</span>
-              </article>
+        {shouldShowProgress && teamValidationErrors.length > 0 && (
+          <section className="team-validation-banner">
+            <div>
+              <strong>Revisa tu once antes de continuar</strong>
+              <ul>
+                {teamValidationErrors.slice(0, 4).map((error) => (
+                  <li key={error}>{error}</li>
+                ))}
+              </ul>
             </div>
 
-            <div className="career-preview-actions">
-              <button
-                type="button"
-                className="primary-home-button"
-                onClick={() => {
-                  if (!hasSavedGameState() || window.confirm("Ya tienes una partida guardada. Si empiezas una carrera nueva, se borrará. ¿Quieres continuar?")) {
-                    handleStartCareer();
-                  }
-                }}
-              >
-                Empezar carrera {CAREER_INITIAL_SEASON_LABEL}
-              </button>
-              <button type="button" className="secondary-home-button" onClick={handleOpenLocalRanking}>
-                Ver ranking local
-              </button>
-              <button type="button" className="career-preview-link career-preview-back" onClick={() => setScreen("home")}>
-                Volver
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (!selectedFormation) return;
+
+                const cleanedPlayers = sanitizeSelectedPlayers({
+                  formation: selectedFormation,
+                  selectedPlayers,
+                });
+
+                setSelectedPlayers(cleanedPlayers);
+                setCurrentRoundIndex(cleanedPlayers.length);
+                setPhase("player_selection");
+                setScreen("season_reveal");
+                setTeamValidationErrors([]);
+              }}
+            >
+              Limpiar duplicados
+            </button>
           </section>
-        </main>
-      )}
+        )}
 
-      {screen === "formation_selection" && (
-        <FormationSelector
-          selectedFormationId={selectedFormation?.id}
-          onSelectFormation={handleSelectFormation}
-        />
-      )}
+        {screen === "career_local_ranking" && (
+          <CareerLocalRanking
+            entries={careerLocalRanking}
+            onNewCareer={handleStartCareer}
+            onClearRanking={handleClearLocalRanking}
+            onBack={() => setScreen("home")}
+          />
+        )}
 
-      {screen === "season_reveal" && selectedFormation && currentSeason && (
-        <SeasonReveal
-          formation={selectedFormation}
-          finalSeason={currentSeason}
-          availableSeasons={currentDraftSeasonPool}
-          roundNumber={currentRoundIndex + 1}
-          totalRounds={TOTAL_PLAYER_ROUNDS}
-          onStartDraft={handleStartDraftAfterReveal}
-        />
-      )}
+        {screen === "career_global_ranking" && (
+          <CareerGlobalRanking
+            onNewCareer={handleStartCareer}
+            onViewLocalRanking={handleOpenLocalRanking}
+            onBack={() => setScreen("home")}
+          />
+        )}
 
-      {isPlayerSelectionReady && selectedFormation && currentSeason && (
-        <PlayerRound
-          roundNumber={currentRoundIndex + 1}
-          totalRounds={TOTAL_PLAYER_ROUNDS}
-          season={currentSeason}
-          formation={selectedFormation}
-          selectedPlayers={selectedPlayers}
-          lastSelection={lastSelection}
-          onSelectPlayer={handleSelectPlayer}
-          onSkipRound={handleSkipRound}
-        />
-      )}
+        {screen === "home" && (
+          <>
+            {challenge && <ChallengeBanner challenge={challenge} onDismiss={handleDismissChallenge} />}
+            <GameHome
+            hasSavedGame={hasSavedGameState()}
+            difficulty={difficulty}
+            onDifficultyChange={setDifficulty}
+            easyModeSeasonRangeId={easyModeSeasonRangeId}
+            onEasyModeSeasonRangeChange={setEasyModeSeasonRangeId}
+            onNewGame={handleNewGame}
+            onContinueGame={handleContinueGame}
+            onCareerPreview={handleOpenCareerPreview}
+            onViewLocalRanking={handleOpenLocalRanking}
+            onViewGlobalRanking={handleOpenGlobalRanking}
+            />
+          </>
+        )}
 
-      {screen === "coach_selection" && selectedFormation && (
-        <CoachRound onSelectCoach={handleSelectCoach} />
-      )}
+        {screen === "career_preview" && (
+          <main className="career-preview-screen">
+            <section className="career-preview-card">
+              <p className="eyebrow">Modo carrera Athletic</p>
+              <h1>Sobrevive temporada a temporada</h1>
+              <p>
+                Empiezas en {CAREER_INITIAL_SEASON_LABEL} con tu once histórico. Cada temporada tienes que cumplir el objetivo para seguir en carrera.
+              </p>
+              <p className="career-preview-difficulty">
+                Dificultad: <strong>{DIFFICULTY_OPTIONS.find((option) => option.id === difficulty)?.label ?? "Normal"}</strong>
+                <button type="button" className="career-preview-link" onClick={() => setScreen("home")}>
+                  Cambiar
+                </button>
+              </p>
 
-      {screen === "coach_selection" && careerRewardFlow === "coach_bonus" && coachBeforeReward && (
-        <div className="career-replacement-floating-actions">
-          <span>Premio especial: puedes mantener a {coachBeforeReward.coachSeason.name} y aplicar igualmente +0.5 media.</span>
-          <button type="button" onClick={handleKeepCurrentCoachWithBonus}>
-            Mantener entrenador actual +0.5
-          </button>
-        </div>
-      )}
+              <div className="career-preview-grid">
+                <article>
+                  <div className="career-preview-icons" aria-hidden="true">
+                    <CompetitionIcon kind="copa" />
+                    <CompetitionIcon kind="europa" />
+                  </div>
+                  <strong>Objetivo</strong>
+                  <span>Clasifícate para Europa o gana la Copa del Rey. Si no, Game Over.</span>
+                </article>
+                <article>
+                  <div className="career-preview-icons" aria-hidden="true">
+                    <CompetitionIcon kind="supercopa" />
+                    <CompetitionIcon kind="europa" />
+                  </div>
+                  <strong>Entre temporadas</strong>
+                  <span>Cambiar un jugador o cambiar entrenador. Si ganas título o Supercopa + Europa, podrás ajustar formación compatible.</span>
+                </article>
+                <article>
+                  <div className="career-preview-icons" aria-hidden="true">
+                    <CompetitionIcon kind="liga" />
+                    <CompetitionIcon kind="copa" />
+                  </div>
+                  <strong>Progresión</strong>
+                  <span>Cada temporada superada, los rivales son un poco más fuertes, y bajan los tres peores de Liga y suben tres de Segunda. Siempre tienes que llegar a Europa o ganar la Copa.</span>
+                </article>
+                <article>
+                  <div className="career-preview-icons" aria-hidden="true">
+                    <CompetitionIcon kind="champions" />
+                  </div>
+                  <strong>Ranking</strong>
+                  <span>Ranking local y global: ordena por temporadas superadas y puntos de palmarés.</span>
+                </article>
+              </div>
 
-      {screen === "coach_selection" && careerRewardFlow === "luck_wheel_coach" && coachBeforeReward && (
-        <div className="career-replacement-floating-actions">
-          <span>Premio de ruleta: puedes cambiar a {coachBeforeReward.coachSeason.name} o cancelar y volver a la Liga.</span>
-          <button type="button" onClick={handleCancelLuckWheelCoachChange}>
-            Cancelar cambio y volver a la Liga
-          </button>
-        </div>
-      )}
+              <div className="career-preview-actions">
+                <button
+                  type="button"
+                  className="primary-home-button"
+                  onClick={() => {
+                    if (!hasSavedGameState() || window.confirm("Ya tienes una partida guardada. Si empiezas una carrera nueva, se borrará. ¿Quieres continuar?")) {
+                      handleStartCareer();
+                    }
+                  }}
+                >
+                  Empezar carrera {CAREER_INITIAL_SEASON_LABEL}
+                </button>
+                <button type="button" className="secondary-home-button" onClick={handleOpenLocalRanking}>
+                  Ver ranking local
+                </button>
+                <button type="button" className="career-preview-link career-preview-back" onClick={() => setScreen("home")}>
+                  Volver
+                </button>
+              </div>
+            </section>
+          </main>
+        )}
 
-      {screen === "team_summary" && selectedFormation && selectedCoach && (
-        <TeamSummary
-          formation={selectedFormation}
-          selectedPlayers={selectedPlayers}
-          selectedCoach={selectedCoach}
-          onStartLeagueSimulation={handleStartLeagueSimulation}
-          onBackToCoach={() => setScreen("coach_selection")}
-          modeLabel={isCareerMode ? `Carrera Athletic · ${careerSeasonLabel}` : undefined}
-          startButtonLabel={isCareerMode ? (careerPendingSupercopa?.userQualified ? "Jugar Supercopa y temporada" : "Jugar temporada de carrera") : undefined}
-          careerRatingBonus={isCareerMode ? careerSeasonRatingBonus : 0}
-          difficulty={difficulty}
-          isCareerMode={isCareerMode}
-        />
-      )}
+        {screen === "formation_selection" && (
+          <FormationSelector
+            selectedFormationId={selectedFormation?.id}
+            onSelectFormation={handleSelectFormation}
+          />
+        )}
 
+        {screen === "season_reveal" && selectedFormation && currentSeason && (
+          <SeasonReveal
+            formation={selectedFormation}
+            finalSeason={currentSeason}
+            availableSeasons={currentDraftSeasonPool}
+            roundNumber={currentRoundIndex + 1}
+            totalRounds={TOTAL_PLAYER_ROUNDS}
+            onStartDraft={handleStartDraftAfterReveal}
+          />
+        )}
 
-      {screen === "career_supercopa" && careerPendingSupercopa && teamRating && (
-        <CareerSupercopa
-          qualification={careerPendingSupercopa}
-          result={careerCurrentSupercopaResult}
-          onSimulate={handleSimulateCareerSupercopa}
-          onContinue={handleContinueAfterSupercopa}
-          onRestart={handleRestart}
-        />
-      )}
+        {isPlayerSelectionReady && selectedFormation && currentSeason && (
+          <PlayerRound
+            roundNumber={currentRoundIndex + 1}
+            totalRounds={TOTAL_PLAYER_ROUNDS}
+            season={currentSeason}
+            formation={selectedFormation}
+            selectedPlayers={selectedPlayers}
+            lastSelection={lastSelection}
+            onSelectPlayer={handleSelectPlayer}
+            onSkipRound={handleSkipRound}
+          />
+        )}
 
-      {screen === "league_simulation" && selectedFormation && selectedCoach && teamRating && (
-        <LeagueSimulatorView
-          gameId={gameId}
-          difficulty={difficulty}
-          formation={selectedFormation}
-          selectedPlayers={selectedPlayers}
-          selectedCoach={selectedCoach}
-          teamRating={teamRating}
-          isCareerMode={isCareerMode}
-          leagueRivals={isCareerMode ? careerLeagueRivals : undefined}
-          careerCompletedSeasons={careerCompletedSeasons}
-          initialContext={leagueContext}
-          onContextChange={setLeagueContext}
-          initialPendingSeasonLuckWheelOffer={pendingSeasonLuckWheelOffer}
-          onPendingSeasonLuckWheelOfferChange={setPendingSeasonLuckWheelOffer}
-          onSeasonLuckWheelPlayerChange={handleSeasonLuckWheelPlayerChange}
-          onSeasonLuckWheelCoachChange={handleSeasonLuckWheelCoachChange}
-          onFinishLeague={handleFinishLeague}
-          europeanTournament={isCareerMode ? europeanCareerState.currentTournament : undefined}
-          onEuropeanTournamentChange={(tournament: EuropeanTournamentState) =>
-            setEuropeanCareerState((current) => setEuropeanCurrentTournament(current, tournament))
-          }
-        />
-      )}
+        {screen === "coach_selection" && selectedFormation && (
+          <CoachRound onSelectCoach={handleSelectCoach} />
+        )}
 
-      {(screen === "career_season_result" || screen === "career_game_over") && finalSummary && careerSeasonResult && careerObjectiveResult && (
-        <CareerSeasonOutcome
-          summary={finalSummary}
-          seasonResult={careerSeasonResult}
-          objectiveResult={careerObjectiveResult}
-          onViewFullSummary={() => setScreen("finished")}
-          onContinueCareer={careerObjectiveResult.survives ? handleContinueCareerAfterSeason : undefined}
-          onRestart={handleStartCareer}
-          onViewLocalRanking={handleOpenLocalRanking}
-          onViewGlobalRanking={handleOpenGlobalRanking}
-          rankingEntry={careerCurrentRankingEntry}
-          selectedPlayers={selectedPlayers}
-          teamRating={teamRating}
-          completedSeasons={careerCompletedSeasons}
-          trophyCounts={careerTrophyCounts}
-          europeanQualification={careerEuropeanQualification}
-          europeanCareerState={europeanCareerState}
-          europeanTournament={europeanCareerState.currentTournament}
-          bestLeaguePosition={careerBestLeaguePosition}
-        />
-      )}
+        {screen === "coach_selection" && careerRewardFlow === "coach_bonus" && coachBeforeReward && (
+          <div className="career-replacement-floating-actions">
+            <span>Premio especial: puedes mantener a {coachBeforeReward.coachSeason.name} y aplicar igualmente +0.5 media.</span>
+            <button type="button" onClick={handleKeepCurrentCoachWithBonus}>
+              Mantener entrenador actual +0.5
+            </button>
+          </div>
+        )}
 
-      {screen === "career_interseason_reward" && selectedFormation && careerSeasonResult && careerObjectiveResult && (
-        <CareerInterseasonReward
-          completedSeasons={careerCompletedSeasons}
-          nextSeasonLabel={careerSeasonLabel}
-          formation={selectedFormation}
-          selectedPlayers={selectedPlayers}
-          selectedCoach={selectedCoach}
-          seasonResult={careerSeasonResult}
-          objectiveResult={careerObjectiveResult}
-          trophyCounts={careerTrophyCounts}
-          promotionTransition={careerPromotionTransition}
-          pendingSupercopa={careerPendingSupercopa}
-          europeanPrestigeReward={careerEuropeanPrestigeReward}
-          onChoosePlayerChange={handleChooseCareerPlayerChange}
-          onChooseCoachChange={handleChooseCareerCoachChange}
-          onChooseFormationChange={handleChooseCareerFormationChange}
-          onRestart={handleRestart}
-        />
-      )}
+        {screen === "coach_selection" && careerRewardFlow === "luck_wheel_coach" && coachBeforeReward && (
+          <div className="career-replacement-floating-actions">
+            <span>Premio de ruleta: puedes cambiar a {coachBeforeReward.coachSeason.name} o cancelar y volver a la Liga.</span>
+            <button type="button" onClick={handleCancelLuckWheelCoachChange}>
+              Cancelar cambio y volver a la Liga
+            </button>
+          </div>
+        )}
+
+        {screen === "team_summary" && selectedFormation && selectedCoach && (
+          <TeamSummary
+            formation={selectedFormation}
+            selectedPlayers={selectedPlayers}
+            selectedCoach={selectedCoach}
+            onStartLeagueSimulation={handleStartLeagueSimulation}
+            onBackToCoach={() => setScreen("coach_selection")}
+            modeLabel={isCareerMode ? `Carrera Athletic · ${careerSeasonLabel}` : undefined}
+            startButtonLabel={isCareerMode ? (careerPendingSupercopa?.userQualified ? "Jugar Supercopa y temporada" : "Jugar temporada de carrera") : undefined}
+            careerRatingBonus={isCareerMode ? careerSeasonRatingBonus : 0}
+            difficulty={difficulty}
+            isCareerMode={isCareerMode}
+          />
+        )}
 
 
-      {screen === "career_formation_change" && selectedFormation && (
-        <CareerFormationChangePicker
-          currentFormation={selectedFormation}
-          selectedPlayers={selectedPlayers}
-          nextSeasonLabel={careerSeasonLabel}
-          onConfirmFormationChange={handleConfirmCareerFormationChange}
-          allowOpenSlot={careerRewardFlow === "player_formation"}
-          removedPlayer={replacementRemovedPlayer}
-          onCancel={handleCancelPlayerReplacement}
-        />
-      )}
+        {screen === "career_supercopa" && careerPendingSupercopa && teamRating && (
+          <CareerSupercopa
+            qualification={careerPendingSupercopa}
+            result={careerCurrentSupercopaResult}
+            onSimulate={handleSimulateCareerSupercopa}
+            onContinue={handleContinueAfterSupercopa}
+            onRestart={handleRestart}
+          />
+        )}
 
-      {screen === "career_player_replacement_pick" && selectedFormation && (
-        <CareerPlayerReplacementPicker
-          formation={selectedFormation}
-          selectedPlayers={selectedPlayers}
-          nextSeasonLabel={careerSeasonLabel}
-          mode={careerRewardFlow === "player_formation" ? "player_formation" : careerRewardFlow === "luck_wheel_player" ? "luck_wheel_player" : "player"}
-          onSelectPlayerToReplace={handleSelectPlayerToReplace}
-          onCancel={handleCancelPlayerReplacement}
-        />
-      )}
+        {screen === "league_simulation" && selectedFormation && selectedCoach && teamRating && (
+          <LeagueSimulatorView
+            gameId={gameId}
+            difficulty={difficulty}
+            formation={selectedFormation}
+            selectedPlayers={selectedPlayers}
+            selectedCoach={selectedCoach}
+            teamRating={teamRating}
+            isCareerMode={isCareerMode}
+            leagueRivals={isCareerMode ? careerLeagueRivals : undefined}
+            careerCompletedSeasons={careerCompletedSeasons}
+            initialContext={leagueContext}
+            onContextChange={setLeagueContext}
+            initialPendingSeasonLuckWheelOffer={pendingSeasonLuckWheelOffer}
+            onPendingSeasonLuckWheelOfferChange={setPendingSeasonLuckWheelOffer}
+            onSeasonLuckWheelPlayerChange={handleSeasonLuckWheelPlayerChange}
+            onSeasonLuckWheelCoachChange={handleSeasonLuckWheelCoachChange}
+            onFinishLeague={handleFinishLeague}
+            europeanTournament={isCareerMode ? europeanCareerState.currentTournament : undefined}
+            onEuropeanTournamentChange={(tournament: EuropeanTournamentState) =>
+              setEuropeanCareerState((current) => setEuropeanCurrentTournament(current, tournament))
+            }
+          />
+        )}
 
-      {screen === "career_player_replacement_draft" && selectedFormation && replacementDraftSeason && (
-        <PlayerRound
-          roundNumber={1}
-          totalRounds={1}
-          season={replacementDraftSeason}
-          formation={selectedFormation}
-          selectedPlayers={selectedPlayers}
-          lastSelection={lastSelection}
-          strictOpenSlotLine={careerRewardFlow === "player_formation" ? getSingleOpenSlotLine({ formation: selectedFormation, selectedPlayers }) : undefined}
-          onSelectPlayer={handleSelectReplacementPlayer}
-          onSkipRound={() => setReplacementDraftSeason(pickRandomSeason(currentDraftSeasonPool))}
-        />
-      )}
+        {(screen === "career_season_result" || screen === "career_game_over") && finalSummary && careerSeasonResult && careerObjectiveResult && (
+          <CareerSeasonOutcome
+            summary={finalSummary}
+            seasonResult={careerSeasonResult}
+            objectiveResult={careerObjectiveResult}
+            onViewFullSummary={() => setScreen("finished")}
+            onContinueCareer={careerObjectiveResult.survives ? handleContinueCareerAfterSeason : undefined}
+            onRestart={handleStartCareer}
+            onViewLocalRanking={handleOpenLocalRanking}
+            onViewGlobalRanking={handleOpenGlobalRanking}
+            rankingEntry={careerCurrentRankingEntry}
+            selectedPlayers={selectedPlayers}
+            teamRating={teamRating}
+            completedSeasons={careerCompletedSeasons}
+            trophyCounts={careerTrophyCounts}
+            europeanQualification={careerEuropeanQualification}
+            europeanCareerState={europeanCareerState}
+            europeanTournament={europeanCareerState.currentTournament}
+            bestLeaguePosition={careerBestLeaguePosition}
+          />
+        )}
 
-      {screen === "career_player_replacement_draft" && replacementRemovedPlayer && (
-        <div className="career-replacement-floating-actions">
-          <span>
-            {careerRewardFlow === "luck_wheel_player" ? "Premio de ruleta: " : ""}Sustituyendo a {replacementRemovedPlayer.playerSeason.name} ({replacementRemovedPlayer.position})
-          </span>
-          <button type="button" onClick={handleCancelPlayerReplacement}>
-            {careerRewardFlow === "luck_wheel_player" ? "Cancelar y volver a la Liga" : "Cancelar y avanzar"}
-          </button>
-        </div>
-      )}
+        {screen === "career_interseason_reward" && selectedFormation && careerSeasonResult && careerObjectiveResult && (
+          <CareerInterseasonReward
+            completedSeasons={careerCompletedSeasons}
+            nextSeasonLabel={careerSeasonLabel}
+            formation={selectedFormation}
+            selectedPlayers={selectedPlayers}
+            selectedCoach={selectedCoach}
+            seasonResult={careerSeasonResult}
+            objectiveResult={careerObjectiveResult}
+            trophyCounts={careerTrophyCounts}
+            promotionTransition={careerPromotionTransition}
+            pendingSupercopa={careerPendingSupercopa}
+            europeanPrestigeReward={careerEuropeanPrestigeReward}
+            onChoosePlayerChange={handleChooseCareerPlayerChange}
+            onChooseCoachChange={handleChooseCareerCoachChange}
+            onChooseFormationChange={handleChooseCareerFormationChange}
+            onRestart={handleRestart}
+          />
+        )}
 
-      {screen === "finished" && finalSummary && selectedFormation && selectedCoach && teamRating && (
-        <FinalSummary
-          summary={finalSummary}
-          difficulty={difficulty}
-          formation={selectedFormation}
-          selectedPlayers={selectedPlayers}
-          selectedCoach={selectedCoach}
-          teamRating={teamRating}
-          onRestart={handleRestart}
-          onReturnToCareer={isCareerMode && careerSeasonResult && careerObjectiveResult ? () => setScreen(careerObjectiveResult.survives ? "career_season_result" : "career_game_over") : undefined}
-          onShare={handleCopyShareText}
-          careerTrophyCounts={displayedCareerTrophyCounts}
-          europeanQualification={isCareerMode ? careerEuropeanQualification : undefined}
-          europeanTournament={isCareerMode ? europeanCareerState.currentTournament : undefined}
-        />
-      )}
-    </div>
+
+        {screen === "career_formation_change" && selectedFormation && (
+          <CareerFormationChangePicker
+            currentFormation={selectedFormation}
+            selectedPlayers={selectedPlayers}
+            nextSeasonLabel={careerSeasonLabel}
+            onConfirmFormationChange={handleConfirmCareerFormationChange}
+            allowOpenSlot={careerRewardFlow === "player_formation"}
+            removedPlayer={replacementRemovedPlayer}
+            onCancel={handleCancelPlayerReplacement}
+          />
+        )}
+
+        {screen === "career_player_replacement_pick" && selectedFormation && (
+          <CareerPlayerReplacementPicker
+            formation={selectedFormation}
+            selectedPlayers={selectedPlayers}
+            nextSeasonLabel={careerSeasonLabel}
+            mode={careerRewardFlow === "player_formation" ? "player_formation" : careerRewardFlow === "luck_wheel_player" ? "luck_wheel_player" : "player"}
+            onSelectPlayerToReplace={handleSelectPlayerToReplace}
+            onCancel={handleCancelPlayerReplacement}
+          />
+        )}
+
+        {screen === "career_player_replacement_draft" && selectedFormation && replacementDraftSeason && (
+          <PlayerRound
+            roundNumber={1}
+            totalRounds={1}
+            season={replacementDraftSeason}
+            formation={selectedFormation}
+            selectedPlayers={selectedPlayers}
+            lastSelection={lastSelection}
+            strictOpenSlotLine={careerRewardFlow === "player_formation" ? getSingleOpenSlotLine({ formation: selectedFormation, selectedPlayers }) : undefined}
+            onSelectPlayer={handleSelectReplacementPlayer}
+            onSkipRound={() => setReplacementDraftSeason(pickRandomSeason(currentDraftSeasonPool))}
+          />
+        )}
+
+        {screen === "career_player_replacement_draft" && replacementRemovedPlayer && (
+          <div className="career-replacement-floating-actions">
+            <span>
+              {careerRewardFlow === "luck_wheel_player" ? "Premio de ruleta: " : ""}Sustituyendo a {replacementRemovedPlayer.playerSeason.name} ({replacementRemovedPlayer.position})
+            </span>
+            <button type="button" onClick={handleCancelPlayerReplacement}>
+              {careerRewardFlow === "luck_wheel_player" ? "Cancelar y volver a la Liga" : "Cancelar y avanzar"}
+            </button>
+          </div>
+        )}
+
+        {screen === "finished" && finalSummary && selectedFormation && selectedCoach && teamRating && (
+          <FinalSummary
+            summary={finalSummary}
+            difficulty={difficulty}
+            formation={selectedFormation}
+            selectedPlayers={selectedPlayers}
+            selectedCoach={selectedCoach}
+            teamRating={teamRating}
+            onRestart={handleRestart}
+            onReturnToCareer={isCareerMode && careerSeasonResult && careerObjectiveResult ? () => setScreen(careerObjectiveResult.survives ? "career_season_result" : "career_game_over") : undefined}
+            onShare={handleCopyShareText}
+            careerTrophyCounts={displayedCareerTrophyCounts}
+            europeanQualification={isCareerMode ? careerEuropeanQualification : undefined}
+            europeanTournament={isCareerMode ? europeanCareerState.currentTournament : undefined}
+          />
+        )}
+      </div>
+    </Suspense>
   );
 }
 
