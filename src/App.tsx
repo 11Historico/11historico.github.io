@@ -1483,7 +1483,7 @@ export default function App() {
                   <CompetitionIcon kind="copa" />
                 </div>
                 <strong>Progresión</strong>
-                <span>Los rivales subirán poco a poco y la Copa será cada año más exigente.</span>
+                <span>Cada temporada bajan los tres peores rivales de Liga y suben tres equipos de Segunda. Siempre tienes que llegar a Europa o ganar la Copa.</span>
               </article>
               <article>
                 <div className="career-preview-icons" aria-hidden="true">
