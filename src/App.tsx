@@ -49,6 +49,7 @@ import { createRandomPlayerRoundSeasons, getDraftSeasonPool, pickRandomSeason } 
 import { TOTAL_PLAYER_ROUNDS, sanitizeSelectedPlayers, validateSelectedTeam } from "./app/teamValidation";
 import GameHome from "./components/GameHome";
 import ChallengeBanner from "./components/ChallengeBanner";
+import { trackEvent } from "./services/analytics";
 import { CHALLENGE_QUERY_PARAM, parseChallenge, type ChallengeSummary } from "./career/challengeLink";
 import PhaseProgress from "./components/PhaseProgress";
 import FormationSelector from "./components/FormationSelector";
@@ -467,6 +468,7 @@ export default function App() {
   }
 
   function handleStartCareer() {
+    trackEvent("career_start");
     clearSavedGameState();
     resetGameState();
     setIsCareerMode(true);
@@ -772,6 +774,7 @@ export default function App() {
       setEuropeanCareerState((current) => appendEuropeanQualification(current, europeanEntry));
 
       if (objectiveResult.isGameOver) {
+        trackEvent("game_over");
         const rankingEntry = buildCareerLocalRankingEntry({
           completedSeasons: careerCompletedSeasons,
           trophyCounts: careerTrophyCounts,
