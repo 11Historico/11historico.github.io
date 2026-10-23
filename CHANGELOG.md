@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.15 — Corrección del build de despliegue
+
+- Las pruebas de navegador en CI ya no reconstruyen `dist/`. Desde v0.25.4, el build de despliegue se sobrescribía con uno sin el endpoint del ranking global ni la variable de analítica.
+- En local, las pruebas siguen construyendo antes de servir, con el endpoint vacío.
+- Versionado a `v0.25.15` / `0.25.15`.
+
 ## v0.25.14 — Analítica sin cookies: activación (pendiente de confirmar)
 
 - Activación de GoatCounter para dos eventos: inicio de carrera y Game Over. Requiere definir `VITE_ANALYTICS_HOST` en GitHub.
