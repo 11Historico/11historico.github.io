@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.21 — Textos de progresión y dificultad
+
+- "Progresión" describe lo que ocurre de verdad: cada temporada bajan los tres peores rivales de Liga y suben tres de Segunda. El texto anterior hablaba de rivales más fuertes y de una Copa más exigente, pero esa lógica no está conectada en el juego.
+- Descripciones de dificultad con el efecto real: Fácil +2 y Leyenda −4 de valoración del equipo en los partidos; Normal sin ajustes.
+- Versionado a `v0.25.21` / `0.25.21`.
+
 ## v0.25.20 — Pantalla de entrada a la carrera: seguridad y accesibilidad
 
 - "Empezar carrera" pide confirmación si hay una partida guardada, porque la borra al empezar.

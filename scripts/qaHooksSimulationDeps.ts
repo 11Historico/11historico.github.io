@@ -14,7 +14,7 @@ type PackageLockJson = {
 
 const ROOT = process.cwd();
 const CURRENT_PUBLIC_VERSION = APP_VERSION;
-const CURRENT_PACKAGE_VERSION = "0.25.20";
+const CURRENT_PACKAGE_VERSION = "0.25.21";
 // Doc histórico de v0.24.2a (no el release actual): esta QA nació en esa
 // fase y sigue comprobando que ese documento concreto siga describiendo la
 // UI de jornada europea, independientemente de cuál sea la fase actual.
