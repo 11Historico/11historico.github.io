@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.18 — Fondo de estadio en la portada
+
+- La portada usa una ilustración vectorial original de un estadio (`src/assets/home-stadium.svg`) como fondo, con un velo oscuro para mantener el texto legible. No reproduce ningún estadio real.
+- Sustituye a las marcas de campo dibujadas con CSS de `v0.25.17`.
+- Versionado a `v0.25.18` / `0.25.18`.
+
 ## v0.25.17 — Portada reordenada
 
 - Los botones de la portada se agrupan en tres bloques: empezar (Jugar carrera, Partida rápida, Continuar), explorar (Cómo funciona, Ver ranking, Ranking local) y compartir.

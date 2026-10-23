@@ -23,18 +23,17 @@
   box-shadow: 0 24px 80px rgba(0,0,0,0.34);
 }
 
-/* Marcas de campo de fondo: línea de medio campo, círculo central y área. Solo decorativo. */
+/* Ilustración de estadio de fondo (src/assets/home-stadium.svg). Solo decorativa: un velo oscuro mantiene el texto legible. */
 .game-home-hero::before {
   content: "";
   position: absolute;
-  inset: 14px;
+  inset: 0;
   z-index: -1;
-  border: 2px solid rgba(255,255,255,0.06);
-  border-radius: 24px;
+  border-radius: inherit;
   pointer-events: none;
   background:
-    radial-gradient(circle at 50% 50%, transparent 0 88px, rgba(255,255,255,0.06) 89px 91px, transparent 92px),
-    linear-gradient(90deg, transparent 49.7%, rgba(255,255,255,0.06) 49.8% 50.2%, transparent 50.3%);
+    linear-gradient(180deg, rgba(22,7,11,0.3), rgba(22,7,11,0.78)),
+    url("../assets/home-stadium.svg") center / cover no-repeat;
 }
 
 .game-home-top-row {
