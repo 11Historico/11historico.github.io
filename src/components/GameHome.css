@@ -12,6 +12,8 @@
 }
 
 .game-home-hero {
+  position: relative;
+  isolation: isolate;
   max-width: 1180px;
   margin: 0 auto;
   padding: 30px 26px 22px;
@@ -19,6 +21,20 @@
   background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.035));
   border: 1px solid rgba(255,255,255,0.14);
   box-shadow: 0 24px 80px rgba(0,0,0,0.34);
+}
+
+/* Marcas de campo de fondo: línea de medio campo, círculo central y área. Solo decorativo. */
+.game-home-hero::before {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  z-index: -1;
+  border: 2px solid rgba(255,255,255,0.06);
+  border-radius: 24px;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 88px, rgba(255,255,255,0.06) 89px 91px, transparent 92px),
+    linear-gradient(90deg, transparent 49.7%, rgba(255,255,255,0.06) 49.8% 50.2%, transparent 50.3%);
 }
 
 .game-home-top-row {
@@ -95,6 +111,36 @@
   line-height: 1.6;
 }
 
+.game-home-objective {
+  display: inline-block;
+  max-width: 720px;
+  margin: 16px 0 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255,224,138,0.1);
+  border: 1px solid rgba(255,224,138,0.28);
+  color: #fff4f6;
+  line-height: 1.45;
+}
+
+.game-home-objective strong {
+  color: #ffe08a;
+  font-weight: 950;
+}
+
+.game-home-competition-icons {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  color: #ffe08a;
+}
+
+.game-home-competition-icons .competition-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 0;
+}
+
 .game-home-public-pillars {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -164,13 +210,38 @@
 
 .game-home-actions {
   display: grid;
-  gap: 12px;
+  gap: 18px;
 }
 
-.game-home-secondary-actions {
+.game-home-action-group {
+  display: grid;
+  gap: 10px;
+}
+
+.game-home-secondary-actions,
+.game-home-explore-actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 10px;
+}
+
+.game-home-explore-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.game-home-explore-actions > button:first-child {
+  grid-column: 1 / -1;
+}
+
+.game-home-explore-actions .secondary-home-button {
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+
+.primary-home-button span:first-child,
+.secondary-home-button span:first-child,
+.share-home-button span:first-child {
+  opacity: 0.75;
 }
 
 .primary-home-button,
@@ -195,6 +266,10 @@
 }
 
 .secondary-home-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: rgba(255,255,255,0.13);
   color: #ffffff;
 }
@@ -220,9 +295,8 @@
 }
 
 .game-home-difficulty-card {
-  margin-top: 22px;
-  padding-top: 18px;
-  border-top: 1px solid rgba(255,255,255,0.12);
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
 }
 
 .game-home-difficulty-header {
@@ -413,7 +487,8 @@
     box-shadow: none;
   }
 
-  .game-home-secondary-actions {
+  .game-home-secondary-actions,
+  .game-home-explore-actions {
     grid-template-columns: 1fr;
   }
 
