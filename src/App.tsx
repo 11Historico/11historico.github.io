@@ -1483,7 +1483,7 @@ export default function App() {
                   <CompetitionIcon kind="copa" />
                 </div>
                 <strong>Progresión</strong>
-                <span>Cada temporada bajan los tres peores rivales de Liga y suben tres equipos de Segunda. Siempre tienes que llegar a Europa o ganar la Copa.</span>
+                <span>Cada temporada superada, los rivales son un poco más fuertes, y bajan los tres peores de Liga y suben tres de Segunda. Siempre tienes que llegar a Europa o ganar la Copa.</span>
               </article>
               <article>
                 <div className="career-preview-icons" aria-hidden="true">
@@ -1606,6 +1606,7 @@ export default function App() {
           teamRating={teamRating}
           isCareerMode={isCareerMode}
           leagueRivals={isCareerMode ? careerLeagueRivals : undefined}
+          careerCompletedSeasons={careerCompletedSeasons}
           initialContext={leagueContext}
           onContextChange={setLeagueContext}
           initialPendingSeasonLuckWheelOffer={pendingSeasonLuckWheelOffer}

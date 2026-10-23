@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.22 — Progresión de los rivales en la carrera
+
+- Los rivales de la carrera se vuelven más fuertes poco a poco: +0,5 de valoración en las tres primeras temporadas superadas, +1 en las tres siguientes y +1,5 después, con un máximo de +10. La curva ya estaba definida en `getRivalDifficultyBonus`, pero no se usaba.
+- La subida se aplica a los rivales al crear la temporada, no a la lista guardada, y no afecta al equipo del jugador.
+- Cambia el balance de la liga en modo carrera. Requiere revisión con partidas completas.
+- Versionado a `v0.25.22` / `0.25.22`.
+
 ## v0.25.21 — Textos de progresión y dificultad
 
 - "Progresión" describe lo que ocurre de verdad: cada temporada bajan los tres peores rivales de Liga y suben tres de Segunda. El texto anterior hablaba de rivales más fuertes y de una Copa más exigente, pero esa lógica no está conectada en el juego.
