@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { seedRandomness } from "./seedRandomness";
 import { expect, test, type Page } from "@playwright/test";
 
 // Partida guardada de prueba (npm run e2e:fixture). Ver scripts/buildE2eFixture.ts.
@@ -42,19 +43,21 @@ async function advanceOnce(page: Page): Promise<boolean> {
   return false;
 }
 
+// Con la semilla fijada, la plantilla débil termina en Game Over de forma reproducible.
 test("carrera completa desde la partida guardada hasta el Game Over", async ({ page }) => {
   test.setTimeout(240_000);
 
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
+  await seedRandomness(page, 1);
   await page.goto("/");
   await page.evaluate(([key, value]) => window.localStorage.setItem(key, value), [SAVE_KEY, fixture]);
   await page.reload();
 
   await page.getByRole("button", { name: "Continuar" }).click();
 
-  const gameOver = page.getByText(/game over/i).first();
+  const gameOver = page.getByRole("heading", { name: /game over/i });
   let stalls = 0;
 
   for (let step = 0; step < 400; step += 1) {
