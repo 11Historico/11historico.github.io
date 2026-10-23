@@ -239,15 +239,57 @@ button:not(:disabled):hover {
 .career-preview-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 12px;
   margin-top: 22px;
+}
+
+.career-preview-icons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: #ffe08a;
+}
+
+.career-preview-icons .competition-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 0;
+}
+
+.career-preview-difficulty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.career-preview-difficulty strong {
+  color: #ffe08a;
+}
+
+.career-preview-link {
+  padding: 8px 4px;
+  border: 0;
+  background: transparent;
+  color: #ffd9e0;
+  font-weight: 850;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.career-preview-back {
+  margin-left: auto;
 }
 
 @media (max-width: 760px) {
   .career-preview-screen { padding: 24px 12px; }
   .career-preview-card { padding: 24px 16px; }
+  .career-preview-card h1 { font-size: 1.85rem; }
   .career-preview-grid { grid-template-columns: 1fr; }
   .career-preview-actions { display: grid; }
+  .career-preview-back { margin-left: 0; justify-self: center; }
 }
 
 .career-replacement-floating-actions {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { EasyModeSeasonRangeId, GameDifficulty } from "../types/game";
+import { DIFFICULTY_OPTIONS } from "../config/difficultyOptions";
 import { EASY_MODE_SEASON_RANGES } from "../data/easyModeSeasonRanges";
 import { APP_VERSION, APP_VERSION_NAME } from "../config/appVersion";
 
@@ -22,27 +23,6 @@ interface GameHomeProps {
   onViewGlobalRanking: () => void;
 }
 
-const DIFFICULTY_OPTIONS: Array<{
-  id: GameDifficulty;
-  label: string;
-  description: string;
-}> = [
-  {
-    id: "normal",
-    label: "Fácil",
-    description: "Más accesible. Permite elegir el rango histórico del draft.",
-  },
-  {
-    id: "dificil",
-    label: "Normal",
-    description: "Equilibrado. Ganar la Liga cuesta, pero es posible.",
-  },
-  {
-    id: "leyenda",
-    label: "Leyenda",
-    description: "Madrid, Barça y Atlético aprietan de verdad.",
-  },
-];
 
 const FEEDBACK_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfSHQS1PVKoWNl8u7mTrYO2Fchuj-2UC82Ap4AVktUnBrBZ8A/viewform?usp=publish-editor";
 const PUBLIC_GAME_URL = "https://ikeritu.github.io/11Historico/";

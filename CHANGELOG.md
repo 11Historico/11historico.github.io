@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.19 — Pantalla de entrada a la carrera
+
+- Texto revisado: se quita "futuro modo carrera" y "Top 100 global futuro", porque el modo ya existe.
+- Muestra la dificultad elegida en la portada, con un enlace "Cambiar".
+- "Ver ranking local" recupera su estilo de botón; "Volver" pasa a enlace discreto.
+- Iconos de competición en las tarjetas y título más pequeño en móvil.
+- Versionado a `v0.25.19` / `0.25.19`.
+
 ## v0.25.18 — Fondo de estadio en la portada
 
 - La portada usa una ilustración vectorial original de un estadio (`src/assets/home-stadium.svg`) como fondo, con un velo oscuro para mantener el texto legible. No reproduce ningún estadio real.
