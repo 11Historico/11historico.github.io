@@ -14,7 +14,7 @@ type PackageLockJson = {
 
 const ROOT = process.cwd();
 const CURRENT_PUBLIC_VERSION = APP_VERSION;
-const CURRENT_PACKAGE_VERSION = "0.25.23";
+const CURRENT_PACKAGE_VERSION = "0.25.24";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
@@ -112,8 +112,8 @@ function testCssViewportFallbacks(): void {
 function testDeployWorkflow(): void {
   const workflow = readText(".github/workflows/deploy.yml");
 
-  assert(workflow.includes("run: npm run qa:mobile-viewport"), "deploy.yml debe ejecutar qa:mobile-viewport antes del build.");
-  assert(workflow.indexOf("run: npm run qa:mobile-viewport") < workflow.indexOf("run: npm run build"), "qa:mobile-viewport debe ejecutarse antes del build.");
+  assert(readText("scripts/runQaSuite.mjs").includes("qaMobileViewportFix"), "runQaSuite debe ejecutar qaMobileViewportFix.");
+  assert(workflow.indexOf("npm run qa:ci") < workflow.indexOf("run: npm run build"), "qa:ci debe ejecutarse antes del build.");
   logOk("workflow ejecuta QA móvil antes del build");
 }
 

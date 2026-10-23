@@ -126,12 +126,11 @@ function testDocsDescribeManualDeploySteps(): void {
 function testQaRegisteredInPackageAndWorkflow(): void {
   const packageJson = JSON.parse(readText("package.json")) as { scripts?: Record<string, string> };
   const scripts = packageJson.scripts ?? {};
-  const workflow = readText(".github/workflows/deploy.yml");
 
   assert(Boolean(scripts["qa:global-ranking-backend-migration"]), "Debe existir qa:global-ranking-backend-migration en package.json.");
   assert(Boolean(scripts["qa:tech-debt"]?.includes("qa:global-ranking-backend-migration")), "qa:tech-debt debe incluir qa:global-ranking-backend-migration.");
-  assertIncludes(workflow, "Run global ranking backend migration QA", "GitHub Actions debe ejecutar la QA de migración del backend de ranking.");
-  assertIncludes(workflow, "npm run qa:global-ranking-backend-migration", "deploy.yml debe lanzar qa:global-ranking-backend-migration.");
+  assertIncludes(readText("scripts/runQaSuite.mjs"), "qaGlobalRankingBackendMigration", "runQaSuite debe ejecutar qaGlobalRankingBackendMigration.");
+  assertIncludes(readText("scripts/runQaSuite.mjs"), "qaGlobalRankingBackendMigration", "runQaSuite debe ejecutar qaGlobalRankingBackendMigration.");
   logOk("QA de migración del backend de ranking registrada en package.json y deploy.yml");
 }
 

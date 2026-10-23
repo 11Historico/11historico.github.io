@@ -49,12 +49,11 @@ function testPublicUxStylesExist(): void {
 
 function testScriptsAndWorkflowAreRegistered(): void {
   const packageJson = read("package.json");
-  const workflow = read(".github/workflows/deploy.yml");
 
   assertIncludes(packageJson, "qa:public-release-ux", "package scripts");
   assertIncludes(packageJson, "npm run qa:public-release-ux", "qa:tech-debt chain");
-  assertIncludes(workflow, "Run public release UX QA", "GitHub Actions");
-  assertIncludes(workflow, "npm run qa:public-release-ux", "GitHub Actions");
+  assertIncludes(read("scripts/runQaSuite.mjs"), "qaPublicReleaseUx", "runQaSuite debe ejecutar qaPublicReleaseUx.");
+  assertIncludes(read("scripts/runQaSuite.mjs"), "qaPublicReleaseUx", "runQaSuite debe ejecutar qaPublicReleaseUx.");
 }
 
 function testDocsExist(): void {
