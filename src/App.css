@@ -203,12 +203,6 @@ button:not(:disabled):hover {
   text-wrap: balance;
 }
 
-.career-preview-screen button:focus-visible,
-.career-preview-screen a:focus-visible {
-  outline: 3px solid #ffe08a;
-  outline-offset: 3px;
-}
-
 .career-preview-card p {
   max-width: 760px;
   margin: 0 0 22px;

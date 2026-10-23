@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.23 — Texto de carrera en la pantalla de liga
+
+- En modo carrera, la pantalla de liga dice "Carrera" en vez de "Partida rápida".
+- Se retira el bloque de foco de la pantalla de carrera de v0.25.20: el foco visible ya es global desde v0.25.2 (`src/index.css`).
+- Prueba e2e nueva: `career-league-copy`.
+- Versionado a `v0.25.23` / `0.25.23`.
+
 ## v0.25.22 — Progresión de los rivales en la carrera
 
 - Los rivales de la carrera se vuelven más fuertes poco a poco: +0,5 de valoración en las tres primeras temporadas superadas, +1 en las tres siguientes y +1,5 después, con un máximo de +10. La curva ya estaba definida en `getRivalDifficultyBonus`, pero no se usaba.
