@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.11 — Cuadros de Copa y Europa al final de temporada
+
+- Cuadro de la Copa del Rey en columnas por ronda. Cada ronda muestra el partido del Athletic si lo jugó, o el partido simulado si no; el ganador va en negrita y el Athletic en dorado.
+- Torneo europeo en columnas: fase inicial, semifinal y final, con la decisión del partido (prórroga o penaltis) cuando la hubo.
+- Las rondas que no se jugaron aparecen como simuladas o sin jugar.
+- Lógica en `src/career/seasonBrackets.ts`, con pruebas unitarias y de renderizado.
+- Versionado a `v0.25.11` / `0.25.11`.
+
 ## v0.25.10 — Estado de la ruleta de temporada
 
 - La conversión del resultado de la ruleta en el estado guardado de la carrera (`buildAcceptedSeasonLuckWheelState`) sale de `LeagueSimulatorView` a `src/career/seasonLuckWheel.ts`, con pruebas unitarias.

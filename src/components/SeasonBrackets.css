@@ -1,0 +1,107 @@
+.season-bracket {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(150px, 1fr);
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.season-bracket-column {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.season-bracket-column > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: #ffffff;
+}
+
+.season-bracket-status {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #f2d2d7;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.season-bracket-simulated .season-bracket-status {
+  background: rgba(255, 224, 138, 0.16);
+  color: #ffe08a;
+}
+
+.season-bracket-pending .season-bracket-status {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.season-bracket-match {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.18);
+  color: #ffffff;
+}
+
+.season-bracket-team {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.season-bracket-team-won {
+  color: #ffffff;
+}
+
+.season-bracket-team-won strong {
+  color: #ffe08a;
+}
+
+.season-bracket-team-user span {
+  color: #ffe08a;
+}
+
+.season-bracket-versus,
+.season-bracket-decision {
+  margin: 0;
+  color: #f2d2d7;
+  font-size: 0.8rem;
+}
+
+.season-bracket-score {
+  font-size: 1.3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.season-bracket-outcome {
+  justify-self: start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.season-bracket-empty {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 640px) {
+  .season-bracket {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+  }
+}
