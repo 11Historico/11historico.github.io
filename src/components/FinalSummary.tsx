@@ -18,6 +18,9 @@ import type { EuropeanQualificationResult } from "../europe/europeanTypes";
 import SelectedTeamBoard from "./SelectedTeamBoard";
 import PalmaresTrophyCase from "./PalmaresTrophyCase";
 import EuropeanQualificationCard from "./EuropeanQualificationCard";
+import { CupBracket, EuropeanBracket } from "./SeasonBrackets";
+import { buildCupBracketRows, buildEuropeanBracketColumns } from "../career/seasonBrackets";
+import type { EuropeanTournamentState } from "../europe/europeanTypes";
 
 import {
   buildHistoryEntry,
@@ -31,6 +34,7 @@ import SupportButton from "./SupportButton";
 
 interface FinalSummaryProps {
   summary: FinalGameSummary;
+  europeanTournament?: EuropeanTournamentState | null;
   difficulty?: GameDifficulty;
   formation: Formation;
   selectedPlayers: SelectedPlayer[];
@@ -168,18 +172,6 @@ function getCupSummaryText(summary: FinalGameSummary): string {
   }
 
   return summary.cupRoundReached ?? "Copa no finalizada";
-}
-
-function getCupResultClass(result: NonNullable<FinalGameSummary["cupResults"]>[number]): string {
-  if (result.userTeamWon) return "final-cup-result final-cup-result-win";
-  if (result.userTeamDrew) return "final-cup-result final-cup-result-draw";
-  return "final-cup-result final-cup-result-loss";
-}
-
-function getCupResultLabel(result: NonNullable<FinalGameSummary["cupResults"]>[number]): string {
-  if (result.userTeamWon) return "Victoria";
-  if (result.userTeamDrew) return "Empate";
-  return "Derrota";
 }
 
 function getCoachBaseBonus(coach: SelectedCoach["coachSeason"]): number {
@@ -549,9 +541,11 @@ function BestGamePanel({ history }: { history: GameHistoryEntry[] }) {
 
 function CupSummaryPanel({ summary }: { summary: FinalGameSummary }) {
   const cupResults = summary.cupResults ?? [];
-  const simulatedCupFinalResults = (summary.cupSimulatedRemainingResults ?? []).filter(
-    (result) => (result.roundName ?? "").toLowerCase() === "final"
-  );
+  const cupRows = buildCupBracketRows({
+    cupResults,
+    simulatedResults: summary.cupSimulatedRemainingResults,
+  });
+  const hasAnyCupMatch = cupRows.some((row) => row.status !== "pending");
 
   return (
     <section className={`final-cup-card ${summary.cupTrophyWon ? "final-cup-card-won" : ""}`}>
@@ -576,38 +570,17 @@ function CupSummaryPanel({ summary }: { summary: FinalGameSummary }) {
         </div>
       )}
 
-      {cupResults.length === 0 ? (
-        <p className="final-cup-empty">No hay partidos de Copa registrados.</p>
+      {hasAnyCupMatch ? (
+        <CupBracket rows={cupRows} />
       ) : (
-        <div className="final-cup-results">
-          {cupResults.map((result) => (
-            <article key={result.fixtureId} className={getCupResultClass(result)}>
-              <span>{result.roundName}</span>
-              <strong>
-                {result.homeTeamName} {result.homeGoals}-{result.awayGoals} {result.awayTeamName}
-              </strong>
-              <small>{getCupResultLabel(result)}</small>
-            </article>
-          ))}
-        </div>
-      )}
-
-      {simulatedCupFinalResults.length > 0 && (
-        <div className="final-cup-results final-cup-rest-results">
-          <h3>Final simulada</h3>
-          {simulatedCupFinalResults.map((result) => (
-            <article key={result.fixtureId} className="final-cup-result final-cup-result-neutral">
-              <span>{result.roundName}</span>
-              <strong>
-                {result.homeTeamName} {result.homeGoals}-{result.awayGoals} {result.awayTeamName}
-              </strong>
-              <small>Simulado</small>
-            </article>
-          ))}
-        </div>
+        <p className="final-cup-empty">No hay partidos de Copa registrados.</p>
       )}
     </section>
   );
+}
+
+function EuropeanTournamentPanel({ tournament }: { tournament: EuropeanTournamentState }) {
+  return <EuropeanBracket columns={buildEuropeanBracketColumns(tournament)} />;
 }
 
 function HistoryPanel({ history }: { history: GameHistoryEntry[] }) {
@@ -711,6 +684,7 @@ export function FinalSummary({
   teamRating,
   careerTrophyCounts,
   europeanQualification,
+  europeanTournament,
   onRestart,
   onReturnToCareer,
   onShare,
@@ -800,6 +774,12 @@ export function FinalSummary({
           <FinalAccordion title="Copa del Rey" eyebrow={getCupSummaryText(summary)} defaultOpen>
             <CupSummaryPanel summary={summary} />
           </FinalAccordion>
+
+          {europeanTournament && europeanTournament.matches.length > 0 && (
+            <FinalAccordion title="Torneo europeo" eyebrow="Fase inicial, semifinal y final" defaultOpen>
+              <EuropeanTournamentPanel tournament={europeanTournament} />
+            </FinalAccordion>
+          )}
 
           {europeanQualification && (
             <FinalAccordion

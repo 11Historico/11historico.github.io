@@ -1690,6 +1690,7 @@ export default function App() {
           onShare={handleCopyShareText}
           careerTrophyCounts={displayedCareerTrophyCounts}
           europeanQualification={isCareerMode ? careerEuropeanQualification : undefined}
+          europeanTournament={isCareerMode ? europeanCareerState.currentTournament : undefined}
         />
       )}
     </div>
