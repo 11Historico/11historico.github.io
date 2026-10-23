@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.26 — Carga diferida de pantallas
+
+- Las pantallas que no se ven al abrir el juego (liga, resumen final, carrera, rankings y pickers) se cargan con `React.lazy` y `Suspense`.
+- El JS principal baja de 537 kB (151 kB comprimido) a 386 kB (114 kB comprimido).
+- Sin cambios de comportamiento.
+- Versionado a `v0.25.26` / `0.25.26`.
+
 ## v0.25.25 — Versión en una sola fuente
 
 - `APP_VERSION` se deriva de `package.json` (`src/config/appVersion.ts`). Ya no hay que escribirla a mano.
