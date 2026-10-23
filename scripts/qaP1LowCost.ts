@@ -50,7 +50,9 @@ function testPrivacyPageExistsAndLinked(): void {
   const ranking = read("src/components/CareerGlobalRanking.tsx");
 
   assert(page.includes("Política de privacidad"), "La página de privacidad debe tener su título.");
-  assert(page.includes("No usamos analítica"), "La página debe declarar que no hay analítica.");
+  assert(page.includes("GoatCounter") && page.includes("Medición de uso"), "La página debe describir la medición de uso.");
+  assert(!page.includes("No usamos analítica"), "La página no debe afirmar que no hay analítica.");
+  assert(!page.includes("[REVISAR"), "La nota de privacidad tiene un hueco pendiente de revisar: no publicar hasta resolverlo.");
   assert(page.includes("No pedimos correo electrónico"), "La página debe declarar qué datos no se piden.");
   assert(ranking.includes('href="privacidad.html"'), "El ranking global debe enlazar la política de privacidad.");
   logOk("La nota de privacidad existe y se enlaza desde el ranking global");
