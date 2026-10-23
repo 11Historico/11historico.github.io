@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.12 — Enlace de reto tras una temporada superada
+
+- Al superar una temporada, el resumen ofrece "Reta a otros jugadores" con la marca actual (puntuación y temporadas) y un botón para copiar el enlace de reto.
+- El botón de copiar es el mismo componente que en el fin de carrera.
+- Fixture de prueba con equipo fuerte (`career-strong.json`) y prueba de navegador de la temporada superada.
+- Versionado a `v0.25.12` / `0.25.12`.
+
 ## v0.25.11 — Cuadros de Copa y Europa al final de temporada
 
 - Cuadro de la Copa del Rey en columnas por ronda. Cada ronda muestra el partido del Athletic si lo jugó, o el partido simulado si no; el ganador va en negrita y el Athletic en dorado.

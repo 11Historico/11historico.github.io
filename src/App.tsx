@@ -1605,6 +1605,7 @@ export default function App() {
           europeanQualification={careerEuropeanQualification}
           europeanCareerState={europeanCareerState}
           europeanTournament={europeanCareerState.currentTournament}
+          bestLeaguePosition={careerBestLeaguePosition}
         />
       )}
 

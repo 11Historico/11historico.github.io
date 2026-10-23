@@ -1,6 +1,7 @@
 // scripts/buildE2eFixture.ts
-// Genera la partida guardada de prueba para la prueba de flujo completo (Playwright).
-// Equipo débil y sin clasificación europea: la temporada termina en Game Over.
+// Genera las partidas guardadas de prueba para las pruebas de flujo completo (Playwright).
+// - career-weak: equipo débil y sin clasificación europea: la temporada termina en Game Over.
+// - career-strong: equipo fuerte: la temporada se supera (pantalla "Temporada superada").
 // Ejecutar con: npm run e2e:fixture
 
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -10,9 +11,12 @@ import { resolvePlayerSlotPlacement } from "../src/domain/positionRules";
 import { calculateTeamRating } from "../src/simulation/teamRating";
 import type { SelectedCoach, SelectedPlayer } from "../src/types/game";
 
-const OUTPUT = "tests/e2e/fixtures/career-weak.json";
+const OUTPUT_WEAK = "tests/e2e/fixtures/career-weak.json";
+const OUTPUT_STRONG = "tests/e2e/fixtures/career-strong.json";
 
-function buildWeakSquad() {
+type Strength = "weak" | "strong";
+
+function buildSquad(strength: Strength) {
   const formation = getFormationById("4-3-3") ?? FORMATIONS.find((candidate) => candidate.name === "4-3-3");
   if (!formation) throw new Error("Falta la formación 4-3-3.");
 
@@ -34,9 +38,8 @@ function buildWeakSquad() {
     }
 
     candidates.sort((a, b) => b.playerSeason.overall - a.playerSeason.overall);
-    // Último candidato: los jugadores más flojos de la base de datos. Así la temporada
-    // termina sin objetivo cumplido y la carrera acaba en Game Over.
-    const pick = candidates[candidates.length - 1];
+    // Débil: los jugadores más flojos de la base de datos. Fuerte: los mejores.
+    const pick = strength === "weak" ? candidates[candidates.length - 1] : candidates[0];
     used.add(pick.playerSeason.canonicalPlayerId);
     selectedPlayers.push({ slotId: slot.id, position: pick.position, playerSeason: pick.playerSeason } as SelectedPlayer);
   }
@@ -44,14 +47,15 @@ function buildWeakSquad() {
   return { formation, selectedPlayers };
 }
 
-function main(): void {
-  const { formation, selectedPlayers } = buildWeakSquad();
-  const coachSeason = [...ATHLETIC_SEASONS.map((season) => season.coach)].sort((a, b) => a.overall - b.overall)[0];
+function buildSave(strength: Strength) {
+  const { formation, selectedPlayers } = buildSquad(strength);
+  const sortedCoaches = [...ATHLETIC_SEASONS.map((season) => season.coach)].sort((a, b) => a.overall - b.overall);
+  const coachSeason = strength === "weak" ? sortedCoaches[0] : sortedCoaches[sortedCoaches.length - 1];
   const selectedCoach = { coachSeason } as SelectedCoach;
   const teamRating = calculateTeamRating({ selectedPlayers, selectedCoach, formation });
 
-  const save = {
-    gameId: "e2e_career_weak",
+  return {
+    gameId: strength === "weak" ? "e2e_career_weak" : "e2e_career_strong",
     phase: "league_simulation",
     difficulty: "normal",
     selectedFormation: formation,
@@ -64,7 +68,7 @@ function main(): void {
     careerCompletedSeasons: 3,
     careerSeasonLabel: "2028/29",
     careerTrophyCounts: { champions: 0, liga: 0, europaLeague: 0, copa: 0, conference: 0, supercopa: 0 },
-    careerBestLeaguePosition: 18,
+    careerBestLeaguePosition: strength === "weak" ? 18 : 3,
     europeanCareer: {
       currentQualification: null,
       history: [],
@@ -74,10 +78,21 @@ function main(): void {
     },
     savedAt: "2026-10-22T00:00:00.000Z",
   };
+}
 
+function main(): void {
   mkdirSync("tests/e2e/fixtures", { recursive: true });
-  writeFileSync(OUTPUT, `${JSON.stringify(save, null, 2)}\n`, "utf8");
-  console.log(`Fixture escrita en ${OUTPUT} (media XI ${teamRating.overall})`);
+
+  const outputs: Array<[Strength, string]> = [
+    ["weak", OUTPUT_WEAK],
+    ["strong", OUTPUT_STRONG],
+  ];
+
+  for (const [strength, output] of outputs) {
+    const save = buildSave(strength);
+    writeFileSync(output, `${JSON.stringify(save, null, 2)}\n`, "utf8");
+    console.log(`Fixture escrita en ${output} (media XI ${save.teamRating.overall})`);
+  }
 }
 
 main();
