@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.16 — Visitas contadas desde la portada
+
+- La analítica se inicializa al arrancar la aplicación, para que cada visita a la portada cuente como página vista. Antes, el script solo se cargaba con el primer evento.
+- Sin `VITE_ANALYTICS_HOST` no cambia nada.
+- Versionado a `v0.25.16` / `0.25.16`.
+
 ## v0.25.15 — Corrección del build de despliegue
 
 - Las pruebas de navegador en CI ya no reconstruyen `dist/`. Desde v0.25.4, el build de despliegue se sobrescribía con uno sin el endpoint del ranking global ni la variable de analítica.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isAnalyticsEnabled, trackEvent } from "../../src/services/analytics";
+import { initAnalytics, isAnalyticsEnabled, trackEvent } from "../../src/services/analytics";
 
 describe("analítica sin cookies", () => {
   it("está desactivada por defecto, sin VITE_ANALYTICS_HOST", () => {
@@ -9,5 +9,9 @@ describe("analítica sin cookies", () => {
   it("trackEvent no hace nada cuando está desactivada (ni lanza en Node)", () => {
     expect(() => trackEvent("career_start")).not.toThrow();
     expect(() => trackEvent("game_over")).not.toThrow();
+  });
+
+  it("initAnalytics no hace nada cuando está desactivada (ni lanza en Node)", () => {
+    expect(() => initAnalytics()).not.toThrow();
   });
 });
