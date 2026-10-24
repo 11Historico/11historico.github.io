@@ -28,6 +28,9 @@ const MAX_NICK_LENGTH = 24;
 const MAX_TOTAL_ENTRIES = 5000;
 const MAX_COMPLETED_SEASONS = 500;
 const MAX_LEAGUE_POSITION = 64;
+// v0.25.30: caché del top de 100 entradas (la petición que hace el cliente). Se borra al enviar una carrera nueva.
+const TOP_CACHE_KEY = 'top_full';
+const TOP_CACHE_SECONDS = 300;
 // Debe reflejar src/career/careerRules.ts CAREER_PALMARES_POINTS. Si cambia
 // ahí, cambia aquí también.
 const PALMARES_POINTS = {
@@ -87,7 +90,7 @@ function doGet(event) {
     }
 
     const limit = clampNumber_(Number(params.limit || TOP_LIMIT), 1, TOP_LIMIT);
-    const entries = getTopEntries_(limit);
+    const entries = limit === TOP_LIMIT ? getCachedTopEntries_() : getTopEntries_(limit);
 
     return jsonOutput_({ ok: true, status: 'loaded', message: 'Ranking global cargado.', entries });
   } catch (error) {
@@ -101,8 +104,13 @@ function doPost(event) {
   try {
     lock.waitLock(5000);
 
-    const payload = parsePostPayload_(event);
-    const entry = normalizePayload_(payload);
+    // Errores de validación: se devuelven con su mensaje. Cualquier otro error va a toErrorResponse_.
+    let entry;
+    try {
+      entry = normalizePayload_(parsePostPayload_(event));
+    } catch (validationError) {
+      return jsonOutput_({ ok: false, status: 'invalid_payload', message: validationError.message });
+    }
     const sheet = getRankingSheet_();
     const existingEntries = readEntries_(sheet);
 
@@ -123,6 +131,7 @@ function doPost(event) {
     }
 
     appendEntryRow_(sheet, entry);
+    CacheService.getScriptCache().remove(TOP_CACHE_KEY);
 
     return jsonOutput_({
       ok: true,
@@ -145,11 +154,19 @@ function parsePostPayload_(event) {
   const rawBody = event && event.postData && event.postData.contents ? event.postData.contents : '';
 
   if (rawBody) {
-    return JSON.parse(rawBody);
+    try {
+      return JSON.parse(rawBody);
+    } catch (_error) {
+      throw new Error('Payload inválido.');
+    }
   }
 
   if (event && event.parameter && event.parameter.payload) {
-    return JSON.parse(event.parameter.payload);
+    try {
+      return JSON.parse(event.parameter.payload);
+    } catch (_error) {
+      throw new Error('Payload inválido.');
+    }
   }
 
   throw new Error('Payload vacío.');
@@ -170,6 +187,7 @@ function normalizePayload_(payload) {
     MAX_COMPLETED_SEASONS,
   );
   const trophyCounts = normalizeTrophyCounts_(payload.trophyCounts);
+  checkTrophyPlausibility_(completedSeasons, trophyCounts);
   // El servidor recalcula la puntuación a partir de temporadas + palmarés en
   // vez de confiar en el arcadeScore/palmaresScore/survivalScore que manda el
   // cliente: el endpoint es público, así que un payload manual no puede
@@ -209,6 +227,23 @@ function normalizePayload_(payload) {
   if (!entry.createdAt) throw new Error('createdAt obligatorio.');
 
   return entry;
+}
+
+// v0.25.30: palmarés coherente con las temporadas declaradas. Como mucho un título por
+// competición nacional y un único torneo europeo por temporada. Se admite una temporada
+// extra: el título de la temporada que termina en Game Over.
+function checkTrophyPlausibility_(completedSeasons, trophyCounts) {
+  const maxPerCompetition = completedSeasons + 1;
+  const europeanTotal = trophyCounts.champions + trophyCounts.europaLeague + trophyCounts.conference;
+
+  if (
+    trophyCounts.liga > maxPerCompetition ||
+    trophyCounts.copa > maxPerCompetition ||
+    trophyCounts.supercopa > maxPerCompetition ||
+    europeanTotal > maxPerCompetition
+  ) {
+    throw new Error('Palmarés incoherente con las temporadas declaradas.');
+  }
 }
 
 function computeScores_(completedSeasons, trophyCounts) {
@@ -345,6 +380,22 @@ function getTopEntries_(limit) {
   return sortEntries_(readEntries_(getRankingSheet_())).slice(0, limit);
 }
 
+// v0.25.30: el top se guarda en caché de script durante TOP_CACHE_SECONDS. Si el valor no cabe
+// (CacheService admite hasta 100 KB), se sirve sin caché.
+function getCachedTopEntries_() {
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get(TOP_CACHE_KEY);
+  if (cached) return JSON.parse(cached);
+
+  const entries = getTopEntries_(TOP_LIMIT);
+  try {
+    cache.put(TOP_CACHE_KEY, JSON.stringify(entries), TOP_CACHE_SECONDS);
+  } catch (_error) {
+    // Sin caché: la respuesta es igual de válida.
+  }
+  return entries;
+}
+
 function sortEntries_(entries) {
   return entries.sort((left, right) => {
     if (right.arcadeScore !== left.arcadeScore) return right.arcadeScore - left.arcadeScore;
@@ -458,11 +509,13 @@ function clampNumber_(value, min, max) {
   return Math.max(min, Math.min(max, Math.floor(value)));
 }
 
+// v0.25.30: el detalle del error se registra en el servidor y no se envía al cliente.
 function toErrorResponse_(error) {
+  console.error('Ranking global: error interno.', error);
   return {
     ok: false,
     status: 'server_error',
-    message: error && error.message ? String(error.message) : 'Error interno del ranking global.',
+    message: 'Error interno del ranking global. Inténtalo de nuevo más tarde.',
   };
 }
 
