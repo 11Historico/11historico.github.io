@@ -11,4 +11,4 @@ export const APP_STATUS = "Versión pública estable: Modo carrera Athletic comp
 // que hacía fácil dejar alguno desactualizado al publicar una fase nueva;
 // ver v0.24.7 — Europa Career Release Stabilization).
 export const CURRENT_RELEASE_TAG = `${APP_VERSION}_STABLE_PUBLIC_RELEASE`;
-export const CURRENT_RELEASE_DOC = "docs/v0_25_31_GAME_TEXT.md";
+export const CURRENT_RELEASE_DOC = "docs/v0_25_32_PWA_MANIFEST.md";

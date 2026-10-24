@@ -38,6 +38,11 @@ function testHowToPlayExplainsObjectiveAndLoop(): void {
   assertIncludes(home, "Palmarés", "how to play palmares");
   assertIncludes(home, "Champions, Europa League y Conference", "how to play european scope");
   assertIncludes(home, "entre los 5 primeros de Liga", "how to play copa reassignment");
+  const indexHtml = read("index.html");
+  assertIncludes(indexHtml, '<link rel="manifest" href="/manifest.webmanifest" />', "manifiesto web enlazado");
+  const manifest = JSON.parse(read("public/manifest.webmanifest"));
+  assertIncludes(JSON.stringify(manifest.icons), "icon-512.png", "manifiesto con icono 512");
+  assertIncludes(JSON.stringify(manifest.icons), "icon-192.png", "manifiesto con icono 192");
 }
 
 function testPublicUxStylesExist(): void {

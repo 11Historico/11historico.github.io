@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.32 — Instalable en el móvil (manifiesto web)
+
+- Manifiesto web (`public/manifest.webmanifest`) con nombre, modo standalone, colores y dos iconos PNG (192 y 512).
+- Icono propio de la app, original: pelota sobre fondo oscuro (`public/app-icon.svg`). No usa escudos ni marcas de terceros.
+- Etiquetas `manifest`, `theme-color` y `apple-touch-icon` en `index.html`.
+- Sin service worker: no hay modo sin conexión en esta versión.
+- Versionado a `v0.25.32` / `0.25.32`.
+
 ## v0.25.31 — Plaza de Copa explicada en "Cómo funciona"
 
 - "Cómo funciona" explica la reasignación de la plaza de Copa: si el campeón queda entre los 5 primeros de Liga, su plaza pasa al 6.º (Europa League) y el 7.º va a Conference; si queda 6.º, conserva su plaza.
