@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.29 — Guardado de partida en un hook
+
+- El efecto que guarda la partida sale de `App.tsx` y pasa a `src/app/useGamePersistence.ts`. Misma lista de dependencias, mismas pantallas excluidas (inicio y entrada a la carrera).
+- Primer corte de la fase 13 (refactor de `App.tsx`). El archivo sigue con 1.738 líneas: los siguientes cortes necesitan su propio diseño.
+- Versionado a `v0.25.29` / `0.25.29`.
+
 ## v0.25.28 — Fondo de estadio en la pantalla de carrera
 
 - La pantalla de entrada a la carrera usa el mismo fondo de estadio que la portada (`src/assets/home-stadium.svg`), con el mismo velo oscuro.

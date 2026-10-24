@@ -48,6 +48,7 @@ import { DEFAULT_EASY_MODE_SEASON_RANGE_ID } from "./data/easyModeSeasonRanges";
 import { createRandomPlayerRoundSeasons, getDraftSeasonPool, pickRandomSeason } from "./app/draftSeasons";
 import { TOTAL_PLAYER_ROUNDS, sanitizeSelectedPlayers, validateSelectedTeam } from "./app/teamValidation";
 import GameHome from "./components/GameHome";
+import { useGamePersistence, type GameSnapshot } from "./app/useGamePersistence";
 import { DIFFICULTY_OPTIONS } from "./config/difficultyOptions";
 import CompetitionIcon from "./components/CompetitionIcon";
 import ChallengeBanner from "./components/ChallengeBanner";
@@ -62,7 +63,6 @@ import {
   clearSavedGameState,
   hasSavedGameState,
   loadGameState,
-  saveGameState,
 } from "./storage/localGameStorage";
 
 import {
@@ -318,10 +318,8 @@ export default function App() {
     window.requestAnimationFrame(scrollToTop);
   }, [screen]);
 
-  useEffect(() => {
-    if (screen === "home" || screen === "career_preview") return;
-
-    saveGameState({
+  const gameSnapshot = useMemo<GameSnapshot>(
+    () => ({
       gameId,
       phase,
       difficulty,
@@ -353,41 +351,43 @@ export default function App() {
       careerCurrentRankingEntry,
       europeanCareer: europeanCareerState,
       careerEuropeanPrestigeReward,
-    });
-  }, [
-    gameId,
-    phase,
-    difficulty,
-    easyModeSeasonRangeId,
-    screen,
-    selectedFormation,
-    playerRoundSeasons,
-    currentRoundIndex,
-    selectedPlayers,
-    selectedCoach,
-    teamRating,
-    leagueContext,
-    pendingSeasonLuckWheelOffer,
-    finalSummary,
-    isCareerMode,
-    careerSeasonResult,
-    careerObjectiveResult,
-    careerCompletedSeasons,
-    careerBestLeaguePosition,
-    careerSeasonLabel,
-    careerTrophyCounts,
-    careerLeagueRivals,
-    careerSecondDivisionPool,
-    careerPromotionTransition,
-    careerPendingSupercopa,
-    careerCurrentSupercopaResult,
-    careerRewardFlow,
-    careerSeasonRatingBonus,
-    careerRewardSnapshot,
-    careerCurrentRankingEntry,
-    europeanCareerState,
-    careerEuropeanPrestigeReward,
-  ]);
+    }),
+    [
+      gameId,
+      phase,
+      difficulty,
+      easyModeSeasonRangeId,
+      selectedFormation,
+      playerRoundSeasons,
+      currentRoundIndex,
+      selectedPlayers,
+      selectedCoach,
+      teamRating,
+      leagueContext,
+      pendingSeasonLuckWheelOffer,
+      finalSummary,
+      isCareerMode,
+      careerSeasonResult,
+      careerObjectiveResult,
+      careerCompletedSeasons,
+      careerBestLeaguePosition,
+      careerSeasonLabel,
+      careerTrophyCounts,
+      careerLeagueRivals,
+      careerSecondDivisionPool,
+      careerPromotionTransition,
+      careerPendingSupercopa,
+      careerCurrentSupercopaResult,
+      careerRewardFlow,
+      careerSeasonRatingBonus,
+      careerRewardSnapshot,
+      careerCurrentRankingEntry,
+      europeanCareerState,
+      careerEuropeanPrestigeReward,
+    ]
+  );
+
+  useGamePersistence(gameSnapshot, screen !== "home" && screen !== "career_preview");
 
   const careerEuropeanQualification = useMemo<EuropeanQualificationResult | undefined>(() => {
     if (!careerSeasonResult) return undefined;
