@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.31 — Plaza de Copa explicada en "Cómo funciona"
+
+- "Cómo funciona" explica la reasignación de la plaza de Copa: si el campeón queda entre los 5 primeros de Liga, su plaza pasa al 6.º (Europa League) y el 7.º va a Conference; si queda 6.º, conserva su plaza.
+- El motivo del resultado al final de temporada ya existía (`objectiveResult.reason`).
+- Texto pendiente de revisión del propietario antes de fusionar.
+- Versionado a `v0.25.31` / `0.25.31`.
+
 ## v0.25.30 — Ranking global: plausibilidad, errores y caché
 
 - El envío rechaza palmarés incoherente con las temporadas declaradas: como mucho un título por competición nacional y un torneo europeo por temporada, con una temporada extra.

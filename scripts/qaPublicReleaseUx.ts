@@ -37,6 +37,7 @@ function testHowToPlayExplainsObjectiveAndLoop(): void {
   assertIncludes(home, "Si sobrevives", "how to play survival loop");
   assertIncludes(home, "Palmarés", "how to play palmares");
   assertIncludes(home, "Champions, Europa League y Conference", "how to play european scope");
+  assertIncludes(home, "entre los 5 primeros de Liga", "how to play copa reassignment");
 }
 
 function testPublicUxStylesExist(): void {
