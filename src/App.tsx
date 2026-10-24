@@ -18,6 +18,15 @@ import type {
 
 import type { UserLeagueSimulationContext } from "./simulation/leagueSimulator";
 import type { SeasonLuckWheelOffer } from "./career/seasonLuckWheel";
+import type { AppScreen } from "./app/appScreen";
+import {
+  cancelLuckWheelCoachChange,
+  hasSpecialCoachBonus,
+  startCareerCoachChange,
+  startLuckWheelCoachChange,
+  startLuckWheelPlayerChange,
+  type CareerRewardFlowPatch,
+} from "./app/careerRewardFlow";
 import { calculateTeamRating } from "./simulation/teamRating";
 import { applyCareerRatingBonus } from "./career/teamPower";
 import {
@@ -189,21 +198,6 @@ function getSingleOpenSlotLine(params: {
 
   return openSlots.length === 1 ? openSlots[0].line : undefined;
 }
-
-type AppScreen =
-  | "home"
-  | "career_preview"
-  | "career_season_result"
-  | "career_game_over"
-  | "career_local_ranking"
-  | "career_global_ranking"
-  | "career_interseason_reward"
-  | "career_supercopa"
-  | "career_player_replacement_pick"
-  | "career_player_replacement_draft"
-  | "career_formation_change"
-  | "season_reveal"
-  | GamePhase;
 
 function createGameId(): string {
   return `game_${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -977,84 +971,57 @@ export default function App() {
     return true;
   }
 
+  function applyCareerRewardFlowPatch(patch: CareerRewardFlowPatch) {
+    if ("leagueContext" in patch) setLeagueContext(patch.leagueContext);
+    if ("careerRewardFlow" in patch) setCareerRewardFlow(patch.careerRewardFlow);
+    if ("coachBeforeReward" in patch) setCoachBeforeReward(patch.coachBeforeReward);
+    if ("selectedCoach" in patch) setSelectedCoach(patch.selectedCoach);
+    if ("teamRating" in patch) setTeamRating(patch.teamRating);
+    if ("finalSummary" in patch) setFinalSummary(patch.finalSummary);
+    if ("careerSeasonResult" in patch) setCareerSeasonResult(patch.careerSeasonResult);
+    if ("careerObjectiveResult" in patch) setCareerObjectiveResult(patch.careerObjectiveResult);
+    if ("careerPromotionTransition" in patch) setCareerPromotionTransition(patch.careerPromotionTransition);
+    if ("pendingSeasonLuckWheelOffer" in patch) setPendingSeasonLuckWheelOffer(patch.pendingSeasonLuckWheelOffer);
+    if ("replacementDraftSeason" in patch) setReplacementDraftSeason(patch.replacementDraftSeason);
+    if ("replacementRemovedPlayer" in patch) setReplacementRemovedPlayer(patch.replacementRemovedPlayer);
+    if ("replacementOriginalFormation" in patch) setReplacementOriginalFormation(patch.replacementOriginalFormation);
+    if ("teamValidationErrors" in patch) setTeamValidationErrors(patch.teamValidationErrors ?? []);
+    if (patch.phase) setPhase(patch.phase);
+    if (patch.screen) setScreen(patch.screen);
+  }
+
   function handleSeasonLuckWheelPlayerChange(nextContext: UserLeagueSimulationContext) {
     if (!selectedFormation || !selectedCoach) return;
 
-    setLeagueContext(nextContext);
-    setCareerRewardFlow("luck_wheel_player");
-    setTeamRating(undefined);
-    setFinalSummary(undefined);
-    setCareerSeasonResult(undefined);
-    setCareerObjectiveResult(undefined);
-    setReplacementDraftSeason(undefined);
-    setReplacementRemovedPlayer(undefined);
-    setReplacementOriginalFormation(undefined);
-    setTeamValidationErrors([]);
-    setPhase("player_selection");
-    setScreen("career_player_replacement_pick");
+    applyCareerRewardFlowPatch(startLuckWheelPlayerChange(nextContext));
   }
 
   function handleSeasonLuckWheelCoachChange(nextContext: UserLeagueSimulationContext) {
     if (!selectedFormation || !selectedCoach) return;
 
-    setLeagueContext(nextContext);
-    setCareerRewardFlow("luck_wheel_coach");
-    setCoachBeforeReward(selectedCoach);
-    setSelectedCoach(undefined);
-    setTeamRating(undefined);
-    setFinalSummary(undefined);
-    setCareerSeasonResult(undefined);
-    setCareerObjectiveResult(undefined);
-    setReplacementDraftSeason(undefined);
-    setReplacementRemovedPlayer(undefined);
-    setReplacementOriginalFormation(undefined);
-    setTeamValidationErrors([]);
-    setPhase("coach_selection");
-    setScreen("coach_selection");
+    applyCareerRewardFlowPatch(startLuckWheelCoachChange(nextContext, selectedCoach));
   }
 
   function handleCancelLuckWheelCoachChange() {
     if (!coachBeforeReward) return;
 
-    setSelectedCoach(coachBeforeReward);
+    applyCareerRewardFlowPatch(cancelLuckWheelCoachChange(coachBeforeReward));
     recalculateVisibleTeamRating({
       formation: selectedFormation,
       selectedPlayers,
       selectedCoach: coachBeforeReward,
     });
-    setCoachBeforeReward(undefined);
-    setCareerRewardFlow(undefined);
-    setTeamValidationErrors([]);
-    setPhase("league_simulation");
-    setScreen("league_simulation");
   }
 
   function handleChooseCareerCoachChange() {
     ensureCareerRewardSnapshot();
 
-    const specialCoachBonus = Boolean(
-      careerSeasonResult &&
-      careerObjectiveResult &&
-      (careerSeasonResult.wonLeague ||
-        careerSeasonResult.wonCopa ||
-        (careerSeasonResult.wonSupercopa && careerObjectiveResult.qualifiedForEurope))
+    applyCareerRewardFlowPatch(
+      startCareerCoachChange({
+        selectedCoach,
+        specialCoachBonus: hasSpecialCoachBonus(careerSeasonResult, careerObjectiveResult),
+      }),
     );
-
-    setCoachBeforeReward(selectedCoach);
-    setCareerRewardFlow(specialCoachBonus ? "coach_bonus" : "standard_coach");
-    setSelectedCoach(undefined);
-    setTeamRating(undefined);
-    setLeagueContext(undefined);
-    setPendingSeasonLuckWheelOffer(undefined);
-    setFinalSummary(undefined);
-    setCareerSeasonResult(undefined);
-    setCareerObjectiveResult(undefined);
-    setCareerPromotionTransition(undefined);
-    setReplacementDraftSeason(undefined);
-    setReplacementRemovedPlayer(undefined);
-    setReplacementOriginalFormation(undefined);
-    setPhase("coach_selection");
-    setScreen("coach_selection");
   }
 
   function handleKeepCurrentCoachWithBonus() {
