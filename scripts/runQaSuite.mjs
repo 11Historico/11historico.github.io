@@ -37,6 +37,7 @@ const QA_SCRIPTS = [
   "qaPublicReleaseUx",
   "qaShareRetentionSystem",
   "qaSavedGameResume",
+  "qaGlobalRankingPlausibility",
 ];
 
 const OUT_DIR = ".audit-dist";

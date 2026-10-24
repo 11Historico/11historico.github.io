@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.30 — Ranking global: plausibilidad, errores y caché
+
+- El envío rechaza palmarés incoherente con las temporadas declaradas: como mucho un título por competición nacional y un torneo europeo por temporada, con una temporada extra.
+- Los errores de validación se devuelven con su mensaje (`invalid_payload`). Los errores internos se registran en el servidor y el cliente recibe un mensaje genérico.
+- El top de 100 entradas se guarda en caché durante 5 minutos y se borra al enviar una carrera nueva.
+- Requiere redesplegar `apps-script/globalRankingBackend.gs` en Apps Script. El frontend no cambia.
+- Versionado a `v0.25.30` / `0.25.30`.
+
 ## v0.25.29 — Guardado de partida en un hook
 
 - El efecto que guarda la partida sale de `App.tsx` y pasa a `src/app/useGamePersistence.ts`. Misma lista de dependencias, mismas pantallas excluidas (inicio y entrada a la carrera).
