@@ -62,7 +62,8 @@ test("una temporada superada ofrece el reto con la marca actual", async ({ page 
     stalls = advanced ? 0 : stalls + 1;
     expect(stalls, "La temporada no ofrece ningún paso de avance").toBeLessThan(10);
 
-    if (advanced) await page.waitForTimeout(150);
+    // Sin botón visible, esperar: la siguiente pantalla (carga diferida) puede tardar en CI.
+    await page.waitForTimeout(advanced ? 150 : 250);
   }
 
   await expect(survived).toBeVisible();
