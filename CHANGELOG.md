@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.28 — Fondo de estadio en la pantalla de carrera
+
+- La pantalla de entrada a la carrera usa el mismo fondo de estadio que la portada (`src/assets/home-stadium.svg`), con el mismo velo oscuro.
+- Sin cambios de texto ni de lógica.
+- Versionado a `v0.25.28` / `0.25.28`.
+
 ## v0.25.27 — Barra de fases y foco en la ruleta
 
 - La barra de fases ya no mete la versión dentro de la cuadrícula: en escritorio las seis fases quedan en una fila, sin que "Resultado" baje a otra línea.
