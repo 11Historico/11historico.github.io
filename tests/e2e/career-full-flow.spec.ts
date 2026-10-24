@@ -75,9 +75,8 @@ Botones: ${buttons.join(" | ")}
 Texto: ${text}`);
     }
 
-    if (advanced) {
-      await page.waitForTimeout(150);
-    }
+    // Sin botón visible, esperar: la siguiente pantalla (carga diferida) puede tardar en CI.
+    await page.waitForTimeout(advanced ? 150 : 250);
   }
 
   await expect(gameOver).toBeVisible();
