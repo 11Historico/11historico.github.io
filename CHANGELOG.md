@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.33 — Flujo de recompensas de la carrera en transiciones puras
+
+- Los cuatro handlers de la ruleta y del cambio de entrenador (`App.tsx`) pasan a transiciones puras en `src/app/careerRewardFlow.ts`. Cada una devuelve solo los campos que cambian, y `applyCareerRewardFlowPatch` los aplica.
+- `AppScreen` se mueve a `src/app/appScreen.ts`.
+- Pruebas unitarias nuevas de las transiciones y de la regla del bonus de entrenador.
+- Versionado a `v0.25.33` / `0.25.33`.
+
 ## v0.25.32 — Instalable en el móvil (manifiesto web)
 
 - Manifiesto web (`public/manifest.webmanifest`) con nombre, modo standalone, colores y dos iconos PNG (192 y 512).
