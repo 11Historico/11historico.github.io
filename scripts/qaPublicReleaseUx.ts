@@ -37,6 +37,12 @@ function testHowToPlayExplainsObjectiveAndLoop(): void {
   assertIncludes(home, "Si sobrevives", "how to play survival loop");
   assertIncludes(home, "Palmarés", "how to play palmares");
   assertIncludes(home, "Champions, Europa League y Conference", "how to play european scope");
+  assertIncludes(home, "entre los 5 primeros de Liga", "how to play copa reassignment");
+  const indexHtml = read("index.html");
+  assertIncludes(indexHtml, '<link rel="manifest" href="/manifest.webmanifest" />', "manifiesto web enlazado");
+  const manifest = JSON.parse(read("public/manifest.webmanifest"));
+  assertIncludes(JSON.stringify(manifest.icons), "icon-512.png", "manifiesto con icono 512");
+  assertIncludes(JSON.stringify(manifest.icons), "icon-192.png", "manifiesto con icono 192");
 }
 
 function testPublicUxStylesExist(): void {
@@ -49,12 +55,11 @@ function testPublicUxStylesExist(): void {
 
 function testScriptsAndWorkflowAreRegistered(): void {
   const packageJson = read("package.json");
-  const workflow = read(".github/workflows/deploy.yml");
 
   assertIncludes(packageJson, "qa:public-release-ux", "package scripts");
   assertIncludes(packageJson, "npm run qa:public-release-ux", "qa:tech-debt chain");
-  assertIncludes(workflow, "Run public release UX QA", "GitHub Actions");
-  assertIncludes(workflow, "npm run qa:public-release-ux", "GitHub Actions");
+  assertIncludes(read("scripts/runQaSuite.mjs"), "qaPublicReleaseUx", "runQaSuite debe ejecutar qaPublicReleaseUx.");
+  assertIncludes(read("scripts/runQaSuite.mjs"), "qaPublicReleaseUx", "runQaSuite debe ejecutar qaPublicReleaseUx.");
 }
 
 function testDocsExist(): void {

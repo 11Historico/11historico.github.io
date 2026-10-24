@@ -1,5 +1,82 @@
 # Changelog
 
+## v0.25.33 — Flujo de recompensas de la carrera en transiciones puras
+
+- Los cuatro handlers de la ruleta y del cambio de entrenador (`App.tsx`) pasan a transiciones puras en `src/app/careerRewardFlow.ts`. Cada una devuelve solo los campos que cambian, y `applyCareerRewardFlowPatch` los aplica.
+- `AppScreen` se mueve a `src/app/appScreen.ts`.
+- Pruebas unitarias nuevas de las transiciones y de la regla del bonus de entrenador.
+- Versionado a `v0.25.33` / `0.25.33`.
+
+## v0.25.32 — Instalable en el móvil (manifiesto web)
+
+- Manifiesto web (`public/manifest.webmanifest`) con nombre, modo standalone, colores y dos iconos PNG (192 y 512).
+- Icono propio de la app, original: pelota sobre fondo oscuro (`public/app-icon.svg`). No usa escudos ni marcas de terceros.
+- Etiquetas `manifest`, `theme-color` y `apple-touch-icon` en `index.html`.
+- Sin service worker: no hay modo sin conexión en esta versión.
+- Versionado a `v0.25.32` / `0.25.32`.
+
+## v0.25.31 — Plaza de Copa explicada en "Cómo funciona"
+
+- "Cómo funciona" explica la reasignación de la plaza de Copa: si el campeón queda entre los 5 primeros de Liga, su plaza pasa al 6.º (Europa League) y el 7.º va a Conference; si queda 6.º, conserva su plaza.
+- El motivo del resultado al final de temporada ya existía (`objectiveResult.reason`).
+- Texto pendiente de revisión del propietario antes de fusionar.
+- Versionado a `v0.25.31` / `0.25.31`.
+
+## v0.25.30 — Ranking global: plausibilidad, errores y caché
+
+- El envío rechaza palmarés incoherente con las temporadas declaradas: como mucho un título por competición nacional y un torneo europeo por temporada, con una temporada extra.
+- Los errores de validación se devuelven con su mensaje (`invalid_payload`). Los errores internos se registran en el servidor y el cliente recibe un mensaje genérico.
+- El top de 100 entradas se guarda en caché durante 5 minutos y se borra al enviar una carrera nueva.
+- Requiere redesplegar `apps-script/globalRankingBackend.gs` en Apps Script. El frontend no cambia.
+- Versionado a `v0.25.30` / `0.25.30`.
+
+## v0.25.29 — Guardado de partida en un hook
+
+- El efecto que guarda la partida sale de `App.tsx` y pasa a `src/app/useGamePersistence.ts`. Misma lista de dependencias, mismas pantallas excluidas (inicio y entrada a la carrera).
+- Primer corte de la fase 13 (refactor de `App.tsx`). El archivo sigue con 1.738 líneas: los siguientes cortes necesitan su propio diseño.
+- Versionado a `v0.25.29` / `0.25.29`.
+
+## v0.25.28 — Fondo de estadio en la pantalla de carrera
+
+- La pantalla de entrada a la carrera usa el mismo fondo de estadio que la portada (`src/assets/home-stadium.svg`), con el mismo velo oscuro.
+- Sin cambios de texto ni de lógica.
+- Versionado a `v0.25.28` / `0.25.28`.
+
+## v0.25.27 — Barra de fases y foco en la ruleta
+
+- La barra de fases ya no mete la versión dentro de la cuadrícula: en escritorio las seis fases quedan en una fila, sin que "Resultado" baje a otra línea.
+- En móvil, el borde derecho de la barra se desvanece para indicar que hay más pasos.
+- La ruleta de temporada recibe el foco al abrirse y cambia de etapa; Tab se queda dentro del diálogo. No se enfoca "Parar flecha", para que Enter no detenga la flecha sin querer.
+- Prueba e2e de temporada superada: se espera el encabezado exacto y no se pulsa "Continuar carrera" desde la pantalla de resultado (carrera de la prueba inestable).
+- Versionado a `v0.25.27` / `0.25.27`.
+
+## v0.25.26 — Carga diferida de pantallas
+
+- Las pantallas que no se ven al abrir el juego (liga, resumen final, carrera, rankings y pickers) se cargan con `React.lazy` y `Suspense`.
+- El JS principal baja de 537 kB (151 kB comprimido) a 386 kB (114 kB comprimido).
+- Sin cambios de comportamiento.
+- Versionado a `v0.25.26` / `0.25.26`.
+
+## v0.25.25 — Versión en una sola fuente
+
+- `APP_VERSION` se deriva de `package.json` (`src/config/appVersion.ts`). Ya no hay que escribirla a mano.
+- Los QA de versión comparan con `package.json` en vez de un literal. Se mantiene la comprobación de formato semver.
+- Para subir de versión: `npm version <x.y.z> --no-git-tag-version` (actualiza `package.json` y `package-lock.json`), y después README, CHANGELOG, documento de fase y `CURRENT_RELEASE_DOC`.
+- Versionado a `v0.25.25` / `0.25.25`.
+
+## v0.25.24 — QA de CI en una sola compilación
+
+- El workflow de despliegue ejecuta los 29 QA en un único paso (`npm run qa:ci`, script `scripts/runQaSuite.mjs`) en vez de 29 pasos, cada uno con su compilación. Local: de unos 38 s a 1 s; las 166 comprobaciones son idénticas.
+- Los QA que comprobaban su propio paso en `deploy.yml` ahora comprueban que su script está registrado en `runQaSuite.mjs`.
+- Versionado a `v0.25.24` / `0.25.24`.
+
+## v0.25.23 — Texto de carrera en la pantalla de liga
+
+- En modo carrera, la pantalla de liga dice "Carrera" en vez de "Partida rápida".
+- Se retira el bloque de foco de la pantalla de carrera de v0.25.20: el foco visible ya es global desde v0.25.2 (`src/index.css`).
+- Prueba e2e nueva: `career-league-copy`.
+- Versionado a `v0.25.23` / `0.25.23`.
+
 ## v0.25.22 — Progresión de los rivales en la carrera
 
 - Los rivales de la carrera se vuelven más fuertes poco a poco: +0,5 de valoración en las tres primeras temporadas superadas, +1 en las tres siguientes y +1,5 después, con un máximo de +10. La curva ya estaba definida en `getRivalDifficultyBonus`, pero no se usaba.

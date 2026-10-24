@@ -143,12 +143,11 @@ function testUiIntegrationExists(): void {
 
 function testScriptsWorkflowAndDocs(): void {
   const packageJson = read("package.json");
-  const workflow = read(".github/workflows/deploy.yml");
 
   assertIncludes(packageJson, "qa:share-retention", "package scripts");
   assertIncludes(packageJson, "npm run qa:share-retention", "qa:tech-debt chain");
-  assertIncludes(workflow, "Run share retention QA", "GitHub Actions");
-  assertIncludes(workflow, "npm run qa:share-retention", "GitHub Actions");
+  assertIncludes(read("scripts/runQaSuite.mjs"), "qaShareRetentionSystem", "runQaSuite debe ejecutar qaShareRetentionSystem.");
+  assertIncludes(read("scripts/runQaSuite.mjs"), "qaShareRetentionSystem", "runQaSuite debe ejecutar qaShareRetentionSystem.");
   assert(existsSync(join(root, "docs/v0_24_9_SHARE_RETENTION_SYSTEM.md")), "phase doc missing");
 }
 

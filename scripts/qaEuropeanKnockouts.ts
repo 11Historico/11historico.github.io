@@ -153,7 +153,6 @@ function testUiAndRegistry(): void {
   const panel = read("src/components/EuropeanProgressPanel.tsx");
   const panelCss = read("src/components/EuropeanProgressPanel.css");
   const packageJson = read("package.json");
-  const workflow = read(".github/workflows/deploy.yml");
   const docs = read("docs/v0_24_3a_EUROPEAN_KNOCKOUTS.md");
 
   assertIncludes(event, "Partido único", "EuropeanMatchEvent debe destacar semifinal/final como partido único.");
@@ -165,8 +164,8 @@ function testUiAndRegistry(): void {
   assertIncludes(panelCss, "european-progress-knockout-state", "El panel debe tener bloque visual de eliminatorias.");
   assertIncludes(packageJson, "qa:european-knockouts", "package.json debe registrar qa:european-knockouts.");
   assertIncludes(packageJson, "qa:european-progress-ui && npm run qa:european-knockouts", "qa:tech-debt debe ejecutar qa:european-knockouts tras progress UI.");
-  assertIncludes(workflow, "Run european knockouts QA", "GitHub Actions debe ejecutar la QA de knockouts.");
-  assertIncludes(workflow, "npm run qa:european-knockouts", "deploy.yml debe lanzar qa:european-knockouts.");
+  assertIncludes(read("scripts/runQaSuite.mjs"), "qaEuropeanKnockouts", "runQaSuite debe ejecutar qaEuropeanKnockouts.");
+  assertIncludes(read("scripts/runQaSuite.mjs"), "qaEuropeanKnockouts", "runQaSuite debe ejecutar qaEuropeanKnockouts.");
   assertIncludes(docs, "No se añaden títulos europeos al palmarés", "La documentación debe dejar fuera de alcance el palmarés.");
 }
 
@@ -182,5 +181,5 @@ console.log("✓ Semifinal perdida elimina sin crear final");
 testFinalOutcomesDoNotTouchPalmares();
 console.log("✓ Final ganada/perdida cierra torneo sin tocar palmarés");
 testUiAndRegistry();
-console.log("✓ UI, documentación, package.json y workflow registran knockouts");
+console.log("✓ UI, documentación, package.json y runner de QA registran knockouts");
 console.log("QA european knockouts OK");

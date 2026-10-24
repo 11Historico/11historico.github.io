@@ -9,11 +9,15 @@
     linear-gradient(180deg, rgba(9, 9, 9, 0.92), rgba(9, 9, 9, 0.64));
   backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 .phase-progress-inner {
-  max-width: 1180px;
-  margin: 0 auto;
+  flex: 0 1 1180px;
+  min-width: 0;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 8px;
@@ -174,10 +178,13 @@
   }
 
   .phase-progress-inner {
+    flex: 1 1 auto;
     max-width: none;
     display: flex;
     gap: 6px;
     overflow-x: auto;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
     scroll-snap-type: x proximity;
     padding-bottom: 2px;
     scrollbar-width: none;
