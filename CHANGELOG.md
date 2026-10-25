@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.35 — Cambio de formación y validación fuera de App
+
+- El cambio de formación de la carrera pasa a una transición pura (`startCareerFormationChange`) y la validación de la nueva formación a `checkCareerFormationChange`, en `src/app/careerRewardFlow.ts`.
+- Las reglas del hueco del sustituto se prueban sin React (`tests/unit/careerFormationChange.test.ts`).
+- Sin cambios de comportamiento. Las rutas de cambio de formación y de reemplazo no tienen prueba E2E: probarlas a mano en una carrera.
+- Versionado a `v0.25.35` / `0.25.35`.
+
 ## v0.25.34 — Decisión explícita de envío al ranking global
 
 - En Game Over, la pregunta "¿Enviar esta carrera al ranking global?" aparece justo debajo del motivo del resultado, en lugar de al final de la pantalla.
