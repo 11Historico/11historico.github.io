@@ -31,66 +31,12 @@ jobs:
         run: npm ci
       - name: Run typecheck
         run: npm run typecheck
-      - name: Run tech health baseline QA
-        run: npm run qa:tech-health-baseline
-      - name: Run mobile viewport QA
-        run: npm run qa:mobile-viewport
-      - name: Run hooks simulation deps QA
-        run: npm run qa:hooks-simulation-deps
-      - name: Run luck wheel real rewards QA
-        run: npm run qa:luck-wheel-real-rewards
-      - name: Run european qualification QA
-        run: npm run qa:european-qualification
-      - name: Run european qualification UI QA
-        run: npm run qa:european-qualification-ui
-      - name: Run european persistence QA
-        run: npm run qa:european-persistence
-      - name: Run european tournament QA
-        run: npm run qa:european-tournament
-      - name: Run european match engine QA
-        run: npm run qa:european-match-engine
-      - name: Run european calendar QA
-        run: npm run qa:european-calendar
-      - name: Run european matchday UI QA
-        run: npm run qa:european-matchday-ui
-      - name: Run european progress UI QA
-        run: npm run qa:european-progress-ui
-      - name: Run european knockouts QA
-        run: npm run qa:european-knockouts
-      - name: Run european knockout extra time QA
-        run: npm run qa:european-knockout-extra-time
-      - name: Run match sequence QA
-        run: npm run qa:match-sequence
-      - name: Run european match sequence QA
-        run: npm run qa:european-match-sequence
-      - name: Run match playback speed QA
-        run: npm run qa:match-playback-speed
-      - name: Run bundle chunking QA
-        run: npm run qa:bundle-chunking
-      - name: Run P1 low-cost QA
-        run: npm run qa:p1-low-cost
-      - name: Run european trophies palmares QA
-        run: npm run qa:european-trophies-palmares
-      - name: Run european rewards prestige QA
-        run: npm run qa:european-rewards-prestige
-      - name: Run european balance QA
-        run: npm run qa:european-balance
-      - name: Run global ranking europa fields QA
-        run: npm run qa:global-ranking-europa-fields
-      - name: Run global ranking backend migration QA
-        run: npm run qa:global-ranking-backend-migration
-      - name: Run european mobile polish QA
-        run: npm run qa:european-mobile-polish
-      - name: Run european visual polish QA
-        run: npm run qa:european-visual-polish
-      - name: Run public release UX QA
-        run: npm run qa:public-release-ux
-      - name: Run share retention QA
-        run: npm run qa:share-retention
-      - name: Run saved game resume QA
-        run: npm run qa:saved-game-resume
+      - name: Run QA suite
+        run: npm run qa:ci
       - name: Run source lint
         run: npm run lint:src
+      - name: Run unit tests
+        run: npm test
       - name: Build
         run: npm run build
         env:
@@ -99,8 +45,14 @@ jobs:
           # anteriores asumen "sin endpoint". Si la variable no existe, queda
           # vacía y el sitio muestra "Conecta el ranking global" como antes.
           VITE_GLOBAL_RANKING_ENDPOINT: ${{ vars.VITE_GLOBAL_RANKING_ENDPOINT }}
+          # Analítica sin cookies (GoatCounter). Si la variable no existe, no se envía nada.
+          VITE_ANALYTICS_HOST: ${{ vars.VITE_ANALYTICS_HOST }}
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run smoke tests
+        run: npm run test:e2e
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
@@ -114,4 +66,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

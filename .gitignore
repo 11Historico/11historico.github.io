@@ -30,3 +30,7 @@ Thumbs.db
 .audit-dist/
 
 Auditoria_*.docx
+
+# Artefactos de Playwright y Vitest
+test-results/
+playwright-report/

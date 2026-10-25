@@ -1,5 +1,221 @@
 # Changelog
 
+## v0.25.33 — Flujo de recompensas de la carrera en transiciones puras
+
+- Los cuatro handlers de la ruleta y del cambio de entrenador (`App.tsx`) pasan a transiciones puras en `src/app/careerRewardFlow.ts`. Cada una devuelve solo los campos que cambian, y `applyCareerRewardFlowPatch` los aplica.
+- `AppScreen` se mueve a `src/app/appScreen.ts`.
+- Pruebas unitarias nuevas de las transiciones y de la regla del bonus de entrenador.
+- Versionado a `v0.25.33` / `0.25.33`.
+
+## v0.25.32 — Instalable en el móvil (manifiesto web)
+
+- Manifiesto web (`public/manifest.webmanifest`) con nombre, modo standalone, colores y dos iconos PNG (192 y 512).
+- Icono propio de la app, original: pelota sobre fondo oscuro (`public/app-icon.svg`). No usa escudos ni marcas de terceros.
+- Etiquetas `manifest`, `theme-color` y `apple-touch-icon` en `index.html`.
+- Sin service worker: no hay modo sin conexión en esta versión.
+- Versionado a `v0.25.32` / `0.25.32`.
+
+## v0.25.31 — Plaza de Copa explicada en "Cómo funciona"
+
+- "Cómo funciona" explica la reasignación de la plaza de Copa: si el campeón queda entre los 5 primeros de Liga, su plaza pasa al 6.º (Europa League) y el 7.º va a Conference; si queda 6.º, conserva su plaza.
+- El motivo del resultado al final de temporada ya existía (`objectiveResult.reason`).
+- Texto pendiente de revisión del propietario antes de fusionar.
+- Versionado a `v0.25.31` / `0.25.31`.
+
+## v0.25.30 — Ranking global: plausibilidad, errores y caché
+
+- El envío rechaza palmarés incoherente con las temporadas declaradas: como mucho un título por competición nacional y un torneo europeo por temporada, con una temporada extra.
+- Los errores de validación se devuelven con su mensaje (`invalid_payload`). Los errores internos se registran en el servidor y el cliente recibe un mensaje genérico.
+- El top de 100 entradas se guarda en caché durante 5 minutos y se borra al enviar una carrera nueva.
+- Requiere redesplegar `apps-script/globalRankingBackend.gs` en Apps Script. El frontend no cambia.
+- Versionado a `v0.25.30` / `0.25.30`.
+
+## v0.25.29 — Guardado de partida en un hook
+
+- El efecto que guarda la partida sale de `App.tsx` y pasa a `src/app/useGamePersistence.ts`. Misma lista de dependencias, mismas pantallas excluidas (inicio y entrada a la carrera).
+- Primer corte de la fase 13 (refactor de `App.tsx`). El archivo sigue con 1.738 líneas: los siguientes cortes necesitan su propio diseño.
+- Versionado a `v0.25.29` / `0.25.29`.
+
+## v0.25.28 — Fondo de estadio en la pantalla de carrera
+
+- La pantalla de entrada a la carrera usa el mismo fondo de estadio que la portada (`src/assets/home-stadium.svg`), con el mismo velo oscuro.
+- Sin cambios de texto ni de lógica.
+- Versionado a `v0.25.28` / `0.25.28`.
+
+## v0.25.27 — Barra de fases y foco en la ruleta
+
+- La barra de fases ya no mete la versión dentro de la cuadrícula: en escritorio las seis fases quedan en una fila, sin que "Resultado" baje a otra línea.
+- En móvil, el borde derecho de la barra se desvanece para indicar que hay más pasos.
+- La ruleta de temporada recibe el foco al abrirse y cambia de etapa; Tab se queda dentro del diálogo. No se enfoca "Parar flecha", para que Enter no detenga la flecha sin querer.
+- Prueba e2e de temporada superada: se espera el encabezado exacto y no se pulsa "Continuar carrera" desde la pantalla de resultado (carrera de la prueba inestable).
+- Versionado a `v0.25.27` / `0.25.27`.
+
+## v0.25.26 — Carga diferida de pantallas
+
+- Las pantallas que no se ven al abrir el juego (liga, resumen final, carrera, rankings y pickers) se cargan con `React.lazy` y `Suspense`.
+- El JS principal baja de 537 kB (151 kB comprimido) a 386 kB (114 kB comprimido).
+- Sin cambios de comportamiento.
+- Versionado a `v0.25.26` / `0.25.26`.
+
+## v0.25.25 — Versión en una sola fuente
+
+- `APP_VERSION` se deriva de `package.json` (`src/config/appVersion.ts`). Ya no hay que escribirla a mano.
+- Los QA de versión comparan con `package.json` en vez de un literal. Se mantiene la comprobación de formato semver.
+- Para subir de versión: `npm version <x.y.z> --no-git-tag-version` (actualiza `package.json` y `package-lock.json`), y después README, CHANGELOG, documento de fase y `CURRENT_RELEASE_DOC`.
+- Versionado a `v0.25.25` / `0.25.25`.
+
+## v0.25.24 — QA de CI en una sola compilación
+
+- El workflow de despliegue ejecuta los 29 QA en un único paso (`npm run qa:ci`, script `scripts/runQaSuite.mjs`) en vez de 29 pasos, cada uno con su compilación. Local: de unos 38 s a 1 s; las 166 comprobaciones son idénticas.
+- Los QA que comprobaban su propio paso en `deploy.yml` ahora comprueban que su script está registrado en `runQaSuite.mjs`.
+- Versionado a `v0.25.24` / `0.25.24`.
+
+## v0.25.23 — Texto de carrera en la pantalla de liga
+
+- En modo carrera, la pantalla de liga dice "Carrera" en vez de "Partida rápida".
+- Se retira el bloque de foco de la pantalla de carrera de v0.25.20: el foco visible ya es global desde v0.25.2 (`src/index.css`).
+- Prueba e2e nueva: `career-league-copy`.
+- Versionado a `v0.25.23` / `0.25.23`.
+
+## v0.25.22 — Progresión de los rivales en la carrera
+
+- Los rivales de la carrera se vuelven más fuertes poco a poco: +0,5 de valoración en las tres primeras temporadas superadas, +1 en las tres siguientes y +1,5 después, con un máximo de +10. La curva ya estaba definida en `getRivalDifficultyBonus`, pero no se usaba.
+- La subida se aplica a los rivales al crear la temporada, no a la lista guardada, y no afecta al equipo del jugador.
+- Cambia el balance de la liga en modo carrera. Requiere revisión con partidas completas.
+- Versionado a `v0.25.22` / `0.25.22`.
+
+## v0.25.21 — Textos de progresión y dificultad
+
+- "Progresión" describe lo que ocurre de verdad: cada temporada bajan los tres peores rivales de Liga y suben tres de Segunda. El texto anterior hablaba de rivales más fuertes y de una Copa más exigente, pero esa lógica no está conectada en el juego.
+- Descripciones de dificultad con el efecto real: Fácil +2 y Leyenda −4 de valoración del equipo en los partidos; Normal sin ajustes.
+- Versionado a `v0.25.21` / `0.25.21`.
+
+## v0.25.20 — Pantalla de entrada a la carrera: seguridad y accesibilidad
+
+- "Empezar carrera" pide confirmación si hay una partida guardada, porque la borra al empezar.
+- La temporada inicial sale de `CAREER_INITIAL_SEASON_LABEL`, no de texto fijo.
+- El título se reparte mejor en líneas (`text-wrap: balance`).
+- Foco de teclado visible en los botones de la pantalla de carrera.
+- Versionado a `v0.25.20` / `0.25.20`.
+
+## v0.25.19 — Pantalla de entrada a la carrera
+
+- Texto revisado: se quita "futuro modo carrera" y "Top 100 global futuro", porque el modo ya existe.
+- Muestra la dificultad elegida en la portada, con un enlace "Cambiar".
+- "Ver ranking local" recupera su estilo de botón; "Volver" pasa a enlace discreto.
+- Iconos de competición en las tarjetas y título más pequeño en móvil.
+- Versionado a `v0.25.19` / `0.25.19`.
+
+## v0.25.18 — Fondo de estadio en la portada
+
+- La portada usa una ilustración vectorial original de un estadio (`src/assets/home-stadium.svg`) como fondo, con un velo oscuro para mantener el texto legible. No reproduce ningún estadio real.
+- Sustituye a las marcas de campo dibujadas con CSS de `v0.25.17`.
+- Versionado a `v0.25.18` / `0.25.18`.
+
+## v0.25.17 — Portada reordenada
+
+- Los botones de la portada se agrupan en tres bloques: empezar (Jugar carrera, Partida rápida, Continuar), explorar (Cómo funciona, Ver ranking, Ranking local) y compartir.
+- "Continuar" solo aparece si hay una partida guardada.
+- La dificultad se mueve encima de "Jugar carrera".
+- El objetivo de la carrera aparece en la cabecera.
+- Fondo con marcas de campo, iconos de competición en las tarjetas de la portada e iconos en los botones.
+- Versionado a `v0.25.17` / `0.25.17`.
+
+## v0.25.16 — Visitas contadas desde la portada
+
+- La analítica se inicializa al arrancar la aplicación, para que cada visita a la portada cuente como página vista. Antes, el script solo se cargaba con el primer evento.
+- Sin `VITE_ANALYTICS_HOST` no cambia nada.
+- Versionado a `v0.25.16` / `0.25.16`.
+
+## v0.25.15 — Corrección del build de despliegue
+
+- Las pruebas de navegador en CI ya no reconstruyen `dist/`. Desde v0.25.4, el build de despliegue se sobrescribía con uno sin el endpoint del ranking global ni la variable de analítica.
+- En local, las pruebas siguen construyendo antes de servir, con el endpoint vacío.
+- Versionado a `v0.25.15` / `0.25.15`.
+
+## v0.25.14 — Analítica sin cookies: activación (pendiente de confirmar)
+
+- Activación de GoatCounter para dos eventos: inicio de carrera y Game Over. Requiere definir `VITE_ANALYTICS_HOST` en GitHub.
+- La nota de privacidad describe la medición de uso y el proveedor. Queda un hueco marcado `[REVISAR]` hasta confirmar su política; el QA impide publicarla con ese hueco.
+- Versionado a `v0.25.14` / `0.25.14`.
+
+## v0.25.13 — Base de analítica sin cookies (desactivada)
+
+- Módulo `src/services/analytics.ts` con dos eventos: `career_start` y `game_over`. Sin `VITE_ANALYTICS_HOST` en la compilación, no carga ningún script ni envía nada.
+- Contacto para peticiones de borrado en la nota de privacidad: ikeritu@hotmail.com.
+- La nota de privacidad sigue diciendo que no hay analítica, que es cierto mientras no se active.
+- Versionado a `v0.25.13` / `0.25.13`.
+
+## v0.25.12 — Enlace de reto tras una temporada superada
+
+- Al superar una temporada, el resumen ofrece "Reta a otros jugadores" con la marca actual (puntuación y temporadas) y un botón para copiar el enlace de reto.
+- El botón de copiar es el mismo componente que en el fin de carrera.
+- Fixture de prueba con equipo fuerte (`career-strong.json`) y prueba de navegador de la temporada superada.
+- Versionado a `v0.25.12` / `0.25.12`.
+
+## v0.25.11 — Cuadros de Copa y Europa al final de temporada
+
+- Cuadro de la Copa del Rey en columnas por ronda. Cada ronda muestra el partido del Athletic si lo jugó, o el partido simulado si no; el ganador va en negrita y el Athletic en dorado.
+- Torneo europeo en columnas: fase inicial, semifinal y final, con la decisión del partido (prórroga o penaltis) cuando la hubo.
+- Las rondas que no se jugaron aparecen como simuladas o sin jugar.
+- Lógica en `src/career/seasonBrackets.ts`, con pruebas unitarias y de renderizado.
+- Versionado a `v0.25.11` / `0.25.11`.
+
+## v0.25.10 — Estado de la ruleta de temporada
+
+- La conversión del resultado de la ruleta en el estado guardado de la carrera (`buildAcceptedSeasonLuckWheelState`) sale de `LeagueSimulatorView` a `src/career/seasonLuckWheel.ts`, con pruebas unitarias.
+- Sin cambio de comportamiento. `src/App.tsx` no cambia en esta versión.
+- Versionado a `v0.25.10` / `0.25.10`.
+
+## v0.25.9 — Enlace de reto
+
+- Botón "Copiar enlace de reto" en la pantalla de fin de carrera. El enlace lleva solo puntuación, temporadas, mejor posición y palmarés: sin nick ni fechas.
+- Al abrir un enlace de reto, la home muestra la marca a superar. Cerrar el aviso quita el parámetro de la barra de direcciones.
+- Los valores del enlace se validan con límites; los enlaces mal formados se ignoran.
+- Pruebas unitarias (`tests/unit/challengeLink.test.ts`) y de navegador (aviso, cierre y URL).
+- Versionado a `v0.25.9` / `0.25.9`.
+
+## v0.25.8 — Iconos por competición
+
+- Iconos propios para LaLiga, Copa del Rey, Supercopa, Champions League, Europa League y Conference League (`CompetitionIcon`), sin logos ni símbolos oficiales.
+- Aparecen en la cabecera de los partidos de Liga y Copa, en la tarjeta de Copa y en el distintivo de la noche europea.
+- Pruebas unitarias de renderizado (`tests/unit/competitionIcon.test.tsx`); Vitest incluye ahora archivos `.tsx`.
+- Versionado a `v0.25.8` / `0.25.8`.
+
+## v0.25.7 — Corte de App.tsx: draft y validación del equipo
+
+- Extraídas de `src/App.tsx` a `src/app/`: el sorteo de temporadas del draft (`draftSeasons.ts`) y la validación y saneado del equipo (`teamValidation.ts`). Sin cambio de comportamiento.
+- `src/App.tsx` pasa de 1841 a 1679 líneas.
+- Pruebas unitarias de los módulos nuevos (`tests/unit/appModules.test.ts`).
+- Versionado a `v0.25.7` / `0.25.7`.
+
+## v0.25.6 — Explicación de la falta de plaza europea
+
+- La tarjeta "Sin billete europeo" de fin de temporada explica por qué no hay plaza: la posición del equipo y, si aplica, cómo el campeón de Copa ya clasificado por Liga desplazó la plaza al 6.º y la Conference al 7.º.
+- La explicación se genera en `resolveEuropeanQualification` (`getNoEuropeanQualificationExplanation`), con pruebas unitarias. La regla no cambia.
+- La prueba de flujo completo comprueba que la tarjeta muestra la posición del equipo.
+- Versionado a `v0.25.6` / `0.25.6`.
+
+## v0.25.5 — Marcas europeas de la tabla final
+
+- La clasificación final marca las plazas europeas con el mismo reparto que el juego: 5.º Europa League, 6.º Conference, y la reasignación cuando el campeón de Copa ya está en Europa por Liga.
+- Antes, la tabla marcaba siempre al 6.º como Europa League y podía mostrar Conference en el 8.º, contradiciendo al Game Over.
+- La regla vive en una sola función (`getFinalTableEuropeanSpot`), con pruebas unitarias.
+- Versionado a `v0.25.5` / `0.25.5`.
+
+## v0.25.4 — Prueba de flujo completo
+
+- Partida guardada de prueba generada por `npm run e2e:fixture` (`scripts/buildE2eFixture.ts`), con una plantilla débil para que la temporada termine en Game Over.
+- Prueba de Playwright de la carrera completa: desde la partida guardada, avanza por liga, Copa y ruleta hasta el Game Over, y comprueba que la pantalla explica el motivo (objetivo fallido o descenso).
+- Versionado a `v0.25.4` / `0.25.4`.
+
+## v0.25.3 — Tests: Vitest y Playwright
+
+- Vitest con 25 pruebas unitarias de lógica pura: reparto europeo y reasignación por campeón de Copa, líneas de tiempo de la secuencia de partido, velocidad y motor europeo (eliminatorias sin empate, determinismo, tandas).
+- Playwright con dos pruebas de humo contra el build de producción: la home carga en español sin errores de consola, y el ranking global enlaza la política de privacidad.
+- Ambas pruebas se ejecutan en el workflow de despliegue, después del build.
+- Versionado a `v0.25.3` / `0.25.3`.
+
 ## v0.25.2 — P1 Low Cost
 
 - Idioma del documento en español (`lang="es"`).

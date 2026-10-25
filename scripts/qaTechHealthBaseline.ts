@@ -40,7 +40,7 @@ function testVersionMetadata(): void {
   assert(APP_VERSION === CURRENT_PUBLIC_VERSION, `APP_VERSION debe ser ${CURRENT_PUBLIC_VERSION}, pero es ${APP_VERSION}.`);
   assert(APP_VERSION_NAME === "Stable Public Release", `APP_VERSION_NAME inesperado: ${APP_VERSION_NAME}.`);
   assert(APP_STATUS.includes("Europa Career") && APP_STATUS.includes("clasificación"), "APP_STATUS debe describir la base de Europa Career y su clasificación.");
-  assert(packageJson.version === "0.25.2", `package.json debe usar 0.25.2, pero usa ${packageJson.version}.`);
+  assert(/^\d+\.\d+\.\d+$/.test(packageJson.version ?? ""), `package.json debe tener versión semver, pero tiene ${packageJson.version}.`);
   assert(packageLock.version === packageJson.version, "package-lock.json version debe coincidir con package.json.");
   assert(packageLock.packages?.[""]?.version === packageJson.version, "package-lock raíz debe coincidir con package.json.");
   logOk("versionado técnico alineado");
@@ -63,7 +63,8 @@ function testDeployWorkflow(): void {
 
   assert(workflow.includes("node-version: 24"), "deploy.yml debe usar Node 24.");
   assert(workflow.includes("run: npm run typecheck"), "deploy.yml debe ejecutar typecheck.");
-  assert(workflow.includes("run: npm run qa:tech-health-baseline"), "deploy.yml debe ejecutar QA técnica baseline.");
+  assert(readText("scripts/runQaSuite.mjs").includes("qaTechHealthBaseline"), "runQaSuite debe ejecutar qaTechHealthBaseline.");
+  assert(workflow.includes("run: npm run qa:ci"), "deploy.yml debe ejecutar qa:ci.");
   assert(workflow.includes("run: npm run build"), "deploy.yml debe conservar el build.");
   assert(workflow.indexOf("run: npm run typecheck") < workflow.indexOf("run: npm run build"), "typecheck debe ejecutarse antes del build.");
   logOk("workflow de GitHub Pages reforzado");

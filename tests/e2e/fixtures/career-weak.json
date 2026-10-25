@@ -1,0 +1,585 @@
+{
+  "gameId": "e2e_career_weak",
+  "phase": "league_simulation",
+  "difficulty": "normal",
+  "selectedFormation": {
+    "id": "4-3-3",
+    "name": "4-3-3",
+    "description": "Sistema equilibrado y ofensivo. Ideal para equipos con extremos potentes, laterales fiables y un delantero centro determinante.",
+    "strengths": [
+      "Buen equilibrio entre ataque y defensa",
+      "Mucho peligro por bandas",
+      "Permite juntar tres delanteros",
+      "Funciona bien con laterales ofensivos"
+    ],
+    "weaknesses": [
+      "Puede sufrir si los extremos ayudan poco en defensa",
+      "Exige buenos laterales",
+      "El mediocampo puede quedar superado ante sistemas con cinco medios"
+    ],
+    "slots": [
+      {
+        "id": "gk",
+        "label": "POR",
+        "allowedPositions": [
+          "POR"
+        ],
+        "line": "goalkeeper"
+      },
+      {
+        "id": "rb",
+        "label": "LD",
+        "allowedPositions": [
+          "LD",
+          "CAD"
+        ],
+        "line": "defense"
+      },
+      {
+        "id": "cb_1",
+        "label": "DFC-D",
+        "allowedPositions": [
+          "DFC"
+        ],
+        "line": "defense"
+      },
+      {
+        "id": "cb_2",
+        "label": "DFC-I",
+        "allowedPositions": [
+          "DFC"
+        ],
+        "line": "defense"
+      },
+      {
+        "id": "lb",
+        "label": "LI",
+        "allowedPositions": [
+          "LI",
+          "CAI"
+        ],
+        "line": "defense"
+      },
+      {
+        "id": "cm_1",
+        "label": "MCD",
+        "allowedPositions": [
+          "MC",
+          "MCD"
+        ],
+        "line": "midfield"
+      },
+      {
+        "id": "cm_2",
+        "label": "MC",
+        "allowedPositions": [
+          "MC",
+          "MCD",
+          "MP"
+        ],
+        "line": "midfield"
+      },
+      {
+        "id": "cm_3",
+        "label": "MP",
+        "allowedPositions": [
+          "MC",
+          "MP"
+        ],
+        "line": "midfield"
+      },
+      {
+        "id": "lw",
+        "label": "EI",
+        "allowedPositions": [
+          "EI",
+          "MI"
+        ],
+        "line": "attack"
+      },
+      {
+        "id": "st",
+        "label": "DC",
+        "allowedPositions": [
+          "DC",
+          "SD"
+        ],
+        "line": "attack"
+      },
+      {
+        "id": "rw",
+        "label": "ED",
+        "allowedPositions": [
+          "ED",
+          "MD"
+        ],
+        "line": "attack"
+      }
+    ],
+    "modifiers": {
+      "attack": 2,
+      "defense": -1,
+      "control": 1,
+      "risk": 1
+    }
+  },
+  "playerRoundSeasons": [],
+  "currentRoundIndex": 11,
+  "selectedPlayers": [
+    {
+      "slotId": "gk",
+      "position": "POR",
+      "playerSeason": {
+        "id": "raul_f_2011_12",
+        "playerId": "raul_f",
+        "canonicalPlayerId": "raul_f",
+        "name": "Raúl F.",
+        "season": "2011/12",
+        "positions": [
+          "POR"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 57,
+          "shooting": 27,
+          "passing": 67,
+          "dribbling": 47,
+          "defending": 42,
+          "physical": 87,
+          "goalkeeping": 94,
+          "mentality": 90
+        },
+        "overall": 68,
+        "dataConfidence": 0.55,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-2011-12-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "rb",
+      "position": "LD",
+      "playerSeason": {
+        "id": "ruben_bilbao_1983_84",
+        "playerId": "ruben_bilbao",
+        "canonicalPlayerId": "ruben_bilbao",
+        "name": "Rubén Bilbao",
+        "season": "1983/84",
+        "positions": [
+          "LD"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 80,
+          "shooting": 51,
+          "passing": 71,
+          "dribbling": 68,
+          "defending": 81,
+          "physical": 79,
+          "goalkeeping": 0,
+          "mentality": 80
+        },
+        "overall": 66,
+        "dataConfidence": 0.55,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-1983-84-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "cb_1",
+      "position": "DFC",
+      "playerSeason": {
+        "id": "ramalho_2011_12",
+        "playerId": "ramalho",
+        "canonicalPlayerId": "ramalho",
+        "name": "Ramalho",
+        "season": "2011/12",
+        "positions": [
+          "DFC",
+          "LD"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 68,
+          "shooting": 45,
+          "passing": 68,
+          "dribbling": 52,
+          "defending": 90,
+          "physical": 92,
+          "goalkeeping": 0,
+          "mentality": 88
+        },
+        "overall": 67,
+        "dataConfidence": 0.55,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-2011-12-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "cb_2",
+      "position": "DFC",
+      "playerSeason": {
+        "id": "egiluz_2023_24",
+        "playerId": "egiluz",
+        "canonicalPlayerId": "egiluz",
+        "name": "Egiluz",
+        "season": "2023/24",
+        "positions": [
+          "DFC"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 68,
+          "shooting": 45,
+          "passing": 68,
+          "dribbling": 52,
+          "defending": 90,
+          "physical": 92,
+          "goalkeeping": 0,
+          "mentality": 88
+        },
+        "overall": 68,
+        "dataConfidence": 0.55,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-2023-24-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "lb",
+      "position": "LI",
+      "playerSeason": {
+        "id": "castillo_2011_12",
+        "playerId": "castillo",
+        "canonicalPlayerId": "castillo",
+        "name": "Castillo",
+        "season": "2011/12",
+        "positions": [
+          "LI"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 82,
+          "shooting": 53,
+          "passing": 73,
+          "dribbling": 70,
+          "defending": 83,
+          "physical": 81,
+          "goalkeeping": 0,
+          "mentality": 82
+        },
+        "overall": 69,
+        "dataConfidence": 0.55,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-2011-12-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "cm_1",
+      "position": "MC",
+      "playerSeason": {
+        "id": "r_de_galarreta_2011_12",
+        "playerId": "r_de_galarreta",
+        "canonicalPlayerId": "ruiz_de_galarreta",
+        "name": "R. de Galarreta",
+        "season": "2011/12",
+        "positions": [
+          "MC"
+        ],
+        "tacticalSlotLabels": [
+          "MC-D",
+          "MC-I",
+          "MCD"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 70,
+          "shooting": 67,
+          "passing": 83,
+          "dribbling": 77,
+          "defending": 70,
+          "physical": 77,
+          "goalkeeping": 0,
+          "mentality": 83
+        },
+        "overall": 68,
+        "dataConfidence": 0.55,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-2011-12-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "cm_2",
+      "position": "MCD",
+      "playerSeason": {
+        "id": "nolaskoain_2023_24",
+        "playerId": "nolaskoain",
+        "canonicalPlayerId": "nolaskoain",
+        "name": "Nolaskoain",
+        "season": "2023/24",
+        "positions": [
+          "MCD",
+          "DFC"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 69,
+          "shooting": 62,
+          "passing": 81,
+          "dribbling": 74,
+          "defending": 84,
+          "physical": 83,
+          "goalkeeping": 0,
+          "mentality": 85
+        },
+        "overall": 70,
+        "dataConfidence": 0.55,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-2023-24-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "cm_3",
+      "position": "MC",
+      "playerSeason": {
+        "id": "viguera_2015_16",
+        "playerId": "viguera",
+        "canonicalPlayerId": "viguera",
+        "name": "Viguera",
+        "season": "2015/16",
+        "positions": [
+          "DC",
+          "SD"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 77,
+          "shooting": 89,
+          "passing": 69,
+          "dribbling": 75,
+          "defending": 45,
+          "physical": 89,
+          "goalkeeping": 0,
+          "mentality": 87
+        },
+        "overall": 70,
+        "dataConfidence": 0.55,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-2015-16-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "lw",
+      "position": "EI",
+      "playerSeason": {
+        "id": "olabarrieta_2023_24",
+        "playerId": "olabarrieta",
+        "canonicalPlayerId": "olabarrieta",
+        "name": "Olabarrieta",
+        "season": "2023/24",
+        "positions": [
+          "EI",
+          "ED"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 85,
+          "shooting": 75,
+          "passing": 75,
+          "dribbling": 84,
+          "defending": 51,
+          "physical": 71,
+          "goalkeeping": 0,
+          "mentality": 79
+        },
+        "overall": 67,
+        "dataConfidence": 0.55,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-2023-24-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "st",
+      "position": "DC",
+      "playerSeason": {
+        "id": "mario_1997_98",
+        "playerId": "mario",
+        "canonicalPlayerId": "mario",
+        "name": "Mario",
+        "season": "1997/98",
+        "positions": [
+          "DC"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 77,
+          "shooting": 89,
+          "passing": 69,
+          "dribbling": 75,
+          "defending": 45,
+          "physical": 89,
+          "goalkeeping": 0,
+          "mentality": 87
+        },
+        "overall": 69,
+        "dataConfidence": 0.55,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-1997-98-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "rw",
+      "position": "ED",
+      "playerSeason": {
+        "id": "adu_ares_2023_24",
+        "playerId": "adu_ares",
+        "canonicalPlayerId": "adu_ares",
+        "name": "Adu Ares",
+        "season": "2023/24",
+        "positions": [
+          "ED",
+          "EI"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 88,
+          "shooting": 78,
+          "passing": 78,
+          "dribbling": 87,
+          "defending": 54,
+          "physical": 74,
+          "goalkeeping": 0,
+          "mentality": 82
+        },
+        "overall": 70,
+        "dataConfidence": 0.55,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-2023-24-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    }
+  ],
+  "selectedCoach": {
+    "coachSeason": {
+      "id": "maximo_royo_1928_29",
+      "coachId": "maximo_royo",
+      "name": "Máximo Royo",
+      "season": "1928/29",
+      "skills": {
+        "attack": 72,
+        "defense": 74,
+        "management": 76,
+        "mentality": 78,
+        "cup": 74,
+        "europe": 50
+      },
+      "overall": 76,
+      "dataConfidence": 0.75,
+      "ratingMethod": "mixed",
+      "sourceRefs": [
+        "athletic-official-1928-29-squad",
+        "athletic-official-maximo-royo"
+      ],
+      "notes": "Temporada fundacional de Liga. Ratings estimados y recalibrados para gameplay a partir de plantilla oficial y contexto competitivo."
+    }
+  },
+  "teamRating": {
+    "attack": 76,
+    "defense": 76,
+    "control": 76,
+    "physical": 78,
+    "mentality": 78,
+    "goalkeeping": 78,
+    "overall": 69,
+    "profileLabel": "Equipo irregular y mejorable",
+    "strengths": [
+      "Once competitivo, aunque todavía mejorable"
+    ],
+    "weaknesses": [
+      "No presenta debilidades graves en el papel"
+    ]
+  },
+  "isCareerMode": true,
+  "careerCompletedSeasons": 3,
+  "careerSeasonLabel": "2028/29",
+  "careerTrophyCounts": {
+    "champions": 0,
+    "liga": 0,
+    "europaLeague": 0,
+    "copa": 0,
+    "conference": 0,
+    "supercopa": 0
+  },
+  "careerBestLeaguePosition": 18,
+  "europeanCareer": {
+    "currentQualification": null,
+    "history": [],
+    "bestCompetition": null,
+    "totalQualifications": 0,
+    "currentTournament": null
+  },
+  "savedAt": "2026-10-22T00:00:00.000Z"
+}

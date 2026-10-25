@@ -94,12 +94,11 @@ function testExistingMobileCoverageStillIntact(): void {
 function testQaRegisteredInPackageAndWorkflow(): void {
   const packageJson = JSON.parse(readText("package.json")) as { scripts?: Record<string, string> };
   const scripts = packageJson.scripts ?? {};
-  const workflow = readText(".github/workflows/deploy.yml");
 
   assert(Boolean(scripts["qa:european-mobile-polish"]), "Debe existir qa:european-mobile-polish en package.json.");
   assert(Boolean(scripts["qa:tech-debt"]?.includes("qa:european-mobile-polish")), "qa:tech-debt debe incluir qa:european-mobile-polish.");
-  assertIncludes(workflow, "Run european mobile polish QA", "GitHub Actions debe ejecutar la QA de pulido móvil europeo.");
-  assertIncludes(workflow, "npm run qa:european-mobile-polish", "deploy.yml debe lanzar qa:european-mobile-polish.");
+  assertIncludes(readText("scripts/runQaSuite.mjs"), "qaEuropeanMobilePolish", "runQaSuite debe ejecutar qaEuropeanMobilePolish.");
+  assertIncludes(readText("scripts/runQaSuite.mjs"), "qaEuropeanMobilePolish", "runQaSuite debe ejecutar qaEuropeanMobilePolish.");
   logOk("QA de pulido móvil europeo registrada en package.json y deploy.yml");
 }
 

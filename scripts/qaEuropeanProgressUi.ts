@@ -52,8 +52,8 @@ function testQaRegistry(): void {
   assertIncludes(packageJson, "qa:european-progress-ui", "package.json debe registrar qa:european-progress-ui.");
   assertIncludes(packageJson, "qa:european-matchday-ui && npm run qa:european-progress-ui", "qa:tech-debt debe ejecutar qa:european-progress-ui después de matchday UI.");
   assertIncludes(workflow, "pull_request", "GitHub Actions debe validar pull requests para trabajar sin local.");
-  assertIncludes(workflow, "Run european progress UI QA", "GitHub Actions debe ejecutar la QA del panel europeo.");
-  assertIncludes(workflow, "npm run qa:european-progress-ui", "GitHub Actions debe lanzar qa:european-progress-ui.");
+  assertIncludes(read("scripts/runQaSuite.mjs"), "qaEuropeanProgressUi", "runQaSuite debe ejecutar qaEuropeanProgressUi.");
+  assertIncludes(read("scripts/runQaSuite.mjs"), "qaEuropeanProgressUi", "runQaSuite debe ejecutar qaEuropeanProgressUi.");
 }
 
 console.log("QA European Progress UI");

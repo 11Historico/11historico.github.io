@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { APP_STATUS, APP_VERSION, APP_VERSION_NAME, CURRENT_RELEASE_DOC, CURRENT_RELEASE_TAG } from "../src/config/appVersion";
+import pkgMeta from "../package.json";
 
 type PackageJson = {
   version?: string;
@@ -14,7 +15,7 @@ type PackageLockJson = {
 
 const ROOT = process.cwd();
 const CURRENT_PUBLIC_VERSION = APP_VERSION;
-const CURRENT_PACKAGE_VERSION = "0.25.2";
+const CURRENT_PACKAGE_VERSION = pkgMeta.version;
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
@@ -112,8 +113,8 @@ function testCssViewportFallbacks(): void {
 function testDeployWorkflow(): void {
   const workflow = readText(".github/workflows/deploy.yml");
 
-  assert(workflow.includes("run: npm run qa:mobile-viewport"), "deploy.yml debe ejecutar qa:mobile-viewport antes del build.");
-  assert(workflow.indexOf("run: npm run qa:mobile-viewport") < workflow.indexOf("run: npm run build"), "qa:mobile-viewport debe ejecutarse antes del build.");
+  assert(readText("scripts/runQaSuite.mjs").includes("qaMobileViewportFix"), "runQaSuite debe ejecutar qaMobileViewportFix.");
+  assert(workflow.indexOf("npm run qa:ci") < workflow.indexOf("run: npm run build"), "qa:ci debe ejecutarse antes del build.");
   logOk("workflow ejecuta QA móvil antes del build");
 }
 

@@ -104,6 +104,29 @@ export function getLeagueCompetitionSpot(
   return null;
 }
 
+/** Explica por qué un Athletic sin plaza europea se queda fuera, según el reparto y el campeón de Copa. */
+export function getNoEuropeanQualificationExplanation(
+  leaguePosition: number,
+  copaWinnerLeaguePosition?: number | null,
+): string {
+  const winner = copaWinnerLeaguePosition ?? null;
+  const cupRule = "Para entrar necesitabas quedar entre los 7 primeros";
+
+  if (winner !== null && winner >= 1 && winner <= 5) {
+    return `Quedaste ${leaguePosition}.º. El campeón de Copa ya estaba en Europa por Liga, así que su plaza de Copa pasó al 6.º (Europa League) y la Conference al 7.º. ${cupRule}.`;
+  }
+
+  if (winner === 6) {
+    return `Quedaste ${leaguePosition}.º. El campeón de Copa, 6.º en Liga, conserva su plaza de Copa y la Conference pasó al 7.º. ${cupRule}.`;
+  }
+
+  if (winner !== null) {
+    return `Quedaste ${leaguePosition}.º. El campeón de Copa no estaba en Europa por Liga, así que su plaza de Copa fue para él. Europa por Liga: 1.º-4.º Champions, 5.º Europa League y 6.º Conference. Para entrar necesitabas quedar entre los 6 primeros.`;
+  }
+
+  return `Quedaste ${leaguePosition}.º. Europa por Liga: 1.º-4.º Champions, 5.º Europa League y 6.º Conference.`;
+}
+
 export function resolveEuropeanQualification(
   input: ResolveEuropeanQualificationInput,
 ): EuropeanQualificationResult {
@@ -151,7 +174,34 @@ export function resolveEuropeanQualification(
     source: "none",
     label: "Sin clasificación europea",
     shortLabel: "Sin Europa",
-    explanation: "El Athletic no se ha clasificado para competición europea esta temporada.",
+    explanation: getNoEuropeanQualificationExplanation(leaguePosition, copaWinnerLeaguePosition),
     priority: NO_QUALIFICATION_PRIORITY,
   };
+}
+
+export interface FinalTableEuropeanSpot extends LeagueCompetitionSpot {
+  /** La plaza la da ser campeón de Copa (no la posición de Liga). */
+  viaCopa: boolean;
+}
+
+/**
+ * Plaza europea que se muestra en la tabla final. Usa el mismo reparto que el juego
+ * (getLeagueCompetitionSpot) y añade el campeón de Copa: si no estaba ya en Champions o
+ * Europa League por Liga, su plaza de Copa es de Europa League.
+ */
+export function getFinalTableEuropeanSpot(
+  position: number,
+  cupWinnerLeaguePosition: number | null,
+): FinalTableEuropeanSpot | null {
+  const spot = getLeagueCompetitionSpot(position, cupWinnerLeaguePosition);
+
+  if (position === cupWinnerLeaguePosition) {
+    if (spot?.competition === "champions_league" || spot?.competition === "europa_league") {
+      return { ...spot, viaCopa: false };
+    }
+
+    return { competition: "europa_league", reallocated: false, viaCopa: true };
+  }
+
+  return spot ? { ...spot, viaCopa: false } : null;
 }
