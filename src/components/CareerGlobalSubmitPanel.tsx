@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import type { CareerLocalRankingEntry } from "../types/career";
 import {
   buildCareerGlobalRankingPayload,
-  getGlobalRankingBackendLabel,
   isGlobalRankingConfigured,
   submitGlobalRankingEntry,
   validateGlobalRankingNick,
@@ -25,20 +24,17 @@ interface CareerGlobalSubmitPanelProps {
 export function CareerGlobalSubmitPanel({ entry, onViewGlobalRanking }: CareerGlobalSubmitPanelProps) {
   const [nick, setNick] = useState(() => loadLastCareerGlobalRankingNick());
   const [submitted, setSubmitted] = useState(() => hasSubmittedCareerGlobalRankingEntry(entry.id));
-  const [message, setMessage] = useState(() => isGlobalRankingConfigured()
-    ? "Introduce nick para enviar esta carrera al futuro Top global."
-    : "Configura VITE_GLOBAL_RANKING_ENDPOINT para activar el envío real a Apps Script.");
+  const [declined, setDeclined] = useState(false);
+  const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [endpointRevision, setEndpointRevision] = useState(0);
 
   const nickError = useMemo(() => nick ? validateGlobalRankingNick(nick) : undefined, [nick]);
   const endpointStatus = useMemo(() => ({
     configured: isGlobalRankingConfigured(),
-    backendLabel: getGlobalRankingBackendLabel(),
     revision: endpointRevision,
   }), [endpointRevision]);
   const configured = endpointStatus.configured;
-  const backendLabel = endpointStatus.backendLabel;
 
   function handleEndpointChange() {
     setEndpointRevision((value) => value + 1);
@@ -76,18 +72,44 @@ export function CareerGlobalSubmitPanel({ entry, onViewGlobalRanking }: CareerGl
     }
   }
 
+  if (submitted) {
+    return (
+      <section className="career-global-submit-panel career-global-submit-panel-done" aria-label="Carrera enviada al ranking global">
+        <h2>Carrera enviada al ranking global</h2>
+        <div className="career-global-submit-actions">
+          <button type="button" className="secondary-home-button" onClick={onViewGlobalRanking}>
+            Ver ranking global
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  if (declined) {
+    return (
+      <section className="career-global-submit-panel career-global-submit-panel-declined" aria-label="Carrera no enviada al ranking global">
+        <p>Esta carrera no se envía al ranking global. Queda solo en tu ranking local.</p>
+        <button type="button" className="secondary-home-button" onClick={() => setDeclined(false)}>
+          Cambiar de opinión
+        </button>
+      </section>
+    );
+  }
+
   return (
-    <section className="career-global-submit-panel" aria-label="Enviar carrera al ranking global">
+    <section className="career-global-submit-panel" aria-labelledby="career-global-submit-question">
       <div>
-        <span className="career-global-submit-kicker">Ranking global · {backendLabel}</span>
-        <h2>Comparte esta carrera</h2>
+        <h2 id="career-global-submit-question">¿Enviar esta carrera al ranking global?</h2>
         <p>
-          Envía tu puntuación al Top global. Si el endpoint no está configurado, puedes pegar la URL /exec aquí y guardarla solo en este navegador.
+          Tu puntuación se suma al Top global. Si no la envías, la carrera queda solo en tu ranking local.
         </p>
       </div>
 
       {!configured && (
-        <CareerGlobalEndpointConfig compact onEndpointChange={handleEndpointChange} />
+        <>
+          <p className="career-global-submit-message">El ranking global no está disponible en esta versión. Puedes configurar un endpoint aquí.</p>
+          <CareerGlobalEndpointConfig compact onEndpointChange={handleEndpointChange} />
+        </>
       )}
 
       <div className="career-global-submit-form">
@@ -109,12 +131,12 @@ export function CareerGlobalSubmitPanel({ entry, onViewGlobalRanking }: CareerGl
           type="button"
           className="career-global-submit-button"
           onClick={handleSubmit}
-          disabled={isSending || submitted || !configured}
+          disabled={isSending || !configured}
         >
-          {submitted ? "Carrera enviada" : configured ? (isSending ? "Enviando..." : "Enviar al ranking global") : "Configura endpoint"}
+          {!configured ? "Ranking global no disponible" : isSending ? "Enviando..." : "Sí, enviar al ranking global"}
         </button>
-        <button type="button" className="secondary-home-button" onClick={onViewGlobalRanking}>
-          Ver ranking global
+        <button type="button" className="career-global-decline-button" onClick={() => setDeclined(true)}>
+          No enviar
         </button>
       </div>
 

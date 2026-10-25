@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.34 — Decisión explícita de envío al ranking global
+
+- En Game Over, la pregunta "¿Enviar esta carrera al ranking global?" aparece justo debajo del motivo del resultado, en lugar de al final de la pantalla.
+- Dos opciones claras: "Sí, enviar al ranking global" y "No enviar". Si dices que no, la carrera queda solo en el ranking local y puedes cambiar de opinión.
+- Texto sin "futuro Top global" y sin mensajes de configuración de desarrollo para el jugador cuando el ranking global no está disponible.
+- Prueba e2e de Game Over ampliada con la pregunta y la opción de no enviar.
+- Versionado a `v0.25.34` / `0.25.34`.
+
 ## v0.25.33 — Flujo de recompensas de la carrera en transiciones puras
 
 - Los cuatro handlers de la ruleta y del cambio de entrenador (`App.tsx`) pasan a transiciones puras en `src/app/careerRewardFlow.ts`. Cada una devuelve solo los campos que cambian, y `applyCareerRewardFlowPatch` los aplica.

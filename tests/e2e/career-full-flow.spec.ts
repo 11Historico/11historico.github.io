@@ -85,5 +85,10 @@ Texto: ${text}`);
   expect(body, "La pantalla de Game Over debe explicar el motivo").toMatch(/Objetivo fallido|Descenso/);
   // La tarjeta europea explica por qué no hay plaza, con la posición del equipo.
   await expect(page.locator(".european-qualification-narrative")).toContainText(/Quedaste \d+\.º/);
+
+  // Al terminar con Game Over, la pregunta de envío al ranking global es explícita y se puede decir que no.
+  await expect(page.getByRole("heading", { name: "¿Enviar esta carrera al ranking global?" })).toBeVisible();
+  await page.getByRole("button", { name: "No enviar" }).click();
+  await expect(page.getByText("Esta carrera no se envía al ranking global")).toBeVisible();
   expect(pageErrors).toEqual([]);
 });
