@@ -22,6 +22,7 @@ import type { AppScreen } from "./app/appScreen";
 import {
   cancelLuckWheelCoachChange,
   checkCareerFormationChange,
+  getRewardFlowResumeScreen,
   hasSpecialCoachBonus,
   startCareerCoachChange,
   startCareerFormationChange,
@@ -352,6 +353,10 @@ export default function App() {
       careerCurrentRankingEntry,
       europeanCareer: europeanCareerState,
       careerEuropeanPrestigeReward,
+      coachBeforeReward,
+      replacementDraftSeason,
+      replacementRemovedPlayer,
+      replacementOriginalFormation,
     }),
     [
       gameId,
@@ -385,6 +390,10 @@ export default function App() {
       careerCurrentRankingEntry,
       europeanCareerState,
       careerEuropeanPrestigeReward,
+      coachBeforeReward,
+      replacementDraftSeason,
+      replacementRemovedPlayer,
+      replacementOriginalFormation,
     ]
   );
 
@@ -541,12 +550,16 @@ export default function App() {
     setCareerCurrentRankingEntry(loadedGame.careerCurrentRankingEntry);
     setEuropeanCareerState(normalizeEuropeanCareerState(loadedGame.europeanCareer));
     setCareerEuropeanPrestigeReward(loadedGame.careerEuropeanPrestigeReward);
-    setReplacementDraftSeason(undefined);
-    setReplacementRemovedPlayer(undefined);
-    setReplacementOriginalFormation(undefined);
-    setCoachBeforeReward(undefined);
+    setReplacementDraftSeason(loadedGame.replacementDraftSeason);
+    setReplacementRemovedPlayer(loadedGame.replacementRemovedPlayer);
+    setReplacementOriginalFormation(loadedGame.replacementOriginalFormation);
+    setCoachBeforeReward(loadedGame.coachBeforeReward);
     setLastSelection(undefined);
-    setScreen(shouldResumeInterseasonReward(loadedGame) ? "career_interseason_reward" : loadedGame.phase);
+    setScreen(
+      shouldResumeInterseasonReward(loadedGame)
+        ? "career_interseason_reward"
+        : getRewardFlowResumeScreen(loadedGame) ?? loadedGame.phase
+    );
   }
 
   function handleSelectFormation(formation: Formation) {

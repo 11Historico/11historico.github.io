@@ -9,6 +9,25 @@ import type { UserLeagueSimulationContext } from "../simulation/leagueSimulator"
 import type { CareerObjectiveResult, CareerPromotionTransition, CareerRewardFlow, CareerSeasonResult } from "../types/career";
 import type { FinalGameSummary, Formation, GamePhase, SeasonId, SelectedCoach, SelectedPlayer, TeamRating } from "../types/game";
 import type { AppScreen } from "./appScreen";
+
+/**
+ * Pantalla en la que retomar un flujo de reemplazo de jugador al cargar la partida.
+ * undefined significa usar la fase guardada tal cual.
+ */
+export function getRewardFlowResumeScreen(saved: {
+  careerRewardFlow?: CareerRewardFlow;
+  replacementDraftSeason?: SeasonId;
+  replacementRemovedPlayer?: SelectedPlayer;
+}): AppScreen | undefined {
+  const { careerRewardFlow, replacementDraftSeason, replacementRemovedPlayer } = saved;
+  const isPlayerReplacement =
+    careerRewardFlow === "standard_player" || careerRewardFlow === "luck_wheel_player" || careerRewardFlow === "player_formation";
+
+  if (!isPlayerReplacement) return undefined;
+  if (replacementDraftSeason) return "career_player_replacement_draft";
+  if (careerRewardFlow === "player_formation" && replacementRemovedPlayer) return "career_formation_change";
+  return "career_player_replacement_pick";
+}
 import { TOTAL_PLAYER_ROUNDS, validateSelectedTeam } from "./teamValidation";
 
 export interface CareerRewardFlowState {

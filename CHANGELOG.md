@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.39 — Retomar los flujos de recompensa al recargar
+
+- La partida guarda el entrenador anterior del cambio de entrenador de la ruleta y los datos del reemplazo de jugador.
+- Al cargar, el juego vuelve a la pantalla del flujo en curso (selector o draft de reemplazo, selector de formación) en vez de la pantalla genérica de la fase.
+- "Cancelar cambio y volver a la Liga" vuelve a funcionar tras recargar.
+- Las partidas guardadas antes de esta versión siguen cargando igual que antes.
+- Versionado a `v0.25.39` / `0.25.39`.
+
 ## v0.25.38 — Tope de la progresión de rivales: +5
 
 - El tope acumulado de la progresión de rivales baja de +10 a +5 (`getRivalDifficultyBonus`). La curva de crecimiento no cambia.
