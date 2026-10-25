@@ -57,6 +57,11 @@ export interface SavedGameState {
   careerRewardFlow?: CareerRewardFlow;
   careerSeasonRatingBonus?: number;
   careerRewardSnapshot?: CareerRewardSnapshot;
+  // Flujo de recompensas en curso (v0.25.39): para retomar el cambio de entrenador o de jugador tras recargar.
+  coachBeforeReward?: SelectedCoach;
+  replacementDraftSeason?: SeasonId;
+  replacementRemovedPlayer?: SelectedPlayer;
+  replacementOriginalFormation?: Formation;
   careerCurrentRankingEntry?: CareerLocalRankingEntry;
   europeanCareer?: EuropeanCareerState;
   // Recompensa de prestigio europeo (v0.24.4a) recién otorgada en la última
