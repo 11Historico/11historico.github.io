@@ -6,6 +6,7 @@ import {
   submitGlobalRankingEntry,
   validateGlobalRankingNick,
 } from "../services/globalRankingService";
+import { trackEvent } from "../services/analytics";
 import CareerGlobalEndpointConfig from "./CareerGlobalEndpointConfig";
 import {
   hasSubmittedCareerGlobalRankingEntry,
@@ -62,6 +63,7 @@ export function CareerGlobalSubmitPanel({ entry, onViewGlobalRanking }: CareerGl
     const result = await submitGlobalRankingEntry(payload);
     setIsSending(false);
     setMessage(result.message);
+    if (result.ok) trackEvent("global_ranking_submit");
 
     // "duplicate" significa que el servidor ya tiene la carrera (por ejemplo, un
     // envío anterior que tardó más que el timeout): cuenta como enviada.

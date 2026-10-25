@@ -5,7 +5,12 @@
 // sitio del proveedor. Sin esa variable no se carga ningún script ni se envía nada.
 // No se escriben cookies ni localStorage, y ninguna propiedad lleva datos de partida.
 
-export type AnalyticsEvent = "career_start" | "game_over";
+export type AnalyticsEvent =
+  | "career_start"
+  | "game_over"
+  | "global_ranking_submit"
+  | "challenge_copy"
+  | "challenge_open";
 
 interface GoatCounterApi {
   count: (options: { path: string; title: string; event: boolean }) => void;
