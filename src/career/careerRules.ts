@@ -99,7 +99,7 @@ export function getRivalDifficultyBonus(completedSeasons: number): number {
     else bonus += 1.5;
   }
 
-  return Math.min(bonus, 10);
+  return Math.min(bonus, 5);
 }
 
 export function getCupDifficultyBonus(completedSeasons: number): number {
