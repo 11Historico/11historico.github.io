@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.37 — Imagen para compartir la carrera (fase 15)
+
+- Botón "Compartir imagen" en la tarjeta de compartir de la carrera: genera un PNG de 1200×630 con temporadas superadas, puntos, palmarés, mejor Liga, última temporada y mejor hito europeo.
+- En móvil abre la hoja de compartir del sistema; en escritorio descarga el PNG.
+- La imagen no incluye el nick ni identificadores de partida. Sin eventos de analítica nuevos.
+- Versionado a `v0.25.37` / `0.25.37`.
+
 ## v0.25.36 — Analítica de crecimiento (fase 6)
 
 - Tres eventos nuevos, sin propiedades: `global_ranking_submit` (envío aceptado al ranking global), `challenge_copy` (enlace de reto copiado) y `challenge_open` (página abierta con un enlace de reto válido).
