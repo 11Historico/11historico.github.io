@@ -90,5 +90,9 @@ Texto: ${text}`);
   await expect(page.getByRole("heading", { name: "¿Enviar esta carrera al ranking global?" })).toBeVisible();
   await page.getByRole("button", { name: "No enviar" }).click();
   await expect(page.getByText("Esta carrera no se envía al ranking global")).toBeVisible();
+
+  // La imagen para compartir se descarga (o se comparte, si el navegador lo permite).
+  await page.getByRole("button", { name: "Compartir imagen" }).click();
+  await expect(page.getByText(/Imagen (descargada|compartida)\./)).toBeVisible();
   expect(pageErrors).toEqual([]);
 });

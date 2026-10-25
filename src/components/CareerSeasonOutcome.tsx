@@ -5,6 +5,8 @@ import type { CareerLocalRankingEntry, CareerObjectiveResult, CareerSeasonResult
 import type { EuropeanCareerState, EuropeanQualificationResult, EuropeanTournamentState } from "../europe/europeanTypes";
 import { buildCareerLocalRankingEntry, calculateCareerArcadeScore, getFinalCareerTrophyCounts } from "../career/careerRanking";
 import { buildChallengeLink, getChallengeSummary } from "../career/challengeLink";
+import { getShareCardContent, getShareCardFileName } from "../career/shareCard";
+import { renderShareCardPng } from "../career/shareCardImage";
 import {
   buildCareerShareText,
   getCareerAchievements,
@@ -161,6 +163,7 @@ function ChallengeLinkButton({ link }: { link: string }) {
 
 function CareerShareRetentionPanel({
   shareText,
+  shareEntry,
   challengeLink,
   achievements,
   rankingPosition,
@@ -168,6 +171,7 @@ function CareerShareRetentionPanel({
   rankingSaved,
 }: {
   shareText: string;
+  shareEntry: CareerLocalRankingEntry;
   challengeLink?: string;
   achievements: CareerAchievement[];
   rankingPosition?: number;
@@ -175,6 +179,33 @@ function CareerShareRetentionPanel({
   rankingSaved: boolean;
 }) {
   const [shareStatus, setShareStatus] = useState("");
+
+  // Comparte la imagen con la hoja nativa si el dispositivo lo permite; si no, la descarga.
+  async function handleShareImage() {
+    try {
+      const blob = await renderShareCardPng(getShareCardContent(shareEntry));
+      const fileName = getShareCardFileName(shareEntry);
+      const file = new File([blob], fileName, { type: "image/png" });
+
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], text: shareText });
+        setShareStatus("Imagen compartida.");
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      // Liberar la URL al instante puede cancelar la descarga en algunos navegadores.
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setShareStatus("Imagen descargada.");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setShareStatus("No se pudo crear la imagen.");
+    }
+  }
 
   async function handleShareCareer() {
     try {
@@ -223,6 +254,9 @@ function CareerShareRetentionPanel({
 
       <button type="button" className="primary-home-button" onClick={handleShareCareer}>
         Compartir mi carrera
+      </button>
+      <button type="button" className="secondary-home-button" onClick={handleShareImage}>
+        Compartir imagen
       </button>
       {challengeLink && <ChallengeLinkButton link={challengeLink} />}
       <p role="status" aria-live="polite">{shareStatus}</p>
@@ -356,9 +390,10 @@ export function CareerSeasonOutcome({
               />
             </section>
 
-            {careerShareText && (
+            {careerShareText && rankingEntry && (
               <CareerShareRetentionPanel
                 shareText={careerShareText}
+                shareEntry={rankingEntry}
                 challengeLink={challengeLinkUrl}
                 achievements={achievements}
                 rankingPosition={rankingPosition}
