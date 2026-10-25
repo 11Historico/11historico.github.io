@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.38 — Tope de la progresión de rivales: +5
+
+- El tope acumulado de la progresión de rivales baja de +10 a +5 (`getRivalDifficultyBonus`). La curva de crecimiento no cambia.
+- Cambio de balance pedido por el propietario tras simular carreras: con +10, las carreras terminaban en Game Over entre las temporadas 7 y 9.
+- Prueba nueva del tope (`tests/unit/rivalBonusCap.test.ts`).
+- Versionado a `v0.25.38` / `0.25.38`.
+
 ## v0.25.37 — Imagen para compartir la carrera (fase 15)
 
 - Botón "Compartir imagen" en la tarjeta de compartir de la carrera: genera un PNG de 1200×630 con temporadas superadas, puntos, palmarés, mejor Liga, última temporada y mejor hito europeo.
