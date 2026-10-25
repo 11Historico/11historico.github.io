@@ -245,6 +245,11 @@ export default function App() {
   const savedGame = useMemo(() => loadGameState(), []);
   const [screen, setScreen] = useState<AppScreen>("home");
   const [challenge, setChallenge] = useState<ChallengeSummary | null>(() => parseChallenge(readChallengeFromUrl()));
+
+  // Cuenta una apertura de reto al cargar la página con un enlace válido. Al cerrarlo, challenge pasa a null y no cuenta.
+  useEffect(() => {
+    if (challenge) trackEvent("challenge_open");
+  }, [challenge]);
   const [isCareerMode, setIsCareerMode] = useState<boolean>(() => savedGame?.isCareerMode ?? false);
   const [careerSeasonResult, setCareerSeasonResult] = useState<CareerSeasonResult | undefined>(() => savedGame?.careerSeasonResult);
   const [careerObjectiveResult, setCareerObjectiveResult] = useState<CareerObjectiveResult | undefined>(() => savedGame?.careerObjectiveResult);

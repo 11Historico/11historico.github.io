@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.36 — Analítica de crecimiento (fase 6)
+
+- Tres eventos nuevos, sin propiedades: `global_ranking_submit` (envío aceptado al ranking global), `challenge_copy` (enlace de reto copiado) y `challenge_open` (página abierta con un enlace de reto válido).
+- Nota de privacidad: lista las cinco acciones que se cuentan.
+- Confirmado antes de esta versión: GoatCounter recibe visitas y el evento `career_start`.
+- Versionado a `v0.25.36` / `0.25.36`.
+
 ## v0.25.35 — Cambio de formación y validación fuera de App
 
 - El cambio de formación de la carrera pasa a una transición pura (`startCareerFormationChange`) y la validación de la nueva formación a `checkCareerFormationChange`, en `src/app/careerRewardFlow.ts`.

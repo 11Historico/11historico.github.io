@@ -17,6 +17,8 @@ import CareerGlobalSubmitPanel from "./CareerGlobalSubmitPanel";
 import PalmaresTrophyCase from "./PalmaresTrophyCase";
 import EuropeanQualificationCard from "./EuropeanQualificationCard";
 
+import { trackEvent } from "../services/analytics";
+
 import "./CareerSeasonOutcome.css";
 
 interface CareerSeasonOutcomeProps {
@@ -140,6 +142,7 @@ function ChallengeLinkButton({ link }: { link: string }) {
     try {
       if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
       await navigator.clipboard.writeText(link);
+      trackEvent("challenge_copy");
       setStatus("Enlace de reto copiado.");
     } catch {
       setStatus("No se pudo copiar el enlace. Revisa la barra de direcciones.");
