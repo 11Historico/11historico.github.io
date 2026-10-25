@@ -47,3 +47,20 @@ test("recargar con el reemplazo de jugador de la ruleta en curso vuelve al selec
   await expect(page.getByRole("button", { name: "Cancelar y volver a la Liga" })).toBeVisible();
   expect(pageErrors).toEqual([]);
 });
+
+test("recargar con el sorteo del sustituto en curso conserva el jugador que sale", async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  await loadSave(page, {
+    ...base,
+    phase: "player_selection",
+    careerRewardFlow: "luck_wheel_player",
+    replacementDraftSeason: "1976/77",
+    replacementRemovedPlayer: base.selectedPlayers[1],
+    savedAt: "2026-10-25T00:00:00.000Z",
+  });
+
+  await expect(page.getByText(/Premio de ruleta: Sustituyendo a/)).toBeVisible();
+  expect(pageErrors).toEqual([]);
+});

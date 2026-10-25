@@ -78,3 +78,30 @@ test("cambio de formación: se abre el selector y cancelar vuelve al resumen del
   await expect(page.getByRole("heading", { name: "Ratings que influyen en la temporada" })).toBeVisible();
   expect(pageErrors).toEqual([]);
 });
+
+test("cambio de formación: confirmar lleva al sorteo del sustituto y sobrevive a recargar", async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  await seedRandomness(page, 1);
+  await page.goto("/");
+  await page.evaluate(([key, value]) => window.localStorage.setItem(key, value), [SAVE_KEY, interseasonSave()]);
+  await page.reload();
+  await page.getByRole("button", { name: "Continuar" }).click();
+
+  await page.getByRole("button", { name: "Jugador + alineación" }).click();
+  await page.getByRole("button", { name: "Elegir y ver alineaciones" }).first().click();
+
+  // Mantener la formación actual: solo se sustituye al jugador elegido.
+  await page.getByRole("button", { name: /Mantener formación/ }).click();
+  await page.getByRole("button", { name: "Solo cambiar jugador" }).click();
+
+  // Tras confirmar, el sorteo del sustituto muestra al jugador que sale.
+  await expect(page.getByText(/Sustituyendo a/)).toBeVisible();
+
+  // Recargar en mitad del sorteo conserva el reemplazo pendiente.
+  await page.reload();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await expect(page.getByText(/Sustituyendo a/)).toBeVisible();
+  expect(pageErrors).toEqual([]);
+});
