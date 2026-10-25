@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.40 — Pruebas del cambio de formación y del reemplazo al recargar
+
+- Nueva prueba E2E: confirmar "Solo cambiar jugador" lleva al sorteo del sustituto y sigue ahí tras recargar.
+- Nueva prueba E2E: recargar con el sorteo del sustituto en curso conserva el jugador que sale.
+- Solo cambian pruebas; la app no cambia de comportamiento.
+- Versionado a `v0.25.40` / `0.25.40`.
+
 ## v0.25.39 — Retomar los flujos de recompensa al recargar
 
 - La partida guarda el entrenador anterior del cambio de entrenador de la ruleta y los datos del reemplazo de jugador.
