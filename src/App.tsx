@@ -21,8 +21,10 @@ import type { SeasonLuckWheelOffer } from "./career/seasonLuckWheel";
 import type { AppScreen } from "./app/appScreen";
 import {
   cancelLuckWheelCoachChange,
+  checkCareerFormationChange,
   hasSpecialCoachBonus,
   startCareerCoachChange,
+  startCareerFormationChange,
   startLuckWheelCoachChange,
   startLuckWheelPlayerChange,
   type CareerRewardFlowPatch,
@@ -1064,36 +1066,22 @@ export default function App() {
     if (!selectedFormation) return;
 
     ensureCareerRewardSnapshot();
-    setCareerRewardFlow("player_formation");
-    setTeamRating(undefined);
-    setLeagueContext(undefined);
-    setPendingSeasonLuckWheelOffer(undefined);
-    setFinalSummary(undefined);
-    setReplacementDraftSeason(undefined);
-    setReplacementRemovedPlayer(undefined);
-    setReplacementOriginalFormation(selectedFormation);
-    setPhase("player_selection");
-    setScreen("career_player_replacement_pick");
+    applyCareerRewardFlowPatch(startCareerFormationChange(selectedFormation));
   }
 
   function handleConfirmCareerFormationChange(formation: Formation, remappedPlayers: SelectedPlayer[]) {
+    const check = checkCareerFormationChange({
+      isPlayerFormationFlow: careerRewardFlow === "player_formation",
+      formation,
+      remappedPlayers,
+    });
+
+    if (!check.valid) {
+      setTeamValidationErrors(check.errors);
+      return;
+    }
+
     if (careerRewardFlow === "player_formation") {
-      const validation = validateSelectedTeam({
-        formation,
-        selectedPlayers: remappedPlayers,
-        expectedPlayerCount: TOTAL_PLAYER_ROUNDS - 1,
-      });
-      const occupiedSlotIds = new Set(remappedPlayers.map((player) => player.slotId));
-      const openSlots = formation.slots.filter((slot) => !occupiedSlotIds.has(slot.id));
-
-      if (!validation.valid || openSlots.length !== 1) {
-        setTeamValidationErrors([
-          ...validation.errors,
-          ...(openSlots.length === 1 ? [] : [`La nueva formación debe dejar exactamente 1 hueco y deja ${openSlots.length}.`]),
-        ]);
-        return;
-      }
-
       setSelectedFormation(formation);
       setSelectedPlayers(remappedPlayers);
       setReplacementDraftSeason(pickRandomSeason(currentDraftSeasonPool));
@@ -1102,16 +1090,6 @@ export default function App() {
       setTeamValidationErrors([]);
       setPhase("player_selection");
       setScreen("career_player_replacement_draft");
-      return;
-    }
-
-    const validation = validateSelectedTeam({
-      formation,
-      selectedPlayers: remappedPlayers,
-    });
-
-    if (!validation.valid) {
-      setTeamValidationErrors(validation.errors);
       return;
     }
 

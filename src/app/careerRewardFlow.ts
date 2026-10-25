@@ -9,6 +9,7 @@ import type { UserLeagueSimulationContext } from "../simulation/leagueSimulator"
 import type { CareerObjectiveResult, CareerPromotionTransition, CareerRewardFlow, CareerSeasonResult } from "../types/career";
 import type { FinalGameSummary, Formation, GamePhase, SeasonId, SelectedCoach, SelectedPlayer, TeamRating } from "../types/game";
 import type { AppScreen } from "./appScreen";
+import { TOTAL_PLAYER_ROUNDS, validateSelectedTeam } from "./teamValidation";
 
 export interface CareerRewardFlowState {
   screen: AppScreen;
@@ -103,6 +104,59 @@ export function startCareerCoachChange(params: {
     phase: "coach_selection",
     screen: "coach_selection",
   };
+}
+
+/** Cambio de formación elegido desde la pantalla entre temporadas. Se guarda la formación actual para poder cancelar. */
+export function startCareerFormationChange(currentFormation: Formation): CareerRewardFlowPatch {
+  return {
+    careerRewardFlow: "player_formation",
+    teamRating: undefined,
+    leagueContext: undefined,
+    pendingSeasonLuckWheelOffer: undefined,
+    finalSummary: undefined,
+    replacementDraftSeason: undefined,
+    replacementRemovedPlayer: undefined,
+    replacementOriginalFormation: currentFormation,
+    phase: "player_selection",
+    screen: "career_player_replacement_pick",
+  };
+}
+
+export type FormationChangeCheck = { valid: true } | { valid: false; errors: string[] };
+
+/**
+ * Valida la nueva formación con sus jugadores remapeados. En el cambio de formación de la carrera
+ * debe quedar exactamente un hueco para el sustituto. En el resto de flujos basta con que el equipo sea válido.
+ */
+export function checkCareerFormationChange(params: {
+  isPlayerFormationFlow: boolean;
+  formation: Formation;
+  remappedPlayers: SelectedPlayer[];
+}): FormationChangeCheck {
+  const { isPlayerFormationFlow, formation, remappedPlayers } = params;
+
+  if (isPlayerFormationFlow) {
+    const validation = validateSelectedTeam({
+      formation,
+      selectedPlayers: remappedPlayers,
+      expectedPlayerCount: TOTAL_PLAYER_ROUNDS - 1,
+    });
+    const occupiedSlotIds = new Set(remappedPlayers.map((player) => player.slotId));
+    const openSlots = formation.slots.filter((slot) => !occupiedSlotIds.has(slot.id));
+
+    if (validation.valid && openSlots.length === 1) return { valid: true };
+
+    return {
+      valid: false,
+      errors: [
+        ...validation.errors,
+        ...(openSlots.length === 1 ? [] : [`La nueva formación debe dejar exactamente 1 hueco y deja ${openSlots.length}.`]),
+      ],
+    };
+  }
+
+  const validation = validateSelectedTeam({ formation, selectedPlayers: remappedPlayers });
+  return validation.valid ? { valid: true } : { valid: false, errors: validation.errors };
 }
 
 /** Bonus especial de entrenador: ganar Liga o Copa, o la Supercopa con plaza europea por Liga. */
