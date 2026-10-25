@@ -286,6 +286,13 @@ export function CareerSeasonOutcome({
         <h1>{survived ? "Temporada superada" : "GAME OVER"}</h1>
         <p className="career-outcome-reason">{objectiveResult.reason}</p>
 
+        {!survived && rankingEntry && onViewGlobalRanking && (
+          <CareerGlobalSubmitPanel
+            entry={rankingEntry}
+            onViewGlobalRanking={onViewGlobalRanking}
+          />
+        )}
+
         <div className="career-outcome-grid">
           <article>
             <span>Liga</span>
@@ -357,13 +364,6 @@ export function CareerSeasonOutcome({
               />
             )}
           </>
-        )}
-
-        {!survived && rankingEntry && onViewGlobalRanking && (
-          <CareerGlobalSubmitPanel
-            entry={rankingEntry}
-            onViewGlobalRanking={onViewGlobalRanking}
-          />
         )}
 
         {survived && (
