@@ -1,7 +1,7 @@
 {
   "name": "futbol11",
   "private": true,
-  "version": "0.25.3",
+  "version": "0.25.33",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,10 +14,13 @@
     "audit:copa:100": "vite build --ssr scripts/balanceAuditCli.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/balanceAuditCli.js --sims=100 --profile=balanced --difficulty=normal --range=all --cup-report",
     "qa:formation-reward": "vite build --ssr scripts/qaFormationReward.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaFormationReward.js",
     "qa:career-ranking": "vite build --ssr scripts/qaCareerLocalRanking.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaCareerLocalRanking.js",
+    "qa:ci": "node scripts/runQaSuite.mjs",
+    "qa:global-ranking-plausibility": "vite build --ssr scripts/qaGlobalRankingPlausibility.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaGlobalRankingPlausibility.js",
     "qa:version": "vite build --ssr scripts/qaVersionConsistency.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaVersionConsistency.js",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "qa:tech-debt": "npm run qa:version && npm run qa:tech-health-baseline && npm run qa:mobile-viewport && npm run qa:hooks-simulation-deps && npm run qa:release-stabilization && npm run qa:agentjacking && npm run qa:formation-reward && npm run qa:career-ranking && npm run qa:global-ranking && npm run qa:global-ranking-ui && npm run qa:team-power && npm run qa:season-luck-wheel && npm run qa:season-luck-wheel-ui && npm run qa:palmares-showcase && npm run qa:luck-wheel-real-rewards && npm run qa:european-qualification && npm run qa:european-qualification-ui && npm run qa:european-persistence && npm run qa:european-tournament && npm run qa:european-match-engine && npm run qa:european-calendar && npm run qa:european-matchday-ui && npm run qa:european-progress-ui && npm run qa:european-knockouts && npm run qa:european-knockout-extra-time && npm run qa:match-sequence && npm run qa:european-match-sequence && npm run qa:match-playback-speed && npm run qa:bundle-chunking && npm run qa:p1-low-cost && npm run qa:european-trophies-palmares && npm run qa:european-rewards-prestige && npm run qa:european-balance && npm run qa:global-ranking-europa-fields && npm run qa:global-ranking-backend-migration && npm run qa:european-mobile-polish && npm run qa:european-visual-polish && npm run qa:public-release-ux && npm run qa:share-retention && npm run qa:saved-game-resume",
+    "e2e:fixture": "vite build --ssr scripts/buildE2eFixture.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/buildE2eFixture.js",
+    "qa:tech-debt": "npm run qa:version && npm run qa:tech-health-baseline && npm run qa:mobile-viewport && npm run qa:hooks-simulation-deps && npm run qa:release-stabilization && npm run qa:agentjacking && npm run qa:formation-reward && npm run qa:career-ranking && npm run qa:global-ranking && npm run qa:global-ranking-ui && npm run qa:team-power && npm run qa:season-luck-wheel && npm run qa:season-luck-wheel-ui && npm run qa:palmares-showcase && npm run qa:luck-wheel-real-rewards && npm run qa:european-qualification && npm run qa:european-qualification-ui && npm run qa:european-persistence && npm run qa:european-tournament && npm run qa:european-match-engine && npm run qa:european-calendar && npm run qa:european-matchday-ui && npm run qa:european-progress-ui && npm run qa:european-knockouts && npm run qa:european-knockout-extra-time && npm run qa:match-sequence && npm run qa:european-match-sequence && npm run qa:match-playback-speed && npm run qa:bundle-chunking && npm run qa:p1-low-cost && npm run qa:european-trophies-palmares && npm run qa:european-rewards-prestige && npm run qa:european-balance && npm run qa:global-ranking-europa-fields && npm run qa:global-ranking-backend-migration && npm run qa:european-mobile-polish && npm run qa:european-visual-polish && npm run qa:public-release-ux && npm run qa:share-retention && npm run qa:saved-game-resume && npm run qa:global-ranking-plausibility",
     "qa:global-ranking": "vite build --ssr scripts/qaGlobalRankingFoundation.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaGlobalRankingFoundation.js",
     "qa:global-ranking-backend": "vite build --ssr scripts/qaGlobalRankingFoundation.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaGlobalRankingFoundation.js",
     "qa:team-power": "vite build --ssr scripts/qaTeamPower.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaTeamPower.js",
@@ -61,22 +64,22 @@
     "qa:saved-game-resume": "vite build --ssr scripts/qaSavedGameResume.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaSavedGameResume.js"
   },
   "dependencies": {
-    "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.64.1",
-    "@types/node": "^24.12.3",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
-    "eslint": "^10.3.0",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "eslint": "^10.13.0",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
-    "globals": "^17.6.0",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
     "typescript": "~6.0.2",
-    "typescript-eslint": "^8.59.2",
+    "typescript-eslint": "^8.72.0",
     "vite": "^8.0.12",
     "vitest": "^5.0.5"
   }

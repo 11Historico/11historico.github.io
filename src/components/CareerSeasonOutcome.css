@@ -299,3 +299,30 @@
   line-height: 1.48;
   white-space: pre-wrap;
 }
+
+/* Reto tras una temporada superada (v0.25.12) */
+.career-season-challenge {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+  padding: 18px;
+  border: 1px solid rgba(255, 224, 138, 0.3);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+}
+
+.career-season-challenge h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.career-season-challenge p {
+  margin: 0;
+  color: #f2d2d7;
+  line-height: 1.45;
+}
+
+.career-season-challenge .secondary-home-button {
+  justify-self: start;
+}

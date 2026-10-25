@@ -1,0 +1,16 @@
+{
+  "name": "Futbol11 · Athletic Club Histórico",
+  "short_name": "Futbol11",
+  "description": "Juego histórico del Athletic Club: draft de jugadores, Liga, Copa del Rey y noches europeas.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#16070b",
+  "theme_color": "#b00020",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

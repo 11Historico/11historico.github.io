@@ -3,7 +3,8 @@ import type { FinalGameSummary, SelectedPlayer, TeamRating } from "../types/game
 import type { CareerAchievement } from "../career/shareRetention";
 import type { CareerLocalRankingEntry, CareerObjectiveResult, CareerSeasonResult, CareerTrophyCounts } from "../types/career";
 import type { EuropeanCareerState, EuropeanQualificationResult, EuropeanTournamentState } from "../europe/europeanTypes";
-import { calculateCareerArcadeScore, getFinalCareerTrophyCounts } from "../career/careerRanking";
+import { buildCareerLocalRankingEntry, calculateCareerArcadeScore, getFinalCareerTrophyCounts } from "../career/careerRanking";
+import { buildChallengeLink, getChallengeSummary } from "../career/challengeLink";
 import {
   buildCareerShareText,
   getCareerAchievements,
@@ -36,6 +37,7 @@ interface CareerSeasonOutcomeProps {
   europeanCareerState?: EuropeanCareerState;
   /** Torneo europeo de la temporada que acaba de cerrarse (para integrar un título pendiente en el palmarés mostrado aquí). */
   europeanTournament?: EuropeanTournamentState | null;
+  bestLeaguePosition?: number;
 }
 
 function getSelectedPlayersAverage(selectedPlayers: SelectedPlayer[] = []): number | undefined {
@@ -131,20 +133,46 @@ function CareerGameOverArcadeSummary({
   );
 }
 
+function ChallengeLinkButton({ link }: { link: string }) {
+  const [status, setStatus] = useState("");
+
+  async function handleCopyChallenge() {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(link);
+      setStatus("Enlace de reto copiado.");
+    } catch {
+      setStatus("No se pudo copiar el enlace. Revisa la barra de direcciones.");
+    }
+  }
+
+  return (
+    <>
+      <button type="button" className="secondary-home-button" onClick={handleCopyChallenge}>
+        Copiar enlace de reto
+      </button>
+      <p role="status" aria-live="polite">{status}</p>
+    </>
+  );
+}
+
 function CareerShareRetentionPanel({
   shareText,
+  challengeLink,
   achievements,
   rankingPosition,
   isNewRecord,
   rankingSaved,
 }: {
   shareText: string;
+  challengeLink?: string;
   achievements: CareerAchievement[];
   rankingPosition?: number;
   isNewRecord: boolean;
   rankingSaved: boolean;
 }) {
   const [shareStatus, setShareStatus] = useState("");
+
   async function handleShareCareer() {
     try {
       if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
@@ -193,6 +221,7 @@ function CareerShareRetentionPanel({
       <button type="button" className="primary-home-button" onClick={handleShareCareer}>
         Compartir mi carrera
       </button>
+      {challengeLink && <ChallengeLinkButton link={challengeLink} />}
       <p role="status" aria-live="polite">{shareStatus}</p>
     </section>
   );
@@ -222,6 +251,7 @@ export function CareerSeasonOutcome({
   europeanQualification,
   europeanCareerState,
   europeanTournament,
+  bestLeaguePosition,
 }: CareerSeasonOutcomeProps) {
   const survived = objectiveResult.survives;
   const xiAverage = getSelectedPlayersAverage(selectedPlayers);
@@ -237,6 +267,17 @@ export function CareerSeasonOutcome({
     rankingPosition,
   });
   const careerShareText = rankingEntry ? buildCareerShareText(rankingEntry) : undefined;
+  const challengeEntry = rankingEntry ?? buildCareerLocalRankingEntry({
+    completedSeasons,
+    trophyCounts,
+    seasonResult,
+    bestLeaguePosition,
+    europeanTournament,
+  });
+  const challengeLinkUrl = buildChallengeLink(
+    getChallengeSummary(challengeEntry),
+    `${window.location.origin}${window.location.pathname}`,
+  );
 
   return (
     <main className={`career-outcome-screen ${survived ? "career-outcome-success" : "career-outcome-game-over"}`}>
@@ -308,6 +349,7 @@ export function CareerSeasonOutcome({
             {careerShareText && (
               <CareerShareRetentionPanel
                 shareText={careerShareText}
+                challengeLink={challengeLinkUrl}
                 achievements={achievements}
                 rankingPosition={rankingPosition}
                 isNewRecord={newPersonalRecord}
@@ -322,6 +364,14 @@ export function CareerSeasonOutcome({
             entry={rankingEntry}
             onViewGlobalRanking={onViewGlobalRanking}
           />
+        )}
+
+        {survived && (
+          <section className="career-season-challenge" aria-label="Retar a otros jugadores">
+            <h2>Reta a otros jugadores</h2>
+            <p>Comparte tu marca hasta esta temporada: {challengeEntry.arcadeScore} puntos y {challengeEntry.completedSeasons} temporadas superadas.</p>
+            <ChallengeLinkButton link={challengeLinkUrl} />
+          </section>
         )}
 
         <div className="career-outcome-actions">

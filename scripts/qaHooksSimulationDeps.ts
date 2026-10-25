@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { APP_STATUS, APP_VERSION, APP_VERSION_NAME, CURRENT_RELEASE_DOC, CURRENT_RELEASE_TAG } from "../src/config/appVersion";
+import pkgMeta from "../package.json";
 
 type PackageJson = {
   version?: string;
@@ -14,7 +15,7 @@ type PackageLockJson = {
 
 const ROOT = process.cwd();
 const CURRENT_PUBLIC_VERSION = APP_VERSION;
-const CURRENT_PACKAGE_VERSION = "0.25.3";
+const CURRENT_PACKAGE_VERSION = pkgMeta.version;
 // Doc histórico de v0.24.2a (no el release actual): esta QA nació en esa
 // fase y sigue comprobando que ese documento concreto siga describiendo la
 // UI de jornada europea, independientemente de cuál sea la fase actual.
@@ -59,9 +60,9 @@ function testScriptsAndWorkflow(): void {
   assert(scripts["lint:src"] === "eslint src scripts", "Debe existir lint:src sobre código vivo.");
   assert(scripts["qa:hooks-simulation-deps"]?.includes("qaHooksSimulationDeps.ts"), "Debe existir qa:hooks-simulation-deps.");
   assert(scripts["qa:tech-debt"]?.includes("qa:hooks-simulation-deps"), "qa:tech-debt debe incluir qa:hooks-simulation-deps.");
-  assert(workflow.includes("run: npm run qa:hooks-simulation-deps"), "deploy.yml debe ejecutar qa:hooks-simulation-deps.");
+  assert(readText("scripts/runQaSuite.mjs").includes("qaHooksSimulationDeps"), "runQaSuite debe ejecutar qaHooksSimulationDeps.");
   assert(workflow.includes("run: npm run lint:src"), "deploy.yml debe ejecutar lint:src.");
-  assert(workflow.indexOf("run: npm run qa:hooks-simulation-deps") < workflow.indexOf("run: npm run build"), "qa:hooks-simulation-deps debe ejecutarse antes del build.");
+  assert(workflow.indexOf("npm run qa:ci") < workflow.indexOf("run: npm run build"), "qa:ci debe ejecutarse antes del build.");
   assert(workflow.indexOf("run: npm run lint:src") < workflow.indexOf("run: npm run build"), "lint:src debe ejecutarse antes del build.");
   logOk("scripts y workflow bloquean regresiones de hooks antes del deploy");
 }

@@ -21,8 +21,8 @@ const modal = read("src/components/SeasonLuckWheelModal.tsx");
 const packageJson = JSON.parse(read("package.json")) as { scripts?: Record<string, string>; version?: string };
 const version = read("src/config/appVersion.ts");
 
-assertIncludes(version, 'APP_VERSION = "v0.25.3"', "versionado app");
-assertIncludes(packageJson.version ?? "", "0.25.3", "versionado package");
+assertIncludes(version, 'from "../../package.json"', "APP_VERSION se deriva de package.json");
+if (!/^\d+\.\d+\.\d+$/.test(packageJson.version ?? "")) throw new Error("versionado package debe ser semver");
 assertIncludes(packageJson.scripts?.["qa:tech-debt"] ?? "", "qa:luck-wheel-real-rewards", "qa integrada en tech-debt");
 
 assertIncludes(careerTypes, '"luck_wheel_player"', "tipo CareerRewardFlow jugador ruleta");
@@ -32,13 +32,17 @@ assertIncludes(leagueSimulator, "onSeasonLuckWheelPlayerChange", "LeagueSimulato
 assertIncludes(leagueSimulator, "onSeasonLuckWheelCoachChange", "LeagueSimulator callback entrenador");
 assertIncludes(leagueSimulator, "result.requiresPlayerChange", "LeagueSimulator detecta premio jugador");
 assertIncludes(leagueSimulator, "result.requiresCoachChange", "LeagueSimulator detecta premio entrenador");
-assertIncludes(leagueSimulator, "requiresPlayerChange: result.requiresPlayerChange", "LeagueSimulator persiste flag jugador");
-assertIncludes(leagueSimulator, "requiresCoachChange: result.requiresCoachChange", "LeagueSimulator persiste flag entrenador");
+assertIncludes(leagueSimulator, "buildAcceptedSeasonLuckWheelState(", "LeagueSimulator usa el constructor de estado de ruleta");
+assertIncludes(read("src/career/seasonLuckWheel.ts"), "requiresPlayerChange: result.requiresPlayerChange", "El estado de ruleta persiste flag jugador");
+assertIncludes(read("src/career/seasonLuckWheel.ts"), "requiresCoachChange: result.requiresCoachChange", "El estado de ruleta persiste flag entrenador");
 
 assertIncludes(app, "function handleSeasonLuckWheelPlayerChange", "App maneja premio jugador");
 assertIncludes(app, "function handleSeasonLuckWheelCoachChange", "App maneja premio entrenador");
-assertIncludes(app, 'setCareerRewardFlow("luck_wheel_player")', "App activa flujo jugador ruleta");
-assertIncludes(app, 'setCareerRewardFlow("luck_wheel_coach")', "App activa flujo entrenador ruleta");
+const rewardFlow = read("src/app/careerRewardFlow.ts");
+assertIncludes(rewardFlow, 'careerRewardFlow: "luck_wheel_player"', "transición jugador ruleta");
+assertIncludes(rewardFlow, 'careerRewardFlow: "luck_wheel_coach"', "transición entrenador ruleta");
+assertIncludes(app, "startLuckWheelPlayerChange(nextContext)", "App usa la transición de jugador ruleta");
+assertIncludes(app, "startLuckWheelCoachChange(nextContext, selectedCoach)", "App usa la transición de entrenador ruleta");
 assertIncludes(app, 'careerRewardFlow === "luck_wheel_player"', "App retorna a Liga tras jugador ruleta");
 assertIncludes(app, 'careerRewardFlow === "luck_wheel_coach"', "App retorna a Liga tras entrenador ruleta");
 assertIncludes(app, "onSeasonLuckWheelPlayerChange={handleSeasonLuckWheelPlayerChange}", "App conecta callback jugador");

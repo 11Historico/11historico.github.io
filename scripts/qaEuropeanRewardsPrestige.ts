@@ -296,12 +296,11 @@ function testTournamentNormalizationPreservesAwardFlags(): void {
 function testQaRegisteredInPackageAndWorkflow(): void {
   const packageJson = JSON.parse(read("package.json")) as { scripts?: Record<string, string> };
   const scripts = packageJson.scripts ?? {};
-  const workflow = read(".github/workflows/deploy.yml");
 
   assert(Boolean(scripts["qa:european-rewards-prestige"]), "Debe existir qa:european-rewards-prestige en package.json.");
   assert(Boolean(scripts["qa:tech-debt"]?.includes("qa:european-rewards-prestige")), "qa:tech-debt debe incluir qa:european-rewards-prestige.");
-  assertIncludes(workflow, "Run european rewards prestige QA", "GitHub Actions debe ejecutar la QA de prestigio europeo.");
-  assertIncludes(workflow, "npm run qa:european-rewards-prestige", "deploy.yml debe lanzar qa:european-rewards-prestige.");
+  assertIncludes(read("scripts/runQaSuite.mjs"), "qaEuropeanRewardsPrestige", "runQaSuite debe ejecutar qaEuropeanRewardsPrestige.");
+  assertIncludes(read("scripts/runQaSuite.mjs"), "qaEuropeanRewardsPrestige", "runQaSuite debe ejecutar qaEuropeanRewardsPrestige.");
   console.log("✓ QA de prestigio europeo registrada en package.json y deploy.yml");
 }
 

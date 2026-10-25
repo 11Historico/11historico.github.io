@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import type { EasyModeSeasonRangeId, GameDifficulty } from "../types/game";
+import { DIFFICULTY_OPTIONS } from "../config/difficultyOptions";
 import { EASY_MODE_SEASON_RANGES } from "../data/easyModeSeasonRanges";
 import { APP_VERSION, APP_VERSION_NAME } from "../config/appVersion";
 
 import "./GameHome.css";
+import CompetitionIcon from "./CompetitionIcon";
 import SupportButton from "./SupportButton";
 
 interface GameHomeProps {
@@ -21,27 +23,6 @@ interface GameHomeProps {
   onViewGlobalRanking: () => void;
 }
 
-const DIFFICULTY_OPTIONS: Array<{
-  id: GameDifficulty;
-  label: string;
-  description: string;
-}> = [
-  {
-    id: "normal",
-    label: "Fácil",
-    description: "Más accesible. Permite elegir el rango histórico del draft.",
-  },
-  {
-    id: "dificil",
-    label: "Normal",
-    description: "Equilibrado. Ganar la Liga cuesta, pero es posible.",
-  },
-  {
-    id: "leyenda",
-    label: "Leyenda",
-    description: "Madrid, Barça y Atlético aprietan de verdad.",
-  },
-];
 
 const FEEDBACK_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfSHQS1PVKoWNl8u7mTrYO2Fchuj-2UC82Ap4AVktUnBrBZ8A/viewform?usp=publish-editor";
 const PUBLIC_GAME_URL = "https://ikeritu.github.io/11Historico/";
@@ -115,6 +96,10 @@ export function GameHome({
               gana títulos, acumula palmarés y pelea por entrar en el ranking.
             </p>
 
+            <p className="game-home-objective">
+              <strong>Objetivo de la carrera:</strong> cada temporada, clasifícate para Europa o gana la Copa del Rey.
+            </p>
+
             <div className="game-home-public-pillars" aria-label="Resumen del juego">
               <article>
                 <strong>1</strong>
@@ -125,6 +110,11 @@ export function GameHome({
                 <strong>2</strong>
                 <span>Compite en Liga, Copa y Europa</span>
                 <p>Sobrevive a cada temporada y juega noches europeas si te clasificas.</p>
+                <div className="game-home-competition-icons" aria-hidden="true">
+                  <CompetitionIcon kind="liga" />
+                  <CompetitionIcon kind="copa" />
+                  <CompetitionIcon kind="champions" />
+                </div>
               </article>
               <article>
                 <strong>3</strong>
@@ -142,51 +132,6 @@ export function GameHome({
           </div>
 
           <div className="game-home-control-panel" aria-label="Panel principal">
-            <div className="game-home-actions" aria-label="Acciones principales">
-              <button type="button" className="primary-home-button" onClick={onCareerPreview}>
-                <span aria-hidden="true">▷</span>
-                <span>Jugar carrera</span>
-              </button>
-
-              <button
-                type="button"
-                className="secondary-home-button"
-                onClick={() => setShowHowToPlay((current) => !current)}
-                aria-expanded={showHowToPlay}
-              >
-                Cómo funciona
-              </button>
-
-              <button type="button" className="secondary-home-button" onClick={onViewGlobalRanking}>
-                Ver ranking
-              </button>
-
-              <div className="game-home-secondary-actions">
-                <button type="button" className="secondary-home-button" onClick={onNewGame}>
-                  Partida rápida
-                </button>
-
-                <button
-                  type="button"
-                  className="secondary-home-button"
-                  onClick={onContinueGame}
-                  disabled={!hasSavedGame}
-                >
-                  Continuar
-                </button>
-
-                <button type="button" className="secondary-home-button" onClick={onViewLocalRanking}>
-                  Ranking local
-                </button>
-              </div>
-
-              <button type="button" className="share-home-button" onClick={handleShareGame}>
-                Compartir juego
-              </button>
-
-              {shareStatus && <p className="share-home-message" role="status">{shareStatus}</p>}
-            </div>
-
             <section className="game-home-difficulty-card" aria-label="Seleccionar dificultad">
               <div className="game-home-difficulty-header">
                 <strong>Dificultad</strong>
@@ -230,6 +175,62 @@ export function GameHome({
                 </details>
               )}
             </section>
+
+            <div className="game-home-actions" aria-label="Acciones principales">
+              <div className="game-home-action-group" aria-label="Empezar">
+                <button type="button" className="primary-home-button" onClick={onCareerPreview}>
+                  <span aria-hidden="true">▷</span>
+                  <span>Jugar carrera</span>
+                </button>
+
+                <div className="game-home-secondary-actions">
+                  <button type="button" className="secondary-home-button" onClick={onNewGame}>
+                    <span aria-hidden="true">»</span>
+                    <span>Partida rápida</span>
+                  </button>
+
+                  {hasSavedGame && (
+                    <button type="button" className="secondary-home-button" onClick={onContinueGame}>
+                      <span aria-hidden="true">↻</span>
+                      <span>Continuar</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="game-home-action-group" aria-label="Explorar">
+                <div className="game-home-explore-actions">
+                  <button
+                    type="button"
+                    className="secondary-home-button"
+                    onClick={() => setShowHowToPlay((current) => !current)}
+                    aria-expanded={showHowToPlay}
+                  >
+                    <span aria-hidden="true">ⓘ</span>
+                    <span>Cómo funciona</span>
+                  </button>
+
+                  <button type="button" className="secondary-home-button" onClick={onViewGlobalRanking}>
+                    <span aria-hidden="true">★</span>
+                    <span>Ver ranking</span>
+                  </button>
+
+                  <button type="button" className="secondary-home-button" onClick={onViewLocalRanking}>
+                    <span aria-hidden="true">▤</span>
+                    <span>Ranking local</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="game-home-action-group" aria-label="Compartir">
+                <button type="button" className="share-home-button" onClick={handleShareGame}>
+                  <span aria-hidden="true">↗</span>
+                  <span>Compartir juego</span>
+                </button>
+
+                {shareStatus && <p className="share-home-message" role="status">{shareStatus}</p>}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -244,8 +245,24 @@ export function GameHome({
               <article><strong>Objetivo</strong><p>Clasifícate para Europa o gana la Copa del Rey. Ese es el mínimo para seguir vivo.</p></article>
               <article><strong>Game Over</strong><p>Si fallas el objetivo o desciendes, la carrera termina y se guarda tu resultado.</p></article>
               <article><strong>Supervivencia</strong><p>Si sobrevives, avanzas otra temporada con recompensas, prestigio y más presión.</p></article>
-              <article><strong>Palmarés</strong><p>Liga, Copa, Supercopa y títulos europeos suman puntos para el ranking.</p></article>
-              <article><strong>Europa</strong><p>Champions, Europa League y Conference tienen calendario, semifinal, final y títulos propios.</p></article>
+              <article>
+                <strong>Palmarés</strong>
+                <p>Liga, Copa, Supercopa y títulos europeos suman puntos para el ranking.</p>
+                <div className="game-home-competition-icons" aria-hidden="true">
+                  <CompetitionIcon kind="liga" />
+                  <CompetitionIcon kind="copa" />
+                  <CompetitionIcon kind="supercopa" />
+                </div>
+              </article>
+              <article>
+                <strong>Europa</strong>
+                <p>Champions, Europa League y Conference tienen calendario, semifinal, final y títulos propios. Si el campeón de Copa queda entre los 5 primeros de Liga, su plaza pasa al 6.º (Europa League) y el 7.º va a Conference. Si queda 6.º, conserva su plaza y el 7.º va a Conference.</p>
+                <div className="game-home-competition-icons" aria-hidden="true">
+                  <CompetitionIcon kind="champions" />
+                  <CompetitionIcon kind="europa" />
+                  <CompetitionIcon kind="conference" />
+                </div>
+              </article>
             </div>
           </section>
         )}

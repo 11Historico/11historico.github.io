@@ -12,11 +12,15 @@ import type {
   TeamRating,
 } from "../types/game";
 import type { CareerTrophyCounts } from "../types/career";
+import { getFinalTableEuropeanSpot, type FinalTableEuropeanSpot } from "../europe/europeanQualification";
 import type { EuropeanQualificationResult } from "../europe/europeanTypes";
 
 import SelectedTeamBoard from "./SelectedTeamBoard";
 import PalmaresTrophyCase from "./PalmaresTrophyCase";
 import EuropeanQualificationCard from "./EuropeanQualificationCard";
+import { CupBracket, EuropeanBracket } from "./SeasonBrackets";
+import { buildCupBracketRows, buildEuropeanBracketColumns } from "../career/seasonBrackets";
+import type { EuropeanTournamentState } from "../europe/europeanTypes";
 
 import {
   buildHistoryEntry,
@@ -30,6 +34,7 @@ import SupportButton from "./SupportButton";
 
 interface FinalSummaryProps {
   summary: FinalGameSummary;
+  europeanTournament?: EuropeanTournamentState | null;
   difficulty?: GameDifficulty;
   formation: Formation;
   selectedPlayers: SelectedPlayer[];
@@ -80,20 +85,39 @@ function getRowKey(row: LeagueTableRow, index: number): string {
   return `${row.teamId}_${index}`;
 }
 
-function findNextLeagueIndexForEurope(params: {
-  table: LeagueTableRow[];
-  reservedIndexes: Set<number>;
-  startIndex: number;
-}): number | undefined {
-  const { table, reservedIndexes, startIndex } = params;
+function getCupWinnerLeaguePosition(table: LeagueTableRow[], summary: FinalGameSummary): number | null {
+  if (!summary.cupChampionTeamId && !summary.cupChampionTeamName) return null;
 
-  for (let index = startIndex; index < table.length; index += 1) {
-    if (!reservedIndexes.has(index)) {
-      return index;
-    }
+  const index = table.findIndex(
+    (row) =>
+      row.teamId === summary.cupChampionTeamId ||
+      row.teamName === summary.cupChampionTeamName ||
+      (isUserTeam(row) && summary.cupChampionTeamId === "athletic_historico"),
+  );
+
+  return index >= 0 ? index + 1 : null;
+}
+
+function getEuropeanMarkerInfo(spot: FinalTableEuropeanSpot, position: number): LeagueQualificationInfo {
+  if (spot.competition === "champions_league") {
+    return position === 1
+      ? { zone: "champion", label: "Campeón + Champions" }
+      : { zone: "champions", label: "Champions" };
   }
 
-  return undefined;
+  if (spot.competition === "europa_league") {
+    return {
+      zone: "europa",
+      label: "Europa League",
+      detail: spot.viaCopa ? "Campeón de Copa" : spot.reallocated ? "Plaza Copa heredada" : "Vía Liga",
+    };
+  }
+
+  return {
+    zone: "conference",
+    label: "Conference",
+    detail: spot.reallocated ? "Plaza heredada" : undefined,
+  };
 }
 
 function buildLeagueQualificationMap(
@@ -101,110 +125,25 @@ function buildLeagueQualificationMap(
   summary: FinalGameSummary
 ): Map<string, LeagueQualificationInfo> {
   const qualificationMap = new Map<string, LeagueQualificationInfo>();
-  const reservedEuropeanIndexes = new Set<number>();
+  const cupWinnerLeaguePosition = getCupWinnerLeaguePosition(table, summary);
 
   table.forEach((row, index) => {
     const position = index + 1;
     const key = getRowKey(row, index);
+    const europeanSpot = getFinalTableEuropeanSpot(position, cupWinnerLeaguePosition);
 
-    if (position === 1) {
-      qualificationMap.set(key, {
-        zone: "champion",
-        label: "Campeón + Champions",
-      });
-      reservedEuropeanIndexes.add(index);
-      return;
-    }
-
-    if (position <= 4) {
-      qualificationMap.set(key, {
-        zone: "champions",
-        label: "Champions",
-      });
-      reservedEuropeanIndexes.add(index);
+    if (europeanSpot) {
+      qualificationMap.set(key, getEuropeanMarkerInfo(europeanSpot, position));
       return;
     }
 
     if (position > table.length - 3) {
-      qualificationMap.set(key, {
-        zone: "relegation",
-        label: "Descenso",
-      });
+      qualificationMap.set(key, { zone: "relegation", label: "Descenso" });
       return;
     }
 
     qualificationMap.set(key, { zone: "middle" });
   });
-
-  // 5º y 6º clasificado van directos a Europa League vía Liga (mismos
-  // umbrales que getLeaguePositionCompetition en
-  // src/europe/europeanQualification.ts: "5º-6º -> Europa League, 7º ->
-  // Conference League"). Antes solo se reservaba el 5º, así que el 6º
-  // aparecía como Conference (o heredaba la plaza de Copa) en vez de Europa
-  // League directa.
-  const leagueEuropaIndexes = [4, 5];
-  for (const leagueEuropaIndex of leagueEuropaIndexes) {
-    if (!table[leagueEuropaIndex]) continue;
-
-    qualificationMap.set(getRowKey(table[leagueEuropaIndex], leagueEuropaIndex), {
-      zone: "europa",
-      label: "Europa League",
-      detail: "Vía Liga",
-    });
-    reservedEuropeanIndexes.add(leagueEuropaIndex);
-  }
-
-  const cupWinnerIndex = table.findIndex((row) => {
-    if (!summary.cupChampionTeamId && !summary.cupChampionTeamName) return false;
-
-    return (
-      row.teamId === summary.cupChampionTeamId ||
-      row.teamName === summary.cupChampionTeamName ||
-      (isUserTeam(row) && summary.cupChampionTeamId === "athletic_historico")
-    );
-  });
-
-  if (cupWinnerIndex >= 0) {
-    const cupWinnerAlreadyQualifiedByLeague = reservedEuropeanIndexes.has(cupWinnerIndex);
-
-    if (cupWinnerAlreadyQualifiedByLeague) {
-      const passedEuropaIndex = findNextLeagueIndexForEurope({
-        table,
-        reservedIndexes: reservedEuropeanIndexes,
-        startIndex: 6, // ambas plazas directas de Liga (5º y 6º) ya están reservadas
-      });
-
-      if (typeof passedEuropaIndex === "number") {
-        qualificationMap.set(getRowKey(table[passedEuropaIndex], passedEuropaIndex), {
-          zone: "europa",
-          label: "Europa League",
-          detail: "Plaza Copa heredada",
-        });
-        reservedEuropeanIndexes.add(passedEuropaIndex);
-      }
-    } else {
-      qualificationMap.set(getRowKey(table[cupWinnerIndex], cupWinnerIndex), {
-        zone: "europa",
-        label: "Europa League",
-        detail: "Campeón de Copa",
-      });
-      reservedEuropeanIndexes.add(cupWinnerIndex);
-    }
-  }
-
-  const conferenceIndex = findNextLeagueIndexForEurope({
-    table,
-    reservedIndexes: reservedEuropeanIndexes,
-    startIndex: 6,
-  });
-
-  if (typeof conferenceIndex === "number") {
-    qualificationMap.set(getRowKey(table[conferenceIndex], conferenceIndex), {
-      zone: "conference",
-      label: "Conference",
-    });
-    reservedEuropeanIndexes.add(conferenceIndex);
-  }
 
   return qualificationMap;
 }
@@ -233,18 +172,6 @@ function getCupSummaryText(summary: FinalGameSummary): string {
   }
 
   return summary.cupRoundReached ?? "Copa no finalizada";
-}
-
-function getCupResultClass(result: NonNullable<FinalGameSummary["cupResults"]>[number]): string {
-  if (result.userTeamWon) return "final-cup-result final-cup-result-win";
-  if (result.userTeamDrew) return "final-cup-result final-cup-result-draw";
-  return "final-cup-result final-cup-result-loss";
-}
-
-function getCupResultLabel(result: NonNullable<FinalGameSummary["cupResults"]>[number]): string {
-  if (result.userTeamWon) return "Victoria";
-  if (result.userTeamDrew) return "Empate";
-  return "Derrota";
 }
 
 function getCoachBaseBonus(coach: SelectedCoach["coachSeason"]): number {
@@ -614,9 +541,11 @@ function BestGamePanel({ history }: { history: GameHistoryEntry[] }) {
 
 function CupSummaryPanel({ summary }: { summary: FinalGameSummary }) {
   const cupResults = summary.cupResults ?? [];
-  const simulatedCupFinalResults = (summary.cupSimulatedRemainingResults ?? []).filter(
-    (result) => (result.roundName ?? "").toLowerCase() === "final"
-  );
+  const cupRows = buildCupBracketRows({
+    cupResults,
+    simulatedResults: summary.cupSimulatedRemainingResults,
+  });
+  const hasAnyCupMatch = cupRows.some((row) => row.status !== "pending");
 
   return (
     <section className={`final-cup-card ${summary.cupTrophyWon ? "final-cup-card-won" : ""}`}>
@@ -641,38 +570,17 @@ function CupSummaryPanel({ summary }: { summary: FinalGameSummary }) {
         </div>
       )}
 
-      {cupResults.length === 0 ? (
-        <p className="final-cup-empty">No hay partidos de Copa registrados.</p>
+      {hasAnyCupMatch ? (
+        <CupBracket rows={cupRows} />
       ) : (
-        <div className="final-cup-results">
-          {cupResults.map((result) => (
-            <article key={result.fixtureId} className={getCupResultClass(result)}>
-              <span>{result.roundName}</span>
-              <strong>
-                {result.homeTeamName} {result.homeGoals}-{result.awayGoals} {result.awayTeamName}
-              </strong>
-              <small>{getCupResultLabel(result)}</small>
-            </article>
-          ))}
-        </div>
-      )}
-
-      {simulatedCupFinalResults.length > 0 && (
-        <div className="final-cup-results final-cup-rest-results">
-          <h3>Final simulada</h3>
-          {simulatedCupFinalResults.map((result) => (
-            <article key={result.fixtureId} className="final-cup-result final-cup-result-neutral">
-              <span>{result.roundName}</span>
-              <strong>
-                {result.homeTeamName} {result.homeGoals}-{result.awayGoals} {result.awayTeamName}
-              </strong>
-              <small>Simulado</small>
-            </article>
-          ))}
-        </div>
+        <p className="final-cup-empty">No hay partidos de Copa registrados.</p>
       )}
     </section>
   );
+}
+
+function EuropeanTournamentPanel({ tournament }: { tournament: EuropeanTournamentState }) {
+  return <EuropeanBracket columns={buildEuropeanBracketColumns(tournament)} />;
 }
 
 function HistoryPanel({ history }: { history: GameHistoryEntry[] }) {
@@ -776,6 +684,7 @@ export function FinalSummary({
   teamRating,
   careerTrophyCounts,
   europeanQualification,
+  europeanTournament,
   onRestart,
   onReturnToCareer,
   onShare,
@@ -865,6 +774,12 @@ export function FinalSummary({
           <FinalAccordion title="Copa del Rey" eyebrow={getCupSummaryText(summary)} defaultOpen>
             <CupSummaryPanel summary={summary} />
           </FinalAccordion>
+
+          {europeanTournament && europeanTournament.matches.length > 0 && (
+            <FinalAccordion title="Torneo europeo" eyebrow="Fase inicial, semifinal y final" defaultOpen>
+              <EuropeanTournamentPanel tournament={europeanTournament} />
+            </FinalAccordion>
+          )}
 
           {europeanQualification && (
             <FinalAccordion

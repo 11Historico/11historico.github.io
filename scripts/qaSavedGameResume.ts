@@ -63,10 +63,9 @@ function testAppUsesIt(): void {
 
 function testRegistered(): void {
   const pkg = JSON.parse(readText("package.json")) as { scripts?: Record<string, string> };
-  const workflow = readText(".github/workflows/deploy.yml");
   assert(Boolean(pkg.scripts?.["qa:saved-game-resume"]), "Debe existir qa:saved-game-resume en package.json.");
   assert(Boolean(pkg.scripts?.["qa:tech-debt"]?.includes("qa:saved-game-resume")), "qa:tech-debt debe incluir qa:saved-game-resume.");
-  assert(workflow.includes("npm run qa:saved-game-resume"), "deploy.yml debe lanzar qa:saved-game-resume.");
+  assert(readText("scripts/runQaSuite.mjs").includes("qaSavedGameResume"), "runQaSuite debe ejecutar qaSavedGameResume.");
   logOk("QA registrada en package.json y deploy.yml");
 }
 

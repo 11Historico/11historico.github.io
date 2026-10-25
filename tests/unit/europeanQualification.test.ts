@@ -63,3 +63,30 @@ describe("getEuropeanQualification (Game Over)", () => {
     expect(getEuropeanQualification(8, true)).toBe("europa_league");
   });
 });
+
+describe("explicación de la falta de plaza europea", () => {
+  it("si el campeón de Copa ya estaba en Europa por Liga, explica el paso de la plaza al 6.º y la Conference al 7.º", () => {
+    const result = resolveEuropeanQualification({ leaguePosition: 8, userWonCopa: false, copaWinnerLeaguePosition: 2 });
+    expect(result.qualified).toBe(false);
+    expect(result.explanation).toContain("Quedaste 8.º");
+    expect(result.explanation).toContain("pasó al 6.º");
+    expect(result.explanation).toContain("Conference al 7.º");
+  });
+
+  it("si el campeón de Copa está fuera de Europa, indica que su plaza era suya y que hay que quedar entre los 6 primeros", () => {
+    const result = resolveEuropeanQualification({ leaguePosition: 8, userWonCopa: false, copaWinnerLeaguePosition: 12 });
+    expect(result.explanation).toContain("su plaza de Copa fue para él");
+    expect(result.explanation).toContain("entre los 6 primeros");
+  });
+
+  it("sin campeón de Copa conocido, da el reparto de Liga sin mencionar la Copa", () => {
+    const result = resolveEuropeanQualification({ leaguePosition: 9, userWonCopa: false });
+    expect(result.explanation).toBe("Quedaste 9.º. Europa por Liga: 1.º-4.º Champions, 5.º Europa League y 6.º Conference.");
+  });
+
+  it("una clasificación no cambia su explicación", () => {
+    const result = resolveEuropeanQualification({ leaguePosition: 5, userWonCopa: false });
+    expect(result.qualified).toBe(true);
+    expect(result.explanation).toContain("por posición final en Liga");
+  });
+});

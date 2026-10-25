@@ -31,8 +31,10 @@ import {
   USER_TEAM_NAME,
 } from "../simulation/leagueTable";
 import { applyDifficultyToTeamRating } from "../career/teamPower";
+import { applyCareerRivalProgression } from "../career/careerRules";
 import {
   applySeasonLuckWheelRatingDelta,
+  buildAcceptedSeasonLuckWheelState,
   buildSeasonLuckWheelOffer,
   type SeasonLuckWheelOffer,
   type SeasonLuckWheelResolvedResult,
@@ -44,6 +46,7 @@ import { simulateEuropeanMatch } from "../europe/europeanMatchEngine";
 import { applyEuropeanMatchResult, isEuropeanKnockoutMatch } from "../europe/europeanTournament";
 import type { EuropeanTournamentMatch, EuropeanTournamentState } from "../europe/europeanTypes";
 import EuropeanMatchEvent from "./EuropeanMatchEvent";
+import { CompetitionIcon } from "./CompetitionIcon";
 import {
   MATCH_SEQUENCE_TICK_MS,
   countGoalsForTeam,
@@ -68,6 +71,7 @@ interface LeagueSimulatorViewProps {
   teamRating: TeamRating;
   isCareerMode?: boolean;
   leagueRivals?: RivalTeam[];
+  careerCompletedSeasons?: number;
   initialContext?: UserLeagueSimulationContext;
   onContextChange?: (context: UserLeagueSimulationContext) => void;
   onSeasonLuckWheelPlayerChange?: (context: UserLeagueSimulationContext) => void;
@@ -269,7 +273,10 @@ function MatchSequence({
         ) : (
           <span className="match-sequence-clock">{frame.stage === "preview" ? "Previa" : `${frame.minute}'`}</span>
         )}
-        <span className="match-sequence-tag">{getMatchSequenceTag(result)}</span>
+        <span className="match-sequence-tag">
+          <CompetitionIcon kind={result.competition === "cup" ? "copa" : "liga"} />
+          {getMatchSequenceTag(result)}
+        </span>
       </div>
 
       <div className="last-result-scoreboard">
@@ -347,6 +354,7 @@ export function LeagueSimulatorView({
   teamRating,
   isCareerMode = false,
   leagueRivals,
+  careerCompletedSeasons = 0,
   initialContext,
   onContextChange,
   onSeasonLuckWheelPlayerChange,
@@ -358,7 +366,7 @@ export function LeagueSimulatorView({
   onPendingSeasonLuckWheelOfferChange,
 }: LeagueSimulatorViewProps) {
   const [context, setContext] = useState<UserLeagueSimulationContext>(
-    () => normalizeLeagueContext(initialContext, selectedCoach, leagueRivals)
+    () => normalizeLeagueContext(initialContext, selectedCoach, leagueRivals && applyCareerRivalProgression(leagueRivals, careerCompletedSeasons))
   );
 
   const [lastResult, setLastResult] = useState<MatchResult | undefined>(undefined);
@@ -502,22 +510,7 @@ export function LeagueSimulatorView({
   }
 
   function handleResolveSeasonLuckWheel(result: SeasonLuckWheelResolvedResult) {
-    const nextState: SeasonLuckWheelState = {
-      seasonId: result.seasonId,
-      used: true,
-      triggerEvent: result.triggerEvent,
-      offeredAt: new Date().toISOString(),
-      accepted: true,
-      resultGroup: result.resultGroup,
-      resultType: result.resultType,
-      ratingDelta: result.ratingDelta,
-      precisionPosition: result.precisionPosition,
-      precisionZoneId: result.precisionZone.id,
-      appearanceText: result.appearanceText,
-      resultText: result.resultText,
-      requiresPlayerChange: result.requiresPlayerChange,
-      requiresCoachChange: result.requiresCoachChange,
-    };
+    const nextState = buildAcceptedSeasonLuckWheelState(result, new Date().toISOString());
     const nextContext = {
       ...context,
       seasonLuckWheel: nextState,
@@ -797,7 +790,7 @@ export function LeagueSimulatorView({
           <p className="eyebrow">LaLiga 25/26 + Copa del Rey</p>
           <h1>Simulación de temporada</h1>
           <p>
-            Partida rápida: simula Liga y Copa con ritmo partido a partido. Puedes dejar correr
+            {isCareerMode ? "Carrera" : "Partida rápida"}: simula Liga y Copa con ritmo partido a partido. Puedes dejar correr
             la simulación automática o saltar hasta el próximo evento.
           </p>
         </div>
@@ -858,7 +851,10 @@ export function LeagueSimulatorView({
 
           {pendingCupFixture && (
             <section className="cup-event-card">
-              <span>Copa del Rey</span>
+              <span>
+                <CompetitionIcon kind="copa" />
+                Copa del Rey
+              </span>
               <h2>{pendingCupFixture.roundName}</h2>
               <p>
                 Rival: {getCupRivalDisplayName(pendingCupFixture.rivalTeamId)} · Partido {pendingCupFixture.venue === "home" ? "en San Mamés" : "fuera de casa"}

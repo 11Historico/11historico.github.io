@@ -1,0 +1,633 @@
+{
+  "gameId": "e2e_career_strong",
+  "phase": "league_simulation",
+  "difficulty": "normal",
+  "selectedFormation": {
+    "id": "4-3-3",
+    "name": "4-3-3",
+    "description": "Sistema equilibrado y ofensivo. Ideal para equipos con extremos potentes, laterales fiables y un delantero centro determinante.",
+    "strengths": [
+      "Buen equilibrio entre ataque y defensa",
+      "Mucho peligro por bandas",
+      "Permite juntar tres delanteros",
+      "Funciona bien con laterales ofensivos"
+    ],
+    "weaknesses": [
+      "Puede sufrir si los extremos ayudan poco en defensa",
+      "Exige buenos laterales",
+      "El mediocampo puede quedar superado ante sistemas con cinco medios"
+    ],
+    "slots": [
+      {
+        "id": "gk",
+        "label": "POR",
+        "allowedPositions": [
+          "POR"
+        ],
+        "line": "goalkeeper"
+      },
+      {
+        "id": "rb",
+        "label": "LD",
+        "allowedPositions": [
+          "LD",
+          "CAD"
+        ],
+        "line": "defense"
+      },
+      {
+        "id": "cb_1",
+        "label": "DFC-D",
+        "allowedPositions": [
+          "DFC"
+        ],
+        "line": "defense"
+      },
+      {
+        "id": "cb_2",
+        "label": "DFC-I",
+        "allowedPositions": [
+          "DFC"
+        ],
+        "line": "defense"
+      },
+      {
+        "id": "lb",
+        "label": "LI",
+        "allowedPositions": [
+          "LI",
+          "CAI"
+        ],
+        "line": "defense"
+      },
+      {
+        "id": "cm_1",
+        "label": "MCD",
+        "allowedPositions": [
+          "MC",
+          "MCD"
+        ],
+        "line": "midfield"
+      },
+      {
+        "id": "cm_2",
+        "label": "MC",
+        "allowedPositions": [
+          "MC",
+          "MCD",
+          "MP"
+        ],
+        "line": "midfield"
+      },
+      {
+        "id": "cm_3",
+        "label": "MP",
+        "allowedPositions": [
+          "MC",
+          "MP"
+        ],
+        "line": "midfield"
+      },
+      {
+        "id": "lw",
+        "label": "EI",
+        "allowedPositions": [
+          "EI",
+          "MI"
+        ],
+        "line": "attack"
+      },
+      {
+        "id": "st",
+        "label": "DC",
+        "allowedPositions": [
+          "DC",
+          "SD"
+        ],
+        "line": "attack"
+      },
+      {
+        "id": "rw",
+        "label": "ED",
+        "allowedPositions": [
+          "ED",
+          "MD"
+        ],
+        "line": "attack"
+      }
+    ],
+    "modifiers": {
+      "attack": 2,
+      "defense": -1,
+      "control": 1,
+      "risk": 1
+    }
+  },
+  "playerRoundSeasons": [],
+  "currentRoundIndex": 11,
+  "selectedPlayers": [
+    {
+      "slotId": "gk",
+      "position": "POR",
+      "playerSeason": {
+        "id": "iribar_1976_77",
+        "playerId": "iribar",
+        "canonicalPlayerId": "iribar",
+        "name": "Iribar",
+        "season": "1976/77",
+        "positions": [
+          "POR"
+        ],
+        "tacticalSlotLabels": [
+          "POR"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 74,
+          "shooting": 44,
+          "passing": 84,
+          "dribbling": 64,
+          "defending": 59,
+          "physical": 99,
+          "goalkeeping": 99,
+          "mentality": 99
+        },
+        "overall": 90,
+        "dataConfidence": 0.45,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "manual-athletic-1976-77-gameplay-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "rb",
+      "position": "LD",
+      "playerSeason": {
+        "id": "goikoetxea_1982_83",
+        "playerId": "goikoetxea",
+        "canonicalPlayerId": "goikoetxea",
+        "name": "Goikoetxea",
+        "season": "1982/83",
+        "positions": [
+          "DFC",
+          "LD"
+        ],
+        "tacticalSlotLabels": [
+          "DFC-D",
+          "LD"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 83,
+          "shooting": 60,
+          "passing": 83,
+          "dribbling": 67,
+          "defending": 99,
+          "physical": 99,
+          "goalkeeping": 0,
+          "mentality": 99
+        },
+        "overall": 88,
+        "dataConfidence": 0.84,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-1982-83-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "cb_1",
+      "position": "DFC",
+      "playerSeason": {
+        "id": "garay_1955_56",
+        "playerId": "garay",
+        "canonicalPlayerId": "garay",
+        "name": "Garay",
+        "season": "1955/56",
+        "positions": [
+          "DFC"
+        ],
+        "tacticalSlotLabels": [
+          "DFC-C",
+          "DFC-I"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 85,
+          "shooting": 62,
+          "passing": 85,
+          "dribbling": 69,
+          "defending": 99,
+          "physical": 99,
+          "goalkeeping": 0,
+          "mentality": 99
+        },
+        "overall": 90,
+        "dataConfidence": 0.85,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-1955-56-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "cb_2",
+      "position": "DFC",
+      "playerSeason": {
+        "id": "javi_martinez_2008_09",
+        "playerId": "javi_martinez",
+        "canonicalPlayerId": "javi_martinez",
+        "name": "Javi Martínez",
+        "season": "2008/09",
+        "positions": [
+          "MCD",
+          "MC",
+          "DFC"
+        ],
+        "tacticalSlotLabels": [
+          "DFC-C",
+          "DFC-D",
+          "MCD"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 81,
+          "shooting": 74,
+          "passing": 93,
+          "dribbling": 86,
+          "defending": 96,
+          "physical": 95,
+          "goalkeeping": 0,
+          "mentality": 97
+        },
+        "overall": 86,
+        "dataConfidence": 0.55,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "manual-athletic-2008-09-gameplay-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "lb",
+      "position": "LI",
+      "playerSeason": {
+        "id": "yuri_2019_20",
+        "playerId": "yuri",
+        "canonicalPlayerId": "yuri",
+        "name": "Yuri",
+        "season": "2019/20",
+        "positions": [
+          "LI",
+          "MI"
+        ],
+        "tacticalSlotLabels": [
+          "LI",
+          "MI"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 94,
+          "shooting": 65,
+          "passing": 85,
+          "dribbling": 82,
+          "defending": 95,
+          "physical": 93,
+          "goalkeeping": 0,
+          "mentality": 94
+        },
+        "overall": 85,
+        "dataConfidence": 0.7,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-2019-20-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "cm_1",
+      "position": "MC",
+      "playerSeason": {
+        "id": "guerrero_1997_98",
+        "playerId": "guerrero",
+        "canonicalPlayerId": "julen_guerrero",
+        "name": "Guerrero",
+        "season": "1997/98",
+        "positions": [
+          "MP",
+          "MC"
+        ],
+        "tacticalSlotLabels": [
+          "MP",
+          "MC-I",
+          "MC-D"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 90,
+          "shooting": 96,
+          "passing": 99,
+          "dribbling": 99,
+          "defending": 70,
+          "physical": 88,
+          "goalkeeping": 0,
+          "mentality": 99
+        },
+        "overall": 90,
+        "dataConfidence": 0.55,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-1997-98-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "cm_2",
+      "position": "MP",
+      "playerSeason": {
+        "id": "rojo_i_1976_77",
+        "playerId": "rojo_i",
+        "canonicalPlayerId": "rojo_i",
+        "name": "Rojo I",
+        "season": "1976/77",
+        "positions": [
+          "MI",
+          "EI",
+          "MP"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 97,
+          "shooting": 86,
+          "passing": 92,
+          "dribbling": 95,
+          "defending": 77,
+          "physical": 89,
+          "goalkeeping": 0,
+          "mentality": 93
+        },
+        "overall": 87,
+        "dataConfidence": 0.45,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "manual-athletic-1976-77-gameplay-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "cm_3",
+      "position": "MC",
+      "playerSeason": {
+        "id": "dani_1983_84",
+        "playerId": "dani",
+        "canonicalPlayerId": "dani",
+        "name": "Dani",
+        "season": "1983/84",
+        "positions": [
+          "DC",
+          "SD"
+        ],
+        "tacticalSlotLabels": [
+          "DC",
+          "DC-I",
+          "DC-D"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 90,
+          "shooting": 99,
+          "passing": 82,
+          "dribbling": 88,
+          "defending": 58,
+          "physical": 99,
+          "goalkeeping": 0,
+          "mentality": 99
+        },
+        "overall": 87,
+        "dataConfidence": 0.55,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-1983-84-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "lw",
+      "position": "EI",
+      "playerSeason": {
+        "id": "gainza_1942_43",
+        "playerId": "gainza",
+        "canonicalPlayerId": "gainza",
+        "name": "Gainza",
+        "season": "1942/43",
+        "positions": [
+          "EI",
+          "MI"
+        ],
+        "tacticalSlotLabels": [
+          "EI",
+          "MI"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 99,
+          "shooting": 91,
+          "passing": 91,
+          "dribbling": 99,
+          "defending": 67,
+          "physical": 87,
+          "goalkeeping": 0,
+          "mentality": 95
+        },
+        "overall": 88,
+        "dataConfidence": 0.55,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "manual-athletic-1942-43-post-war-gameplay-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "st",
+      "position": "DC",
+      "playerSeason": {
+        "id": "zarra_1942_43",
+        "playerId": "zarra",
+        "canonicalPlayerId": "zarra",
+        "name": "Zarra",
+        "season": "1942/43",
+        "positions": [
+          "DC"
+        ],
+        "tacticalSlotLabels": [
+          "DC",
+          "DC-I",
+          "DC-D"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 92,
+          "shooting": 99,
+          "passing": 84,
+          "dribbling": 90,
+          "defending": 60,
+          "physical": 99,
+          "goalkeeping": 0,
+          "mentality": 99
+        },
+        "overall": 90,
+        "dataConfidence": 0.55,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "manual-athletic-1942-43-post-war-gameplay-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    },
+    {
+      "slotId": "rw",
+      "position": "ED",
+      "playerSeason": {
+        "id": "nico_williams_2025_26",
+        "playerId": "nico_williams",
+        "canonicalPlayerId": "nico_williams",
+        "name": "Nico Williams",
+        "season": "2025/26",
+        "positions": [
+          "EI",
+          "ED"
+        ],
+        "tacticalSlotLabels": [
+          "EI",
+          "ED"
+        ],
+        "matches": 0,
+        "minutes": 0,
+        "goals": 0,
+        "assists": 0,
+        "skills": {
+          "pace": 99,
+          "shooting": 91,
+          "passing": 91,
+          "dribbling": 99,
+          "defending": 67,
+          "physical": 87,
+          "goalkeeping": 0,
+          "mentality": 95
+        },
+        "overall": 88,
+        "dataConfidence": 0.72,
+        "ratingMethod": "mixed",
+        "sourceRefs": [
+          "athletic-official-2025-26-squad"
+        ],
+        "notes": "Plantilla y categoría posicional verificadas por fuente oficial. Minutos/asistencias/goles individuales pendientes de verificación completa antes de usar como estadística histórica definitiva."
+      }
+    }
+  ],
+  "selectedCoach": {
+    "coachSeason": {
+      "id": "frederick_pentland_1930_31",
+      "coachId": "frederick_pentland",
+      "name": "Frederick Pentland",
+      "season": "1930/31",
+      "skills": {
+        "attack": 95,
+        "defense": 85,
+        "management": 92,
+        "mentality": 94,
+        "cup": 94,
+        "europe": 70
+      },
+      "overall": 92,
+      "dataConfidence": 0.9,
+      "ratingMethod": "mixed",
+      "sourceRefs": [
+        "athletic-official-1930-31-squad",
+        "athletic-official-frederick-pentland"
+      ],
+      "notes": "Liga y Copa. Temporada de máximo impacto ofensivo, incluida la histórica goleada 12-1 al FC Barcelona. Ratings de jugadores recalibrados para mantener leyendas puntuales sin inflar toda la plantilla."
+    }
+  },
+  "teamRating": {
+    "attack": 96,
+    "defense": 94,
+    "control": 96,
+    "physical": 95,
+    "mentality": 98,
+    "goalkeeping": 98,
+    "overall": 91,
+    "profileLabel": "Once histórico de nivel campeón",
+    "strengths": [
+      "Ataque de mucho nivel",
+      "Defensa muy fiable",
+      "Gran control del centro del campo",
+      "Equipo poderoso en duelos e intensidad",
+      "Mentalidad competitiva muy alta",
+      "Portería diferencial"
+    ],
+    "weaknesses": [
+      "No presenta debilidades graves en el papel"
+    ]
+  },
+  "isCareerMode": true,
+  "careerCompletedSeasons": 3,
+  "careerSeasonLabel": "2028/29",
+  "careerTrophyCounts": {
+    "champions": 0,
+    "liga": 0,
+    "europaLeague": 0,
+    "copa": 0,
+    "conference": 0,
+    "supercopa": 0
+  },
+  "careerBestLeaguePosition": 3,
+  "europeanCareer": {
+    "currentQualification": null,
+    "history": [],
+    "bestCompetition": null,
+    "totalQualifications": 0,
+    "currentTournament": null
+  },
+  "savedAt": "2026-10-22T00:00:00.000Z"
+}

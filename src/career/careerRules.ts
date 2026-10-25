@@ -1,5 +1,5 @@
 import { getLeagueCompetitionSpot } from "../europe/europeanQualification";
-import type { Formation } from "../types/game";
+import type { Formation, RivalTeam } from "../types/game";
 import type {
   CareerObjectiveResult,
   CareerSeasonResult,
@@ -104,6 +104,29 @@ export function getRivalDifficultyBonus(completedSeasons: number): number {
 
 export function getCupDifficultyBonus(completedSeasons: number): number {
   return Math.max(0, completedSeasons) * 0.15;
+}
+
+/**
+ * Sube la valoración de los rivales según las temporadas superadas (curva de getRivalDifficultyBonus).
+ * Devuelve copias: la lista de rivales guardada no cambia.
+ */
+export function applyCareerRivalProgression(rivals: RivalTeam[], completedSeasons: number): RivalTeam[] {
+  const bonus = getRivalDifficultyBonus(completedSeasons);
+  if (bonus <= 0) return rivals;
+
+  const boost = (value: number) => Math.min(99, value + bonus);
+
+  return rivals.map((rival) => ({
+    ...rival,
+    ratings: {
+      attack: boost(rival.ratings.attack),
+      midfield: boost(rival.ratings.midfield),
+      defense: boost(rival.ratings.defense),
+      goalkeeping: boost(rival.ratings.goalkeeping),
+      mentality: boost(rival.ratings.mentality),
+      overall: boost(rival.ratings.overall),
+    },
+  }));
 }
 
 export function calculatePalmaresScore(trophies: CareerTrophyCounts): number {

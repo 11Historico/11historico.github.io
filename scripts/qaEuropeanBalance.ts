@@ -252,12 +252,11 @@ function testDoesNotTouchOtherSystems(): void {
 function testQaRegisteredInPackageAndWorkflow(): void {
   const packageJson = JSON.parse(readText("package.json")) as { scripts?: Record<string, string> };
   const scripts = packageJson.scripts ?? {};
-  const workflow = readText(".github/workflows/deploy.yml");
 
   assert(Boolean(scripts["qa:european-balance"]), "Debe existir qa:european-balance en package.json.");
   assert(Boolean(scripts["qa:tech-debt"]?.includes("qa:european-balance")), "qa:tech-debt debe incluir qa:european-balance.");
-  assertIncludes(workflow, "Run european balance QA", "GitHub Actions debe ejecutar la QA de balance europeo.");
-  assertIncludes(workflow, "npm run qa:european-balance", "deploy.yml debe lanzar qa:european-balance.");
+  assertIncludes(readText("scripts/runQaSuite.mjs"), "qaEuropeanBalance", "runQaSuite debe ejecutar qaEuropeanBalance.");
+  assertIncludes(readText("scripts/runQaSuite.mjs"), "qaEuropeanBalance", "runQaSuite debe ejecutar qaEuropeanBalance.");
   logOk("QA de balance europeo registrada en package.json y deploy.yml");
 }
 
