@@ -104,7 +104,7 @@ export function GameHome({
               <article>
                 <strong>1</strong>
                 <span>Elige jugadores históricos</span>
-                <p>Construye un once único con leyendas y temporadas reales del Athletic.</p>
+                <p>Construye un once único con leyendas y temporadas reales de la historia del club.</p>
               </article>
               <article>
                 <strong>2</strong>
@@ -272,6 +272,7 @@ export function GameHome({
         <footer className="game-home-footer">
           <span>{APP_VERSION}: {APP_VERSION_NAME}</span>
           <a href={FEEDBACK_URL} target="_blank" rel="noreferrer">Feedback ↗</a>
+          <small>Proyecto de aficionados. No está afiliado ni respaldado por el Athletic Club, LaLiga, la RFEF ni la UEFA.</small>
         </footer>
       </section>
     </main>

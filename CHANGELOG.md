@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.46 — Nota de no afiliación y frase de portada
+
+- Pie de la portada y página de privacidad: el proyecto se declara de aficionados, sin afiliación ni respaldo del Athletic Club, LaLiga, la RFEF ni la UEFA.
+- La frase de portada usa "la historia del club" en vez del nombre del club.
+- Versionado a `v0.25.46` / `0.25.46`.
+
 ## v0.25.45 — Nombre del equipo del usuario: Once Histórico
 
 - El equipo que el usuario crea en el juego se llama "Once Histórico" en la interfaz, en los mensajes de liga y Europa, y en los textos para compartir.
