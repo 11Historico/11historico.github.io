@@ -10,7 +10,7 @@ test("la home carga en español, con título y sin errores de consola", async ({
 
   await page.goto("/");
 
-  await expect(page).toHaveTitle(/Futbol11/);
+  await expect(page).toHaveTitle(/Once Histórico/);
   await expect(page.locator("html")).toHaveAttribute("lang", "es");
   await expect(page.getByRole("button", { name: "Jugar carrera" })).toBeVisible();
   expect(errors).toEqual([]);

@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.25.44 — Marca del producto: Once Histórico
+
+- La marca visible pasa a "Once Histórico" en la web, en los metadatos, en el manifiesto, en la página de privacidad, en la imagen para compartir y en la portada.
+- "Modo carrera Athletic" pasa a "Modo carrera" en las pantallas de carrera.
+- El nombre del equipo dentro del juego, los datos reales y la decisión de asesoría siguen sin cambios.
+- Versionado a `v0.25.44` / `0.25.44`.
+
+## v0.25.43 — Imagen de vista previa neutra
+
+- `public/og-image.png` (usada en `og:image` y `twitter:image`) sustituye el fondo de franjas por una imagen propia de 1200×630, con el nombre del juego y un campo dibujado, sin escudos ni colores de equipo.
+- El título y la descripción de `index.html` no cambian: siguen a la espera de la decisión de la fase 16.
+- Versionado a `v0.25.43` / `0.25.43`.
+
 ## v0.25.42 — Tope de la progresión de rivales: +3
 
 - El tope acumulado de la progresión de rivales baja de +5 a +3 (`getRivalDifficultyBonus`). La curva no cambia: la temporada 5 ya alcanza el tope.

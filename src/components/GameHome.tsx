@@ -26,7 +26,7 @@ interface GameHomeProps {
 
 const FEEDBACK_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfSHQS1PVKoWNl8u7mTrYO2Fchuj-2UC82Ap4AVktUnBrBZ8A/viewform?usp=publish-editor";
 const PUBLIC_GAME_URL = "https://ikeritu.github.io/11Historico/";
-const SHARE_TEXT = "Construye tu Athletic histórico, sobrevive temporada a temporada y compite en Liga, Copa y Europa.";
+const SHARE_TEXT = "Construye tu once histórico, sobrevive temporada a temporada y compite en Liga, Copa y Europa.";
 
 export function GameHome({
   hasSavedGame,
@@ -88,8 +88,8 @@ export function GameHome({
 
         <div className="game-home-main-grid">
           <div className="game-home-intro">
-            <p className="game-home-kicker">Simulador de carrera · Athletic histórico</p>
-            <h1>Construye tu Athletic histórico y sobrevive temporada a temporada</h1>
+            <p className="game-home-kicker">Simulador de carrera · Once histórico</p>
+            <h1>Construye tu once histórico y sobrevive temporada a temporada</h1>
 
             <p className="game-home-subtitle">
               Elige jugadores de distintas épocas, compite en Liga, Copa y Europa,
