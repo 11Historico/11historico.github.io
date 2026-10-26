@@ -893,7 +893,7 @@ export function LeagueSimulatorView({
           )}
 
           <section className="season-stats-card">
-            <h2>Estadísticas del Athletic Club Histórico</h2>
+            <h2>Estadísticas del Once Histórico</h2>
 
             <div className="season-stats-grid">
               <div>

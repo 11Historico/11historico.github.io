@@ -10,7 +10,7 @@ const cupMatch: MatchResult = {
   matchday: 0,
   competition: "cup",
   roundName: "Dieciseisavos",
-  homeTeamName: "Athletic Club Histórico",
+  homeTeamName: "Once Histórico",
   awayTeamName: "Rival",
   homeGoals: 2,
   awayGoals: 0,

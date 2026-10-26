@@ -74,7 +74,7 @@ function getCompetitionModifierClass(tournament: EuropeanTournamentState): strin
 }
 
 function getPhaseObjectiveText(tournament: EuropeanTournamentState): string {
-  if (tournament.eliminated) return "Objetivo cerrado: el Athletic está eliminado de Europa.";
+  if (tournament.eliminated) return "Objetivo cerrado: el Once Histórico está eliminado de Europa.";
   if (tournament.completed && tournament.champion) {
     return "Objetivo logrado: campeón europeo, se suma al palmarés al cerrar la temporada.";
   }

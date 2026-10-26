@@ -35,7 +35,7 @@ export function getBestEuropeanAchievement(trophyCounts: CareerTrophyCounts): st
 export function buildCareerShareText(entry: CareerLocalRankingEntry): string {
   const europeanAchievement = getBestEuropeanAchievement(entry.trophyCounts);
   const lines = [
-    "🏆 Mi Athletic Histórico",
+    "🏆 Mi Once Histórico",
     "",
     `Temporadas superadas: ${entry.completedSeasons}`,
     `Puntos: ${entry.arcadeScore}`,

@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.45 — Nombre del equipo del usuario: Once Histórico
+
+- El equipo que el usuario crea en el juego se llama "Once Histórico" en la interfaz, en los mensajes de liga y Europa, y en los textos para compartir.
+- Sin cambios en los datos reales de plantillas, temporadas y rivales, ni en la decisión de asesoría de la fase 16.
+- Versionado a `v0.25.45` / `0.25.45`.
+
 ## v0.25.44 — Marca del producto: Once Histórico
 
 - La marca visible pasa a "Once Histórico" en la web, en los metadatos, en el manifiesto, en la página de privacidad, en la imagen para compartir y en la portada.
