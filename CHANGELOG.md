@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.41 — Cierre del reemplazo de jugador en un parche puro
+
+- `endReplacementFlowPatch` limpia el flujo y el reemplazo de jugador al cancelar o completar el draft, en vez de repetir seis cambios de estado en `App.tsx`.
+- Cuarto corte de la fase 13. Sin cambio de comportamiento.
+- Versionado a `v0.25.41` / `0.25.41`.
+
 ## v0.25.40 — Pruebas del cambio de formación y del reemplazo al recargar
 
 - Nueva prueba E2E: confirmar "Solo cambiar jugador" lleva al sorteo del sustituto y sigue ahí tras recargar.
