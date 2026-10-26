@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   cancelLuckWheelCoachChange,
+  endReplacementFlowPatch,
   hasSpecialCoachBonus,
   startCareerCoachChange,
   startLuckWheelCoachChange,
@@ -89,5 +90,17 @@ describe("hasSpecialCoachBonus", () => {
   it("no aplica sin resultado u objetivo", () => {
     expect(hasSpecialCoachBonus(undefined, objective(true))).toBe(false);
     expect(hasSpecialCoachBonus(seasonResult({ wonLeague: true }), undefined)).toBe(false);
+  });
+});
+
+describe("endReplacementFlowPatch", () => {
+  it("limpia el reemplazo, el flujo y los errores de validación", () => {
+    expect(endReplacementFlowPatch()).toEqual({
+      careerRewardFlow: undefined,
+      replacementDraftSeason: undefined,
+      replacementRemovedPlayer: undefined,
+      replacementOriginalFormation: undefined,
+      teamValidationErrors: [],
+    });
   });
 });

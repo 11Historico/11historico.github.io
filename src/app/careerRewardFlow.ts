@@ -141,6 +141,17 @@ export function startCareerFormationChange(currentFormation: Formation): CareerR
   };
 }
 
+/** Fin de un reemplazo de jugador, con el draft completado o cancelado: se limpia el estado del reemplazo y del flujo. */
+export function endReplacementFlowPatch(): CareerRewardFlowPatch {
+  return {
+    careerRewardFlow: undefined,
+    replacementDraftSeason: undefined,
+    replacementRemovedPlayer: undefined,
+    replacementOriginalFormation: undefined,
+    teamValidationErrors: [],
+  };
+}
+
 export type FormationChangeCheck = { valid: true } | { valid: false; errors: string[] };
 
 /**
