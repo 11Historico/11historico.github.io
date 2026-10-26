@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.42 — Tope de la progresión de rivales: +3
+
+- El tope acumulado de la progresión de rivales baja de +5 a +3 (`getRivalDifficultyBonus`). La curva no cambia: la temporada 5 ya alcanza el tope.
+- Motivo: con +5 ninguna de las 30 semillas simuladas llegó a diez temporadas. Con +3, 6 de 30 (20 %). Ver `docs/v0_25_42_RIVAL_CAP_3.md`.
+- Versionado a `v0.25.42` / `0.25.42`.
+
 ## v0.25.41 — Cierre del reemplazo de jugador en un parche puro
 
 - `endReplacementFlowPatch` limpia el flujo y el reemplazo de jugador al cancelar o completar el draft, en vez de repetir seis cambios de estado en `App.tsx`.
