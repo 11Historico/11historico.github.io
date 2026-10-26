@@ -226,7 +226,7 @@ export function TeamSummary({
 
         <div className="team-summary-header-row">
           <div>
-            <h1>Athletic Club Histórico</h1>
+            <h1>Once Histórico</h1>
             <p>
               Revisa tu once, entrenador y perfil colectivo antes de empezar la Liga 25/26.
             </p>
@@ -257,8 +257,8 @@ export function TeamSummary({
             <strong>{formatRatingValue(displayedRating.overall ?? 0)}</strong>
             <small>
               {(displayedRating.overall ?? 0) >= 90
-                ? "Athletic Club Histórico de nivel campeón"
-                : "Athletic Club Histórico competitivo"}
+                ? "Once Histórico de nivel campeón"
+                : "Once Histórico competitivo"}
             </small>
             <div className="team-summary-power-breakdown">
               <span>Base visible: {formatRatingValue(teamPowerPreview.baseRating.overall ?? 0)}</span>

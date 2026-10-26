@@ -78,8 +78,8 @@ export function createCareerSupercopaQualification(params: {
     participants,
     userQualified,
     reason: userQualified
-      ? "Athletic clasificado para Supercopa por Liga o Copa."
-      : "Athletic no juega Supercopa: entran 1.º y 2.º de Liga y finalistas de Copa.",
+      ? "Once Histórico clasificado para Supercopa por Liga o Copa."
+      : "Once Histórico no juega Supercopa: entran 1.º y 2.º de Liga y finalistas de Copa.",
   };
 }
 

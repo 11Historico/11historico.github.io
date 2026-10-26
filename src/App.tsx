@@ -1535,7 +1535,7 @@ export default function App() {
             selectedCoach={selectedCoach}
             onStartLeagueSimulation={handleStartLeagueSimulation}
             onBackToCoach={() => setScreen("coach_selection")}
-            modeLabel={isCareerMode ? `Carrera Athletic · ${careerSeasonLabel}` : undefined}
+            modeLabel={isCareerMode ? `Carrera · ${careerSeasonLabel}` : undefined}
             startButtonLabel={isCareerMode ? (careerPendingSupercopa?.userQualified ? "Jugar Supercopa y temporada" : "Jugar temporada de carrera") : undefined}
             careerRatingBonus={isCareerMode ? careerSeasonRatingBonus : 0}
             difficulty={difficulty}

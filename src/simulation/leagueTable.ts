@@ -10,7 +10,7 @@ import type {
 
 import { USER_TEAM_ID } from "../data/laliga2526Teams";
 
-export const USER_TEAM_NAME = "Athletic Club Histórico";
+export const USER_TEAM_NAME = "Once Histórico";
 
 export interface CreateInitialLeagueTableParams {
   rivals: RivalTeam[];
