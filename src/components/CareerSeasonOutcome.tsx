@@ -319,7 +319,7 @@ export function CareerSeasonOutcome({
   return (
     <main className={`career-outcome-screen ${survived ? "career-outcome-success" : "career-outcome-game-over"}`}>
       <section className="career-outcome-card">
-        <p className="eyebrow">Modo carrera Athletic · {seasonResult.seasonLabel}</p>
+        <p className="eyebrow">Modo carrera · {seasonResult.seasonLabel}</p>
         <h1>{survived ? "Temporada superada" : "GAME OVER"}</h1>
         <p className="career-outcome-reason">{objectiveResult.reason}</p>
 

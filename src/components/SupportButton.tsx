@@ -17,7 +17,7 @@ export function SupportButton({
   return (
     <aside className={`support-card support-card--${variant} ${className}`.trim()}>
       <div className="support-card-text">
-        <strong>Te gusta Futbol11?</strong>
+        <strong>Te gusta Once Histórico?</strong>
         <span>Ayuda a mantener y mejorar el proyecto.</span>
       </div>
 
@@ -27,7 +27,7 @@ export function SupportButton({
           href={KOFI_URL}
           target="_blank"
           rel="noreferrer"
-          aria-label="Apoyar Futbol11 en Ko-fi"
+          aria-label="Apoyar Once Histórico en Ko-fi"
         >
           <span aria-hidden="true">☕</span>
           <span>Ko-fi</span>
@@ -38,7 +38,7 @@ export function SupportButton({
           href={PAYPAL_URL}
           target="_blank"
           rel="noreferrer"
-          aria-label="Apoyar Futbol11 en PayPal"
+          aria-label="Apoyar Once Histórico en PayPal"
         >
           <span aria-hidden="true">💙</span>
           <span>PayPal.me</span>

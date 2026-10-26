@@ -1406,7 +1406,7 @@ export default function App() {
         {screen === "career_preview" && (
           <main className="career-preview-screen">
             <section className="career-preview-card">
-              <p className="eyebrow">Modo carrera Athletic</p>
+              <p className="eyebrow">Modo carrera</p>
               <h1>Sobrevive temporada a temporada</h1>
               <p>
                 Empiezas en {CAREER_INITIAL_SEASON_LABEL} con tu once histórico. Cada temporada tienes que cumplir el objetivo para seguir en carrera.

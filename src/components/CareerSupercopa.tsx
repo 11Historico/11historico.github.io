@@ -27,7 +27,7 @@ export function CareerSupercopa({
   return (
     <main className="career-supercopa-screen">
       <section className="career-supercopa-card">
-        <p className="eyebrow">Modo carrera Athletic · {qualification.seasonLabel}</p>
+        <p className="eyebrow">Modo carrera · {qualification.seasonLabel}</p>
         <h1>Supercopa de España</h1>
         <p className="career-supercopa-lead">
           Juegan 1.º y 2.º de Liga más campeón y subcampeón de Copa. Si hay duplicados,

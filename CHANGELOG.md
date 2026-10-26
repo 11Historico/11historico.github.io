@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.44 — Marca del producto: Once Histórico
+
+- La marca visible pasa a "Once Histórico" en la web, en los metadatos, en el manifiesto, en la página de privacidad, en la imagen para compartir y en la portada.
+- "Modo carrera Athletic" pasa a "Modo carrera" en las pantallas de carrera.
+- El nombre del equipo dentro del juego, los datos reales y la decisión de asesoría siguen sin cambios.
+- Versionado a `v0.25.44` / `0.25.44`.
+
 ## v0.25.43 — Imagen de vista previa neutra
 
 - `public/og-image.png` (usada en `og:image` y `twitter:image`) sustituye el fondo de franjas por una imagen propia de 1200×630, con el nombre del juego y un campo dibujado, sin escudos ni colores de equipo.

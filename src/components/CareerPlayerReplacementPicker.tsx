@@ -27,7 +27,7 @@ export function CareerPlayerReplacementPicker({
       <section className="career-replace-card">
         <header className="career-replace-header">
           <div>
-            <p className="eyebrow">Modo carrera Athletic · {nextSeasonLabel}</p>
+            <p className="eyebrow">Modo carrera · {nextSeasonLabel}</p>
             <h1>Elige el jugador que quieres cambiar</h1>
             <p>
               {mode === "player_formation"

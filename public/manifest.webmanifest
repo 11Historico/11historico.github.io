@@ -1,7 +1,7 @@
 {
-  "name": "Futbol11 · Athletic Club Histórico",
-  "short_name": "Futbol11",
-  "description": "Juego histórico del Athletic Club: draft de jugadores, Liga, Copa del Rey y noches europeas.",
+  "name": "Once Histórico",
+  "short_name": "Once Histórico",
+  "description": "Juego histórico de draft de jugadores, Liga, Copa del Rey y noches europeas.",
   "lang": "es",
   "start_url": "./",
   "scope": "./",

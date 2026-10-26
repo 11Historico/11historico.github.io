@@ -201,7 +201,7 @@ export function CareerFormationChangePicker({
   return (
     <main className="career-formation-change-screen">
       <section className="career-formation-change-card">
-        <p className="eyebrow">Modo carrera Athletic · premio especial</p>
+        <p className="eyebrow">Modo carrera · premio especial</p>
         <h1>Cambiar jugador o formación compatible</h1>
         <p className="career-formation-change-lead">
           Has desbloqueado un ajuste táctico para la temporada {nextSeasonLabel}. Puedes mantener tu formación actual y cambiar solo el jugador, o elegir una alineación compatible con los jugadores restantes, sin moverlos de su línea natural y con un hueco válido para el sustituto.

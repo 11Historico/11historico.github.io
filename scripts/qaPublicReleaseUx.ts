@@ -20,7 +20,7 @@ function assertIncludes(source: string, expected: string, context: string): void
 function testHomeExplainsGameInTenSeconds(): void {
   const home = read("src/components/GameHome.tsx");
 
-  assertIncludes(home, "Construye tu Athletic histórico y sobrevive temporada a temporada", "home hero");
+  assertIncludes(home, "Construye tu once histórico y sobrevive temporada a temporada", "home hero");
   assertIncludes(home, "Elige jugadores históricos", "public pillars");
   assertIncludes(home, "Compite en Liga, Copa y Europa", "public pillars");
   assertIncludes(home, "Gana títulos y entra al ranking", "public pillars");

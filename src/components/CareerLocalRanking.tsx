@@ -48,7 +48,7 @@ export function CareerLocalRanking({
   return (
     <main className="career-ranking-screen">
       <section className="career-ranking-card">
-        <p className="eyebrow">Modo carrera Athletic</p>
+        <p className="eyebrow">Modo carrera</p>
         <h1>Top local</h1>
         <p className="career-ranking-intro">
           Mejores carreras guardadas solo en este navegador: este ranking no envía nada fuera de tu dispositivo. Para compararte con otros jugadores, usa el ranking global.
