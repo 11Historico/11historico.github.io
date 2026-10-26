@@ -22,6 +22,7 @@ import type { AppScreen } from "./app/appScreen";
 import {
   cancelLuckWheelCoachChange,
   checkCareerFormationChange,
+  endReplacementFlowPatch,
   getRewardFlowResumeScreen,
   hasSpecialCoachBonus,
   startCareerCoachChange,
@@ -1207,12 +1208,8 @@ export default function App() {
       selectedPlayers: fallbackPlayers,
       selectedCoach,
     });
-    setReplacementDraftSeason(undefined);
-    setReplacementRemovedPlayer(undefined);
-    setReplacementOriginalFormation(undefined);
-    setCareerRewardFlow(undefined);
+    applyCareerRewardFlowPatch(endReplacementFlowPatch());
     setCareerRewardSnapshot(undefined);
-    setTeamValidationErrors([]);
     if (!isLuckWheelPlayerFlow) {
       setLeagueContext(undefined);
       setPendingSeasonLuckWheelOffer(undefined);
@@ -1250,12 +1247,8 @@ export default function App() {
       selectedCoach,
     });
     setLastSelection(selection);
-    setReplacementDraftSeason(undefined);
-    setReplacementRemovedPlayer(undefined);
-    setReplacementOriginalFormation(undefined);
-    setCareerRewardFlow(undefined);
+    applyCareerRewardFlowPatch(endReplacementFlowPatch());
     setCareerRewardSnapshot(undefined);
-    setTeamValidationErrors([]);
     setCurrentRoundIndex(nextPlayers.length);
     setCareerSeasonResult(undefined);
     setCareerObjectiveResult(undefined);
