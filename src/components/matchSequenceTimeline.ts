@@ -4,7 +4,7 @@
 // Convierte el tiempo transcurrido en fotograma (fase, minuto y goles visibles)
 // usando solo los `goalEvents` que ya genera el motor. No cambia la simulación.
 
-import type { GoalEvent } from "../types/game";
+import type { GoalEvent, MatchResult } from "../types/game";
 
 export const MATCH_SEQUENCE_PREVIEW_MS = 1000;
 export const MATCH_SEQUENCE_PLAY_MS = 2800;
@@ -53,4 +53,17 @@ export function getMatchSequenceFrame(goalEvents: GoalEvent[], elapsedMs: number
 
 export function countGoalsForTeam(goals: GoalEvent[], teamName: string): number {
   return goals.filter((goal) => goal.teamName === teamName).length;
+}
+
+// Insignia del resultado del usuario: la usan la secuencia y los últimos resultados.
+export function getResultBadge(result: MatchResult): string {
+  if (result.userTeamWon) return "Victoria";
+  if (result.userTeamDrew) return "Empate";
+  return "Derrota";
+}
+
+export function getResultClass(result: MatchResult): string {
+  if (result.userTeamWon) return "result-badge result-badge-win";
+  if (result.userTeamDrew) return "result-badge result-badge-draw";
+  return "result-badge result-badge-loss";
 }

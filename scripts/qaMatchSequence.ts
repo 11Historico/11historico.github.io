@@ -100,6 +100,11 @@ function testWiring(): void {
   );
   assert(view.includes("onPlayingChange={setIsSequencePlaying}"), "La secuencia debe avisar a la vista cuando juega.");
   assert(css.includes(".match-sequence-cup"), "La Copa debe tener su estilo propio.");
+  // v0.25.60: la secuencia y la camiseta viven en módulos propios. Importarlas
+  // desde LeagueSimulatorView arrastraba todo el simulador a pantallas que se cargan en diferido.
+  for (const path of ["src/components/CareerSupercopa.tsx", "src/components/FinalSummary.tsx"]) {
+    assert(!read(path).includes('from "./LeagueSimulatorView"'), `${path} no debe importar de LeagueSimulatorView.`);
+  }
   logOk("La vista usa la secuencia, espera a que termine y la Copa tiene estilo propio");
 }
 

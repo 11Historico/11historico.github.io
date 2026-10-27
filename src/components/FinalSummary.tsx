@@ -18,7 +18,7 @@ import type { EuropeanCompetition, EuropeanQualificationResult } from "../europe
 import SelectedTeamBoard from "./SelectedTeamBoard";
 import PalmaresTrophyCase from "./PalmaresTrophyCase";
 import { CompetitionIcon, type CompetitionIconKind } from "./CompetitionIcon";
-import { TeamKitIcon } from "./LeagueSimulatorView";
+import { TeamKitIcon } from "./TeamKitIcon";
 import EuropeanQualificationCard from "./EuropeanQualificationCard";
 import { CupBracket, EuropeanBracket } from "./SeasonBrackets";
 import { buildCupBracketRows, buildEuropeanBracketColumns } from "../career/seasonBrackets";

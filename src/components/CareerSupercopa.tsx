@@ -5,7 +5,7 @@ import type {
   CareerSupercopaResult,
 } from "../types/career";
 
-import { MatchSequence } from "./LeagueSimulatorView";
+import { MatchSequence } from "./MatchSequence";
 
 import "./CareerSupercopa.css";
 
