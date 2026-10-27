@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.58 — CI: concurrencia por rama
+
+- Cada rama o PR tiene su propio grupo de concurrencia en el CI. Antes todas las ejecuciones compartían el grupo `pages` y un push a `main` cancelaba el CI de un PR que esperaba turno; por eso hacían falta commits vacíos para relanzarlo.
+- En un PR, un push nuevo cancela la ejecución anterior del mismo PR.
+- El despliegue a Pages solo se hace desde `main` y sigue yendo de uno en uno. Lanzar el workflow a mano sobre otra rama ejecuta solo las comprobaciones.
+- Versionado a `v0.25.58` / `0.25.58`.
+
 ## v0.25.57 — Pantalla de liga: acciones de juego y pestañas de consulta
 
 - La fila de acciones de la liga queda solo para jugar: Simular partido europeo, Simular y Saltar hasta próximo evento.
