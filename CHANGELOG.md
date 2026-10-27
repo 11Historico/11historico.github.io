@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.59 — `dist/` fuera de git
+
+- Se dejan de seguir en git los 5 archivos de `dist/` que quedaban de antes de ignorar la carpeta. `dist/` ya estaba en `.gitignore`; el CI genera la build en cada despliegue.
+- La web publicada no cambia.
+- Versionado a `v0.25.59` / `0.25.59`.
+
 ## v0.25.58 — CI: concurrencia por rama
 
 - Cada rama o PR tiene su propio grupo de concurrencia en el CI. Antes todas las ejecuciones compartían el grupo `pages` y un push a `main` cancelaba el CI de un PR que esperaba turno; por eso hacían falta commits vacíos para relanzarlo.
