@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.25.50 — Ver el palmarés desde la pantalla de liga
+
+- En modo carrera, la pantalla de liga tiene un botón "Ver palmarés" para consultar los títulos a mitad de temporada.
+- Versionado a `v0.25.50` / `0.25.50`.
+
 ## v0.25.49 — Rivales europeos reales y más variados
 
 - Champions League y Europa League pasan a clubes reales, como la Conference League. Cada pool tiene 20 clubes, para que los rivales cambien entre temporadas.
