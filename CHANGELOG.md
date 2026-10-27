@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.48 — Rivales reales en la Conference League y botón de partido europeo
+
+- Los rivales de la Conference League son clubes reales de esos países, sin escudos ni equipaciones.
+- "Simular partido europeo" aparece en la fila de acciones de la liga, junto a "Simular" y "Saltar hasta próximo evento".
+- Versionado a `v0.25.48` / `0.25.48`.
+
 ## v0.25.47 — El equipo del usuario vuelve a "Athletic Club Histórico"
 
 - El equipo del usuario recupera el nombre "Athletic Club Histórico" en la interfaz, en los mensajes de liga y Europa, y en los textos para compartir. Revierte el cambio de v0.25.45.

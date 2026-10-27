@@ -828,6 +828,12 @@ export function LeagueSimulatorView({
               </div>
             ) : (
               <div className="league-buttons">
+                {pendingEuropeanMatch && (
+                  <button type="button" onClick={handleSimulateEuropeanMatch}>
+                    Simular partido europeo
+                  </button>
+                )}
+
                 <button
                   type="button"
                   className={isAutoSimulating ? "stop-league-button" : "secondary-league-button"}
@@ -867,7 +873,6 @@ export function LeagueSimulatorView({
               tournament={europeanTournament}
               match={europeanEventMatch}
               userTeamRating={effectiveTeamRating.overall}
-              onSimulate={handleSimulateEuropeanMatch}
               onContinue={handleContinueAfterEuropeanMatch}
             />
           )}
