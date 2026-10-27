@@ -10,6 +10,7 @@
 import { useEffect, useState } from "react";
 
 import { getEuropeanCompetitionLabel } from "../europe/europeanQualification";
+import { USER_TEAM_NAME } from "../simulation/leagueTable";
 import {
   EUROPEAN_KNOCKOUT_TIE_RULE_TEXT,
   getEuropeanMatchDecisionText,
@@ -99,7 +100,7 @@ function getProgressPercent(tournament: EuropeanTournamentState): number {
 }
 
 function getKnockoutWinText(match: EuropeanTournamentMatch): string {
-  if (match.phase === "semifinal") return "Victoria: Athletic a la final europea";
+  if (match.phase === "semifinal") return "Victoria: tu equipo pasa a la final europea";
   if (match.phase === "final") return "Victoria: campeón europeo, se suma al palmarés al cerrar la temporada";
   return "Victoria: suma puntos en fase inicial";
 }
@@ -196,8 +197,8 @@ export function EuropeanMatchEvent({
   const isPlayed = match.status === "played";
   const isKnockoutMatch = match.phase === "semifinal" || match.phase === "final";
   const homeAwayText = match.isHome
-    ? "El Athletic jugará como local"
-    : "El Athletic jugará como visitante";
+    ? "Tu equipo jugará como local"
+    : "Tu equipo jugará como visitante";
   const progressPercent = getProgressPercent(tournament);
   const phaseLabel = getEuropeanTournamentPhaseLabel(match.phase);
 
@@ -236,7 +237,7 @@ export function EuropeanMatchEvent({
 
       <div className="european-match-event-scoreboard" aria-label="Previa europea">
         <article className="european-match-event-team european-match-event-team-user">
-          <span>Athletic Club</span>
+          <span>{USER_TEAM_NAME}</span>
           <strong>{Math.round(userTeamRating)}</strong>
           <small>{match.isHome ? "Local · San Mamés" : "Visitante"}</small>
         </article>
