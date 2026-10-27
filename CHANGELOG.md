@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.60 — Secuencia de partido y camisetas en módulos propios
+
+- `MatchSequence` pasa a `src/components/MatchSequence.tsx` y `TeamKitIcon` / `TeamWithKit` a `src/components/TeamKitIcon.tsx`. `getResultBadge` y `getResultClass` pasan a `matchSequenceTimeline.ts`.
+- La Supercopa y la pantalla final ya no importan `LeagueSimulatorView`, así que dejan de cargar todo el simulador. El chunk de `LeagueSimulatorView` baja de 52,0 kB a 45,7 kB.
+- Sin cambios visibles ni de juego.
+- Versionado a `v0.25.60` / `0.25.60`.
+
 ## v0.25.59 — `dist/` fuera de git
 
 - Se dejan de seguir en git los 5 archivos de `dist/` que quedaban de antes de ignorar la carpeta. `dist/` ya estaba en `.gitignore`; el CI genera la build en cada despliegue.

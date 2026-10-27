@@ -50,12 +50,9 @@ import type { EuropeanTournamentMatch, EuropeanTournamentState } from "../europe
 import EuropeanMatchEvent from "./EuropeanMatchEvent";
 import { CompetitionIcon } from "./CompetitionIcon";
 import EuropeanLeagueTable from "./EuropeanLeagueTable";
-import {
-  MATCH_SEQUENCE_TICK_MS,
-  countGoalsForTeam,
-  getMatchSequenceDurationMs,
-  getMatchSequenceFrame,
-} from "./matchSequenceTimeline";
+import { MatchSequence } from "./MatchSequence";
+import { TeamWithKit } from "./TeamKitIcon";
+import { getResultBadge, getResultClass } from "./matchSequenceTimeline";
 import {
   MATCH_PLAYBACK_SPEED_OPTIONS,
   getMatchPlaybackMultiplier,
@@ -96,116 +93,10 @@ interface LeagueSimulatorViewProps {
 
 const AUTO_SIMULATION_DELAY_MS = 1300;
 
-function getResultBadge(result: MatchResult): string {
-  if (result.userTeamWon) return "Victoria";
-  if (result.userTeamDrew) return "Empate";
-  return "Derrota";
-}
-
-function getResultClass(result: MatchResult): string {
-  if (result.userTeamWon) return "result-badge result-badge-win";
-  if (result.userTeamDrew) return "result-badge result-badge-draw";
-  return "result-badge result-badge-loss";
-}
-
 function getDifficultyLabel(difficulty: GameDifficulty): string {
   if (difficulty === "normal") return "Fácil";
   if (difficulty === "leyenda") return "Leyenda";
   return "Normal";
-}
-
-function normalizeTeamNameForKit(teamName: string): string {
-  return teamName
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
-function getTeamKitClass(teamName: string): string {
-  const normalizedName = normalizeTeamNameForKit(teamName);
-
-  if (
-    normalizedName.includes("athletic club historico") ||
-    normalizedName.includes("athletic historico") ||
-    normalizedName.includes("zurigorri")
-  ) {
-    return "team-kit-athletic";
-  }
-
-  if (normalizedName.includes("sevilla")) {
-    return "team-kit-sevilla";
-  }
-
-  if (normalizedName.includes("real madrid")) return "team-kit-real-madrid";
-  if (normalizedName.includes("barcelona") || normalizedName.includes("fc barcelona")) return "team-kit-barcelona";
-  if (normalizedName.includes("atletico")) return "team-kit-atletico";
-  if (normalizedName.includes("valencia")) return "team-kit-valencia";
-  if (normalizedName.includes("betis")) return "team-kit-betis";
-  if (normalizedName.includes("real sociedad")) return "team-kit-sociedad";
-  if (normalizedName.includes("osasuna")) return "team-kit-osasuna";
-  if (normalizedName.includes("celta")) return "team-kit-celta";
-  if (normalizedName.includes("alaves")) return "team-kit-alaves";
-  if (normalizedName.includes("elche")) return "team-kit-elche";
-  if (normalizedName.includes("getafe")) return "team-kit-getafe";
-  if (normalizedName.includes("girona")) return "team-kit-girona";
-  if (normalizedName.includes("levante")) return "team-kit-levante";
-  if (normalizedName.includes("rayo")) return "team-kit-rayo";
-  if (normalizedName.includes("espanyol")) return "team-kit-espanyol";
-  if (normalizedName.includes("mallorca")) return "team-kit-mallorca";
-  if (normalizedName.includes("oviedo")) return "team-kit-oviedo";
-  if (normalizedName.includes("villarreal")) return "team-kit-villarreal";
-  if (normalizedName.includes("mirandes")) return "team-kit-mirandes";
-  if (normalizedName.includes("zaragoza")) return "team-kit-zaragoza";
-  if (normalizedName.includes("sporting")) return "team-kit-sporting";
-  if (normalizedName.includes("tenerife")) return "team-kit-tenerife";
-  if (normalizedName.includes("racing")) return "team-kit-racing";
-  if (normalizedName.includes("deportivo de la coruna") || normalizedName.includes("coruna")) return "team-kit-deportivo";
-  if (normalizedName.includes("albacete")) return "team-kit-albacete";
-  if (normalizedName.includes("alcoyano")) return "team-kit-alcoyano";
-  if (normalizedName.includes("cultural")) return "team-kit-cultural";
-  if (normalizedName.includes("cadiz")) return "team-kit-cadiz";
-  if (normalizedName.includes("malaga")) return "team-kit-malaga";
-  if (normalizedName.includes("numancia")) return "team-kit-numancia";
-  if (normalizedName.includes("almeria")) return "team-kit-almeria";
-  if (normalizedName.includes("alcorcon")) return "team-kit-alcorcon";
-  if (normalizedName.includes("badajoz")) return "team-kit-badajoz";
-  if (normalizedName.includes("castellon")) return "team-kit-castellon";
-  if (normalizedName.includes("eibar")) return "team-kit-eibar";
-  if (normalizedName.includes("burgos")) return "team-kit-burgos";
-  if (normalizedName.includes("las palmas")) return "team-kit-las-palmas";
-  if (normalizedName.includes("cordoba")) return "team-kit-cordoba";
-  if (normalizedName.includes("granada")) return "team-kit-granada";
-  if (normalizedName.includes("huesca")) return "team-kit-huesca";
-  if (normalizedName.includes("barakaldo")) return "team-kit-barakaldo";
-  if (normalizedName.includes("sestao")) return "team-kit-sestao";
-  if (normalizedName.includes("portugalete")) return "team-kit-portugalete";
-
-  return "team-kit-default";
-}
-
-export function TeamKitIcon({ teamName, compact = false }: { teamName: string; compact?: boolean }) {
-  return (
-    <span
-      className={`team-kit-icon ${getTeamKitClass(teamName)} ${
-        compact ? "team-kit-icon-compact" : ""
-      }`}
-      aria-label={`Camiseta ${teamName}`}
-      title={teamName}
-    >
-      <span className="team-kit-sleeve team-kit-sleeve-left" />
-      <span className="team-kit-body" />
-      <span className="team-kit-sleeve team-kit-sleeve-right" />
-    </span>
-  );
-}
-
-function TeamWithKit({ teamName }: { teamName: string }) {
-  return (
-    <span className="team-with-kit">
-      <TeamKitIcon teamName={teamName} />
-      <span>{teamName}</span>
-    </span>
-  );
 }
 
 function PlaybackSpeedControl() {
@@ -226,113 +117,6 @@ function PlaybackSpeedControl() {
         </button>
       ))}
     </div>
-  );
-}
-
-function getMatchSequenceTag(result: MatchResult): string {
-  if (result.roundName?.startsWith("Supercopa")) return result.roundName;
-  if (result.competition === "cup") return `Copa del Rey · ${result.roundName ?? ""}`.trim();
-  return `LaLiga · Jornada ${result.matchday}`;
-}
-
-export function MatchSequence({
-  result,
-  onPlayingChange,
-}: {
-  result: MatchResult;
-  onPlayingChange: (playing: boolean) => void;
-}) {
-  const playbackMultiplier = getMatchPlaybackMultiplier(useMatchPlaybackSpeed());
-  const durationMs = getMatchSequenceDurationMs(playbackMultiplier);
-  const [elapsedMs, setElapsedMs] = useState(() =>
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? durationMs : 0,
-  );
-  const frame = getMatchSequenceFrame(result.goalEvents, elapsedMs, playbackMultiplier);
-  const isFinal = frame.stage === "final";
-  const homeGoals = isFinal ? result.homeGoals : countGoalsForTeam(frame.visibleGoals, result.homeTeamName);
-  const awayGoals = isFinal ? result.awayGoals : countGoalsForTeam(frame.visibleGoals, result.awayTeamName);
-
-  useEffect(() => {
-    onPlayingChange(!isFinal);
-  }, [isFinal, onPlayingChange]);
-
-  useEffect(() => {
-    return () => onPlayingChange(false);
-  }, [onPlayingChange]);
-
-  useEffect(() => {
-    if (isFinal) return undefined;
-
-    const intervalId = window.setInterval(() => {
-      setElapsedMs((current) => Math.min(durationMs, current + MATCH_SEQUENCE_TICK_MS));
-    }, MATCH_SEQUENCE_TICK_MS);
-
-    return () => window.clearInterval(intervalId);
-  }, [durationMs, isFinal]);
-
-  return (
-    <article className={`last-result-card match-sequence ${result.competition === "cup" ? "match-sequence-cup" : "match-sequence-league"}`}>
-      <div className="last-result-top">
-        {isFinal ? (
-          result.userTeamPlayed === false ? (
-            <span className="match-sequence-clock">Final</span>
-          ) : (
-            <span className={getResultClass(result)}>{getResultBadge(result)}</span>
-          )
-        ) : (
-          <span className="match-sequence-clock">{frame.stage === "preview" ? "Previa" : `${frame.minute}'`}</span>
-        )}
-        <span className="match-sequence-tag">
-          <CompetitionIcon kind={result.competition === "cup" ? "copa" : "liga"} />
-          {getMatchSequenceTag(result)}
-        </span>
-      </div>
-
-      <div className="last-result-scoreboard">
-        <ScoreTeam teamName={result.homeTeamName} goals={homeGoals} />
-        <span className="score-separator">-</span>
-        <ScoreTeam teamName={result.awayTeamName} goals={awayGoals} />
-      </div>
-
-      <div className="match-sequence-progress" aria-hidden="true">
-        <span style={{ width: `${(elapsedMs / durationMs) * 100}%` }} />
-      </div>
-
-      {frame.visibleGoals.length > 0 ? (
-        <ul className="goal-events-list" aria-live="polite">
-          {frame.visibleGoals.map((event, index) => (
-            <li key={`${event.minute}_${event.teamName}_${index}`}>
-              <strong>{event.minute}'</strong>
-              <TeamWithKit teamName={event.teamName} />
-              {event.scorerName && <em>{event.scorerName}</em>}
-              {event.assistName && <small>Asistencia: {event.assistName}</small>}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        isFinal && <p className="empty-league-message">Partido sin goles.</p>
-      )}
-
-      {!isFinal && (
-        <button
-          type="button"
-          className="secondary-league-button match-sequence-skip"
-          onClick={() => setElapsedMs(durationMs)}
-        >
-          Saltar
-        </button>
-      )}
-    </article>
-  );
-}
-
-function ScoreTeam({ teamName, goals }: { teamName: string; goals: number }) {
-  return (
-    <span className="score-team">
-      <TeamKitIcon teamName={teamName} />
-      <span>{teamName}</span>
-      <strong>{goals}</strong>
-    </span>
   );
 }
 
