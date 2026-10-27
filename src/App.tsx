@@ -1565,6 +1565,7 @@ export default function App() {
             isCareerMode={isCareerMode}
             leagueRivals={isCareerMode ? careerLeagueRivals : undefined}
             careerCompletedSeasons={careerCompletedSeasons}
+            careerTrophyCounts={isCareerMode ? careerTrophyCounts : undefined}
             initialContext={leagueContext}
             onContextChange={setLeagueContext}
             initialPendingSeasonLuckWheelOffer={pendingSeasonLuckWheelOffer}

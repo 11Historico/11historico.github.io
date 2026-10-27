@@ -12,6 +12,16 @@
 - Previa y 90' usan la misma duración que la secuencia de Liga.
 - Versionado a `v0.25.51` / `0.25.51`.
 
+## v0.25.50 — Ver el palmarés desde la pantalla de liga
+
+- En modo carrera, la pantalla de liga tiene un botón "Ver palmarés" para consultar los títulos a mitad de temporada.
+- Versionado a `v0.25.50` / `0.25.50`.
+
+## v0.25.49 — Rivales europeos reales y más variados
+
+- Champions League y Europa League pasan a clubes reales, como la Conference League. Cada pool tiene 20 clubes, para que los rivales cambien entre temporadas.
+- Versionado a `v0.25.49` / `0.25.49`.
+
 ## v0.25.48 — Rivales reales en la Conference League y botón de partido europeo
 
 - Los rivales de la Conference League son clubes reales de esos países, sin escudos ni equipaciones.
