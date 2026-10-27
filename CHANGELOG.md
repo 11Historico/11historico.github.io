@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.66 — Capturas en el README
+
+- El README muestra cuatro capturas del juego: portada, draft, simulación de Liga y temporada superada (`docs/screenshots/`).
+- `tests/e2e/readme-screenshots.spec.ts` las regenera con `README_SCREENSHOTS=1`; en las pruebas normales se salta.
+- Versionado a `v0.25.66` / `0.25.66`.
+
 ## v0.25.65 — Eventos de analítica: imagen compartida y temporada superada
 
 - Dos eventos nuevos de GoatCounter, sin propiedades: `share_image` (imagen de la carrera compartida o descargada) y `season_complete` (temporada superada y carrera continuada).

@@ -143,7 +143,7 @@ Juego web en React + TypeScript para construir un once histórico del Athletic C
 
 ## Estado actual
 
-Versión pública actual: `v0.25.65_STABLE_PUBLIC_RELEASE`.
+Versión pública actual: `v0.25.66_STABLE_PUBLIC_RELEASE`.
 
 Base jugable cerrada:
 
@@ -160,6 +160,16 @@ GitHub Pages:
 ```text
 https://ikeritu.github.io/11Historico/
 ```
+
+## Capturas
+
+| Portada | Draft histórico |
+|---|---|
+| ![Portada: dificultad, carrera, partida rápida y ranking](docs/screenshots/portada.jpg) | ![Draft: temporada sorteada, jugadores disponibles y el once en el campo](docs/screenshots/draft.jpg) |
+| **Simulación de Liga** | **Temporada superada** |
+| ![Simulación de Liga: próximo paso, partido con goles y clasificación](docs/screenshots/liga.jpg) | ![Fin de temporada en carrera: Liga, Europa, Copa, descenso y Supercopa](docs/screenshots/temporada-superada.jpg) |
+
+Se regeneran con `tests/e2e/readme-screenshots.spec.ts` (ver `docs/v0_25_66_README_SCREENSHOTS.md`).
 
 ## Qué incluye
 
