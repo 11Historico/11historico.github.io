@@ -20,6 +20,7 @@ import {
 } from "../domain/positionRules";
 
 import { getAvailableAthleticSeasons, getPlayersBySeason } from "../data/athleticSeasons";
+import { RATING_METHOD_LABELS } from "../data/sources";
 import TacticalPitch from "./TacticalPitch";
 
 import "./PlayerRound.css";
@@ -836,7 +837,7 @@ export function PlayerRound({
 
                   <div className="player-meta">
                     <span>{getDataConfidenceLabel(player.dataConfidence)}</span>
-                    <span>{player.ratingMethod}</span>
+                    <span>{RATING_METHOD_LABELS[player.ratingMethod]}</span>
                     <span>{getSkillLabel(sortKey)}: {getSortValue(player, sortKey)}</span>
                   </div>
 

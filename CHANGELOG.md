@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.67 — Botón «Saltar» y método de valoración en español
+
+- Los botones «Saltar» de la secuencia de partido (Liga, Copa, Supercopa y Europa) ya no salen con el borde y la letra del navegador.
+- Las tarjetas del draft y del entrenador muestran «Estadísticas + estimación» en vez de la etiqueta interna `mixed`.
+- Captura del draft del README regenerada.
+- Versionado a `v0.25.67` / `0.25.67`.
+
 ## v0.25.66 — Capturas en el README
 
 - El README muestra cuatro capturas del juego: portada, draft, simulación de Liga y temporada superada (`docs/screenshots/`).

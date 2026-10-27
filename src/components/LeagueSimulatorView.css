@@ -1034,6 +1034,20 @@
   transition: width 100ms linear;
 }
 
+/* "Saltar" de la secuencia de partido (Liga/Copa y Europa). Va fuera de .league-buttons,
+   así que .secondary-league-button solo le da el color: sin esto quedaba con el borde
+   y la letra del navegador. */
+.match-sequence-skip,
+.european-match-sequence-skip {
+  min-height: 40px;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
 .match-sequence-skip {
   margin-top: 12px;
   width: 100%;

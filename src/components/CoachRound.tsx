@@ -8,6 +8,7 @@ import {
   getAvailableAthleticSeasons,
   getCoachBySeason,
 } from "../data/athleticSeasons";
+import { RATING_METHOD_LABELS } from "../data/sources";
 
 import "./CoachRound.css";
 
@@ -266,7 +267,7 @@ function CoachVisualCard({
       </div>
 
       <div className="coach-meta">
-        <span>{coach.ratingMethod}</span>
+        <span>{RATING_METHOD_LABELS[coach.ratingMethod]}</span>
       </div>
 
       {coach.notes && <p className="coach-notes">{coach.notes}</p>}
