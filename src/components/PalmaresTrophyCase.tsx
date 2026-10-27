@@ -6,7 +6,7 @@ import type { CareerTrophyCounts } from "../types/career";
 import "./PalmaresTrophyCase.css";
 
 interface PalmaresTrophyCaseProps {
-  summary: FinalGameSummary;
+  summary?: FinalGameSummary;
   trophyCounts?: CareerTrophyCounts;
   variant?: "single-game" | "career";
 }
@@ -37,14 +37,14 @@ function buildCareerTrophies(trophyCounts: CareerTrophyCounts): TrophyCount[] {
   return DEFAULT_TROPHIES.map((fallback) => byId.get(fallback.id) ?? fallback);
 }
 
-function buildTrophies(summary: FinalGameSummary, trophyCounts?: CareerTrophyCounts): TrophyCount[] {
+function buildTrophies(summary: FinalGameSummary | undefined, trophyCounts?: CareerTrophyCounts): TrophyCount[] {
   if (trophyCounts) {
     return buildCareerTrophies(trophyCounts);
   }
 
   const byId = new Map<TrophyId, TrophyCount>(DEFAULT_TROPHIES.map((item) => [item.id, item]));
 
-  for (const trophy of summary.trophiesWon ?? []) {
+  for (const trophy of summary?.trophiesWon ?? []) {
     byId.set(trophy.id, trophy);
   }
 
@@ -64,8 +64,8 @@ function getCareerTrophyNote(trophy: TrophyCount): string {
   return `Sin ${trophy.label} ganada todavía`;
 }
 
-function getTrophyNote(trophy: TrophyCount, summary: FinalGameSummary, variant: "single-game" | "career"): string {
-  if (variant === "career") {
+function getTrophyNote(trophy: TrophyCount, summary: FinalGameSummary | undefined, variant: "single-game" | "career"): string {
+  if (variant === "career" || !summary) {
     return getCareerTrophyNote(trophy);
   }
   if (trophy.id === "liga") {
