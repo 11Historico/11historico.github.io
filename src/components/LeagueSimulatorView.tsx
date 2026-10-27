@@ -49,6 +49,7 @@ import { applyEuropeanMatchResult, isEuropeanKnockoutMatch } from "../europe/eur
 import type { EuropeanTournamentMatch, EuropeanTournamentState } from "../europe/europeanTypes";
 import EuropeanMatchEvent from "./EuropeanMatchEvent";
 import { CompetitionIcon } from "./CompetitionIcon";
+import EuropeanLeagueTable from "./EuropeanLeagueTable";
 import {
   MATCH_SEQUENCE_TICK_MS,
   countGoalsForTeam,
@@ -375,6 +376,7 @@ export function LeagueSimulatorView({
 
   const [lastResult, setLastResult] = useState<MatchResult | undefined>(undefined);
   const [isAutoSimulating, setIsAutoSimulating] = useState(false);
+  const [isEuropeanTableOpen, setIsEuropeanTableOpen] = useState(false);
   const [isPalmaresOpen, setIsPalmaresOpen] = useState(false);
   const [isSequencePlaying, setIsSequencePlaying] = useState(false);
   const playbackMultiplier = getMatchPlaybackMultiplier(useMatchPlaybackSpeed());
@@ -857,6 +859,12 @@ export function LeagueSimulatorView({
                   Saltar hasta próximo evento
                 </button>
 
+                {europeanTournament && (
+                  <button type="button" className="tertiary-league-button" onClick={() => setIsEuropeanTableOpen((open) => !open)}>
+                    {isEuropeanTableOpen ? "Ocultar clasificación europea" : "Ver clasificación europea"}
+                  </button>
+                )}
+
                 {isCareerMode && careerTrophyCounts && (
                   <button type="button" className="tertiary-league-button" onClick={() => setIsPalmaresOpen((open) => !open)}>
                     {isPalmaresOpen ? "Ocultar palmarés" : "Ver palmarés"}
@@ -865,6 +873,8 @@ export function LeagueSimulatorView({
               </div>
             )}
           </div>
+
+          {europeanTournament && isEuropeanTableOpen && <EuropeanLeagueTable tournament={europeanTournament} />}
 
           {isCareerMode && careerTrophyCounts && isPalmaresOpen && (
             <PalmaresTrophyCase trophyCounts={careerTrophyCounts} variant="career" />
