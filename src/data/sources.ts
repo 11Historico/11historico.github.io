@@ -1,6 +1,14 @@
 // src/data/sources.ts
 
-import type { DataSource } from "../types/game";
+import type { DataSource, RatingMethod } from "../types/game";
+
+/** Texto visible del método de valoración en las tarjetas de jugador y entrenador. */
+export const RATING_METHOD_LABELS: Record<RatingMethod, string> = {
+  official: "Valoración oficial",
+  stats: "Por estadísticas",
+  mixed: "Estadísticas + estimación",
+  manual_estimate: "Estimación manual",
+};
 
 /**
  * Fuentes base para construir el dataset de Once histórico Zurigorri.
