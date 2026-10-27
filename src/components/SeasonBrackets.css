@@ -11,6 +11,8 @@
   display: grid;
   align-content: start;
   gap: 8px;
+  /* Sin esto, la cabecera más ancha que la columna invade la siguiente. */
+  min-width: 0;
   padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 18px;
@@ -19,6 +21,7 @@
 
 .season-bracket-column > header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
@@ -46,7 +49,7 @@
 .season-bracket-match {
   display: grid;
   gap: 6px;
-  padding: 10px;
+  padding: 10px 8px;
   border-radius: 14px;
   background: rgba(0, 0, 0, 0.18);
   color: #ffffff;
@@ -55,7 +58,9 @@
 .season-bracket-team {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
   font-weight: 800;
   color: rgba(255, 255, 255, 0.82);
 }
@@ -68,7 +73,21 @@
   color: #ffe08a;
 }
 
-.season-bracket-team-user span {
+/* Los nombres largos pasan a dos líneas; la camiseta queda centrada a su lado. */
+.season-bracket-team-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+/* Camiseta a escala (zoom mantiene las proporciones y reduce el hueco que ocupa):
+   con cinco columnas en escritorio, "Deportivo" + camiseta + goles debe caber en ~158 px. */
+.season-bracket .team-kit-icon {
+  zoom: 0.75;
+}
+
+.season-bracket-team-user .season-bracket-team-name {
   color: #ffe08a;
 }
 

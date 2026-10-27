@@ -14,6 +14,8 @@ import {
 import { getEuropeanMatchDecisionText } from "../europe/europeanTournament";
 import type { EuropeanTournamentMatch } from "../europe/europeanTypes";
 import type { MatchResult } from "../types/game";
+// Solo en Copa: los rivales europeos van sin equipaciones (ver europeanOpponents.ts).
+import { TeamKitIcon } from "./TeamKitIcon";
 
 import "./SeasonBrackets.css";
 
@@ -30,7 +32,10 @@ function TeamLine({ name, goals, won }: { name: string; goals: number; won: bool
 
   return (
     <div className={classes.join(" ")}>
-      <span>{name}</span>
+      <span className="season-bracket-team-name">
+        <TeamKitIcon teamName={name} />
+        <span>{name}</span>
+      </span>
       <strong>{goals}</strong>
     </div>
   );

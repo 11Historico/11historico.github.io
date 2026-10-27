@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.62 — Camisetas en el cuadro de la Copa
+
+- El cuadro de la Copa del Rey de la pantalla final muestra la camiseta de cada equipo junto a su nombre.
+- Las columnas del cuadro ya no se pisan en escritorio: la cabecera puede pasar a dos líneas y las tarjetas caben en su columna.
+- El cuadro europeo sigue sin camisetas: los rivales europeos van sin equipaciones.
+- Versionado a `v0.25.62` / `0.25.62`.
+
 ## v0.25.61 — Regla de nombres del equipo en los textos
 
 - Regla mixta: "Athletic Club Histórico" en titulares, marcadores y tablas; "Tu equipo" en textos de estado y objetivos; "el Athletic" se mantiene en la narrativa (ruleta, crónicas europeas, etiquetas de época).
