@@ -230,17 +230,20 @@ function normalizePayload_(payload) {
 }
 
 // v0.25.30: palmarés coherente con las temporadas declaradas. Como mucho un título por
-// competición nacional y un único torneo europeo por temporada. Se admite una temporada
-// extra: el título de la temporada que termina en Game Over.
+// competición nacional y un único torneo europeo por temporada.
+// v0.25.64: la carrera juega completedSeasons + 1 temporadas (la última termina en Game Over):
+// - Liga: ganarla clasifica para Europa y salva la temporada, así que no cabe en la de Game Over.
+// - Copa: sí cabe en la de Game Over (Copa + descenso).
+// - Supercopa y torneo europeo: se clasifican en una temporada y se juegan en la siguiente,
+//   así que la primera no tiene ninguno de los dos.
 function checkTrophyPlausibility_(completedSeasons, trophyCounts) {
-  const maxPerCompetition = completedSeasons + 1;
   const europeanTotal = trophyCounts.champions + trophyCounts.europaLeague + trophyCounts.conference;
 
   if (
-    trophyCounts.liga > maxPerCompetition ||
-    trophyCounts.copa > maxPerCompetition ||
-    trophyCounts.supercopa > maxPerCompetition ||
-    europeanTotal > maxPerCompetition
+    trophyCounts.liga > completedSeasons ||
+    trophyCounts.copa > completedSeasons + 1 ||
+    trophyCounts.supercopa > completedSeasons ||
+    europeanTotal > completedSeasons
   ) {
     throw new Error('Palmarés incoherente con las temporadas declaradas.');
   }

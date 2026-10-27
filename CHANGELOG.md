@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.64 — Ranking global: límites del palmarés por competición
+
+- El backend del ranking global ajusta el máximo de títulos a las reglas del juego: Liga, Supercopa y títulos europeos, como mucho uno por temporada superada; Copa, uno más (Copa + descenso en la temporada de Game Over).
+- Antes aceptaba palmarés imposibles, como una Champions sin temporadas superadas.
+- La QA comprueba también las reglas del juego en las que se basan los límites.
+- Requiere redesplegar Apps Script.
+- Versionado a `v0.25.64` / `0.25.64`.
+
 ## v0.25.63 — Camisetas pequeñas a escala
 
 - Las camisetas de los últimos resultados y de la lista de goles ya no pierden la forma: se reducen con `zoom` en vez de redimensionar cada pieza.
