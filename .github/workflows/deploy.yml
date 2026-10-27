@@ -12,9 +12,12 @@ permissions:
   pages: write
   id-token: write
 
+# Un grupo por rama o PR. Antes había un único grupo "pages" para todo, y
+# GitHub solo deja una ejecución pendiente por grupo: un push a main cancelaba
+# el CI de un PR que esperaba turno. En un PR, un push nuevo cancela el anterior.
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -57,7 +60,13 @@ jobs:
           path: dist
 
   deploy:
-    if: github.event_name != 'pull_request'
+    # Solo main publica. Lanzar el workflow a mano sobre otra rama
+    # (gh workflow run deploy.yml --ref <rama>) ejecuta solo las comprobaciones.
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    # Los despliegues a Pages van de uno en uno.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
