@@ -1569,3 +1569,27 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Color y icono por competición en los bloques de la final de temporada (v0.25.54). */
+.final-accordion[data-competition] {
+  --accent: #ffccd3;
+  border-left: 4px solid var(--accent);
+}
+
+.final-accordion[data-competition="liga"] { --accent: #3ddc84; }
+.final-accordion[data-competition="copa"] { --accent: #ffd166; }
+.final-accordion[data-competition="champions"] { --accent: #6c9bff; }
+.final-accordion[data-competition="europa"] { --accent: #ff9a3d; }
+.final-accordion[data-competition="conference"] { --accent: #3ddcc4; }
+.final-accordion[data-competition="supercopa"] { --accent: #c08bff; }
+
+.final-accordion[data-competition] .final-accordion-header small {
+  color: var(--accent);
+}
+
+.final-accordion-header > .competition-icon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  color: var(--accent, #ffccd3);
+}

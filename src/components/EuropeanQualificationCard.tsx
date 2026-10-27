@@ -31,15 +31,15 @@ function getCompetitionModifierClass(result: EuropeanQualificationResult): strin
 
 function getNarrative(result: EuropeanQualificationResult): string {
   if (result.competition === "champions_league") {
-    return "El Athletic jugará la Champions League la próxima temporada.";
+    return "Tu equipo jugará la Champions League la próxima temporada.";
   }
   if (result.competition === "europa_league") {
-    return "El Athletic jugará la Europa League la próxima temporada.";
+    return "Tu equipo jugará la Europa League la próxima temporada.";
   }
   if (result.competition === "conference_league") {
-    return "El Athletic jugará la Conference League la próxima temporada.";
+    return "Tu equipo jugará la Conference League la próxima temporada.";
   }
-  return result.explanation || "El Athletic no se ha clasificado para competición europea esta temporada.";
+  return result.explanation || "Tu equipo no se ha clasificado para competición europea esta temporada.";
 }
 
 export function EuropeanQualificationCard({ result }: EuropeanQualificationCardProps) {

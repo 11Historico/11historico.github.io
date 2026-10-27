@@ -183,7 +183,7 @@ function getTeamKitClass(teamName: string): string {
   return "team-kit-default";
 }
 
-function TeamKitIcon({ teamName, compact = false }: { teamName: string; compact?: boolean }) {
+export function TeamKitIcon({ teamName, compact = false }: { teamName: string; compact?: boolean }) {
   return (
     <span
       className={`team-kit-icon ${getTeamKitClass(teamName)} ${

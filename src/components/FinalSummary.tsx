@@ -13,10 +13,12 @@ import type {
 } from "../types/game";
 import type { CareerTrophyCounts } from "../types/career";
 import { getFinalTableEuropeanSpot, type FinalTableEuropeanSpot } from "../europe/europeanQualification";
-import type { EuropeanQualificationResult } from "../europe/europeanTypes";
+import type { EuropeanCompetition, EuropeanQualificationResult } from "../europe/europeanTypes";
 
 import SelectedTeamBoard from "./SelectedTeamBoard";
 import PalmaresTrophyCase from "./PalmaresTrophyCase";
+import { CompetitionIcon, type CompetitionIconKind } from "./CompetitionIcon";
+import { TeamKitIcon } from "./LeagueSimulatorView";
 import EuropeanQualificationCard from "./EuropeanQualificationCard";
 import { CupBracket, EuropeanBracket } from "./SeasonBrackets";
 import { buildCupBracketRows, buildEuropeanBracketColumns } from "../career/seasonBrackets";
@@ -432,6 +434,7 @@ function LeagueTableFinal({ table, summary }: { table?: LeagueTableRow[]; summar
                 >
                   <td>{index + 1}</td>
                   <td className="final-league-team-cell">
+                    <TeamKitIcon teamName={row.teamName} compact />
                     <strong>{getDisplayTeamName(row)}</strong>
                     <div className="final-league-team-tags">
                       {qualificationInfo.label && (
@@ -642,27 +645,39 @@ function HistoryPanel({ history }: { history: GameHistoryEntry[] }) {
 }
 
 
+function getEuropeanCompetitionIcon(competition: EuropeanCompetition): CompetitionIconKind {
+  if (competition === "champions_league") return "champions";
+  if (competition === "europa_league") return "europa";
+  return "conference";
+}
+
 function FinalAccordion({
   title,
   eyebrow,
   defaultOpen = true,
+  competition,
   children,
 }: {
   title: string;
   eyebrow?: string;
   defaultOpen?: boolean;
+  competition?: CompetitionIconKind;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <section className={`final-accordion ${open ? "final-accordion-open" : ""}`}>
+    <section
+      className={`final-accordion ${open ? "final-accordion-open" : ""}`}
+      data-competition={competition}
+    >
       <button
         type="button"
         className="final-accordion-header"
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
       >
+        {competition && <CompetitionIcon kind={competition} />}
         <span>
           {eyebrow && <small>{eyebrow}</small>}
           <strong>{title}</strong>
@@ -765,18 +780,23 @@ export function FinalSummary({
             {summary.cupTrophyWon ? <small>🏆 Campeón</small> : summary.cupStatus === "eliminated" ? <small>Resultado copero</small> : null}
           </section>
 
-          <BestGamePanel history={history} />
-
-          <FinalAccordion title="Palmarés" eyebrow="Vitrina histórica" defaultOpen={false}>
+          <FinalAccordion title="Palmarés" eyebrow="Vitrina histórica" defaultOpen>
             <PalmaresTrophyCase summary={summary} trophyCounts={careerTrophyCounts} variant={careerTrophyCounts ? "career" : "single-game"} />
           </FinalAccordion>
 
-          <FinalAccordion title="Copa del Rey" eyebrow={getCupSummaryText(summary)} defaultOpen>
+          <BestGamePanel history={history} />
+
+          <FinalAccordion title="Copa del Rey" eyebrow={getCupSummaryText(summary)} competition="copa" defaultOpen>
             <CupSummaryPanel summary={summary} />
           </FinalAccordion>
 
           {europeanTournament && europeanTournament.matches.length > 0 && (
-            <FinalAccordion title="Torneo europeo" eyebrow="Fase inicial, semifinal y final" defaultOpen>
+            <FinalAccordion
+              title="Torneo europeo"
+              eyebrow="Fase inicial, semifinal y final"
+              competition={getEuropeanCompetitionIcon(europeanTournament.competition)}
+              defaultOpen
+            >
               <EuropeanTournamentPanel tournament={europeanTournament} />
             </FinalAccordion>
           )}
@@ -785,13 +805,14 @@ export function FinalSummary({
             <FinalAccordion
               title="Clasificación europea"
               eyebrow={europeanQualification.qualified ? europeanQualification.shortLabel : "Sin billete europeo"}
+              competition={europeanQualification.competition ? getEuropeanCompetitionIcon(europeanQualification.competition) : undefined}
               defaultOpen
             >
               <EuropeanQualificationCard result={europeanQualification} />
             </FinalAccordion>
           )}
 
-          <FinalAccordion title="Clasificación final completa" eyebrow="LaLiga 25/26" defaultOpen>
+          <FinalAccordion title="Clasificación final completa" eyebrow="LaLiga 25/26" competition="liga" defaultOpen>
             <LeagueTableFinal table={summary.table} summary={summary} />
           </FinalAccordion>
 

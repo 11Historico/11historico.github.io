@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.54 — Pantalla de final de temporada: palmarés visible y competiciones diferenciadas
+
+- El palmarés aparece abierto justo después de las estadísticas principales.
+- Cada competición tiene su icono y su color en la final de temporada.
+- La clasificación de liga muestra la camiseta de cada equipo.
+- El texto de clasificación europea usa "Tu equipo" en lugar de "El Athletic".
+- Versionado a `v0.25.54` / `0.25.54`.
+
 ## v0.25.53 — Supercopa en directo, partido a partido
 
 - Los partidos de la Supercopa se reproducen con marcador y goles en directo, como en Liga, en vez de mostrar solo el resultado.
