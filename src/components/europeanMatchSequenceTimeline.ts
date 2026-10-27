@@ -1,14 +1,15 @@
 // src/components/europeanMatchSequenceTimeline.ts
 //
 // Secuencia de partido europeo (v0.24.9j, Fase B): lógica pura de la línea de tiempo.
-// El motor europeo no guarda minutos de gol, así que la secuencia no muestra goles:
-// reproduce previa, 90', prórroga (si la hubo) y tanda (si la hubo) y revela el
-// marcador de cada tramo al terminarlo.
+// Reproduce previa, 90', prórroga (si la hubo) y tanda (si la hubo). En el tiempo
+// reglamentario muestra los goles con su minuto, igual que en Liga (v0.25.51), y el
+// marcador de cada tramo se revela al terminarlo.
 
-import type { EuropeanKnockoutDecision, EuropeanTournamentMatch } from "../europe/europeanTypes";
+import type { EuropeanGoalEvent, EuropeanKnockoutDecision, EuropeanTournamentMatch } from "../europe/europeanTypes";
+import { MATCH_SEQUENCE_PLAY_MS, MATCH_SEQUENCE_PREVIEW_MS } from "./matchSequenceTimeline";
 
-export const EUROPEAN_SEQUENCE_PREVIEW_MS = 1000;
-export const EUROPEAN_SEQUENCE_REGULAR_MS = 2400;
+export const EUROPEAN_SEQUENCE_PREVIEW_MS = MATCH_SEQUENCE_PREVIEW_MS;
+export const EUROPEAN_SEQUENCE_REGULAR_MS = MATCH_SEQUENCE_PLAY_MS;
 export const EUROPEAN_SEQUENCE_EXTRA_MS = 1400;
 export const EUROPEAN_SEQUENCE_PENALTIES_MS = 1600;
 export const EUROPEAN_SEQUENCE_TICK_MS = 100;
@@ -28,6 +29,8 @@ export interface EuropeanSequenceFrame {
   stage: EuropeanSequenceStage;
   clockLabel: string;
   scoreBasis: EuropeanSequenceScoreBasis;
+  /** Minuto del tiempo reglamentario (0-90). Solo en el tramo "regular". */
+  minute?: number;
 }
 
 type MatchDecision = Pick<EuropeanTournamentMatch, "decidedBy">;
@@ -81,7 +84,7 @@ export function getEuropeanSequenceFrame(match: MatchDecision, elapsedMs: number
 
   if (segment.stage === "regular") {
     const minute = Math.min(90, Math.floor(progress * 91));
-    return { stage: "regular", clockLabel: `${minute}'`, scoreBasis: "none" };
+    return { stage: "regular", clockLabel: `${minute}'`, scoreBasis: "none", minute };
   }
 
   if (segment.stage === "extra_time") {
@@ -107,4 +110,17 @@ export function getEuropeanSequenceScore(
   }
 
   return { userGoals: match.userGoals ?? 0, opponentGoals: match.opponentGoals ?? 0 };
+}
+
+/** Marcador en directo (del punto de vista del Athletic) con los goles hasta ese minuto. */
+export function getEuropeanLiveScore(
+  goals: EuropeanGoalEvent[] | undefined,
+  minute: number,
+): { userGoals: number; opponentGoals: number } {
+  const visible = (goals ?? []).filter((goal) => goal.minute <= minute);
+
+  return {
+    userGoals: visible.filter((goal) => goal.isUserGoal).length,
+    opponentGoals: visible.filter((goal) => !goal.isUserGoal).length,
+  };
 }

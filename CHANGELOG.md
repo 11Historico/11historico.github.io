@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.51 — Partido europeo con progreso en directo, como en Liga
+
+- Los partidos europeos muestran el marcador gol a gol durante el tiempo reglamentario, igual que en Liga.
+- Previa y 90' usan la misma duración que la secuencia de Liga.
+- Versionado a `v0.25.51` / `0.25.51`.
+
 ## v0.25.50 — Ver el palmarés desde la pantalla de liga
 
 - En modo carrera, la pantalla de liga tiene un botón "Ver palmarés" para consultar los títulos a mitad de temporada.

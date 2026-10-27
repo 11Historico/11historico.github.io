@@ -77,6 +77,13 @@ export interface EuropeanPenaltyShootout {
   opponentScored: number;
 }
 
+/** Gol del tiempo reglamentario, con minuto para reproducir el partido como en Liga. */
+export interface EuropeanGoalEvent {
+  minute: number;
+  isUserGoal: boolean;
+  scorerName?: string;
+}
+
 export interface EuropeanTournamentMatch {
   id: string;
   seasonNumber: number;
@@ -96,6 +103,8 @@ export interface EuropeanTournamentMatch {
   regularTimeUserGoals?: number;
   regularTimeOpponentGoals?: number;
   penaltyShootout?: EuropeanPenaltyShootout;
+  /** Goles del tiempo reglamentario con minuto. Ausente en partidos anteriores a v0.25.51. */
+  goalEvents?: EuropeanGoalEvent[];
 }
 
 export interface EuropeanTournamentState {
