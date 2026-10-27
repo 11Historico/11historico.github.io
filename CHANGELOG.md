@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.65 — Eventos de analítica: imagen compartida y temporada superada
+
+- Dos eventos nuevos de GoatCounter, sin propiedades: `share_image` (imagen de la carrera compartida o descargada) y `season_complete` (temporada superada y carrera continuada).
+- La nota de privacidad pasa de cinco a siete acciones contadas, con fecha nueva.
+- La QA comprueba que la nota de privacidad cuenta tantas acciones como eventos hay.
+- Versionado a `v0.25.65` / `0.25.65`.
+
 ## v0.25.64 — Ranking global: límites del palmarés por competición
 
 - El backend del ranking global ajusta el máximo de títulos a las reglas del juego: Liga, Supercopa y títulos europeos, como mucho uno por temporada superada; Copa, uno más (Copa + descenso en la temporada de Game Over).
