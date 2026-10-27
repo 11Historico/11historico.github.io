@@ -31,6 +31,12 @@ describe("vista del cuadro de la Copa", () => {
     expect(markup).toContain("season-bracket-team-user");
   });
 
+  it("pone la camiseta de cada equipo junto a su nombre", () => {
+    const markup = renderToStaticMarkup(<CupBracket rows={buildCupBracketRows({ cupResults: [cupMatch] })} />);
+    expect(markup).toContain("team-kit-athletic");
+    expect(markup).toContain('aria-label="Camiseta Rival"');
+  });
+
   it("marca como simuladas las rondas siguientes", () => {
     const simulated = { ...cupMatch, roundName: "Octavos", homeTeamName: "A", awayTeamName: "B" };
     const markup = renderToStaticMarkup(<CupBracket rows={buildCupBracketRows({ cupResults: [cupMatch], simulatedResults: [simulated] })} />);
@@ -63,5 +69,7 @@ describe("vista del cuadro europeo", () => {
     expect(markup).toContain("No llegó a la final.");
     expect(markup).toContain("vs Rival Europeo");
     expect(markup).toContain("Victoria");
+    // Los rivales europeos van sin equipaciones.
+    expect(markup).not.toContain("team-kit-icon");
   });
 });
