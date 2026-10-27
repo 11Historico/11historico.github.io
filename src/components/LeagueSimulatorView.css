@@ -1128,3 +1128,32 @@
 .european-league-table .league-table-row-qualify {
   box-shadow: inset 4px 0 0 #3ddc84;
 }
+
+/* Pestañas de consulta bajo las acciones de la jornada (v0.25.57). */
+.league-consult-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.league-consult-tab {
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.league-consult-tab[aria-selected="true"] {
+  border-color: #ffffff;
+  background: #ffffff;
+  color: #7a0019;
+}
+
+.league-consult-tab:focus-visible {
+  outline: 3px solid #ffd166;
+  outline-offset: 2px;
+}

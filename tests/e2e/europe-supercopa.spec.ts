@@ -70,14 +70,17 @@ test("la liga permite consultar la clasificación europea y el palmarés", async
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await loadSave(page, europeanSave());
 
-  await page.getByRole("button", { name: "Ver clasificación europea" }).click();
+  await page.getByRole("tab", { name: "Clasificación europea" }).click();
   const table = page.getByRole("region", { name: "Clasificación de la competición europea" });
   await expect(table.getByRole("heading", { name: "Clasificación europea · fase de liga" })).toBeVisible();
   await expect(table.getByText("Pasan a semifinales los 2 primeros.")).toBeVisible();
   await expect(table.locator(".league-table-row")).toHaveCount(7);
 
-  await page.getByRole("button", { name: "Ver palmarés" }).click();
+  await page.getByRole("tab", { name: "Palmarés" }).click();
   await expect(page.getByRole("heading", { name: "Vitrina histórica" })).toBeVisible();
+  // Las pestañas son excluyentes: al abrir el palmarés se oculta la clasificación europea.
+  await expect(table).toHaveCount(0);
+  await expect(page.getByRole("tab", { name: "Palmarés" })).toHaveAttribute("aria-selected", "true");
   expect(pageErrors).toEqual([]);
 });
 
