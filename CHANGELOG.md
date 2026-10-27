@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.47 — El equipo del usuario vuelve a "Athletic Club Histórico"
+
+- El equipo del usuario recupera el nombre "Athletic Club Histórico" en la interfaz, en los mensajes de liga y Europa, y en los textos para compartir. Revierte el cambio de v0.25.45.
+- La camiseta del equipo del usuario vuelve a ser roja y blanca.
+- La marca del producto sigue siendo "Once Histórico".
+- Versionado a `v0.25.47` / `0.25.47`.
+
 ## v0.25.46 — Nota de no afiliación y frase de portada
 
 - Pie de la portada y página de privacidad: el proyecto se declara de aficionados, sin afiliación ni respaldo del Athletic Club, LaLiga, la RFEF ni la UEFA.

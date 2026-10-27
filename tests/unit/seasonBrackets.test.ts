@@ -49,7 +49,7 @@ describe("cuadro de la Copa", () => {
     expect(getCupMatchWinner(cupMatch("Final", 1, 1))).toBeUndefined();
   });
 
-  it("reconoce al equipo del usuario por su nombre", () => {
+  it("reconoce al Athletic por su nombre", () => {
     expect(isUserTeamName(USER_TEAM_NAME)).toBe(true);
     expect(isUserTeamName("Rival")).toBe(false);
   });

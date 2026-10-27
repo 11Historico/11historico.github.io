@@ -61,7 +61,7 @@ function isUserTeam(row: LeagueTableRow): boolean {
 
 function getDisplayTeamName(row: LeagueTableRow): string {
   if (isUserTeam(row)) {
-    return "Once Histórico";
+    return "Athletic Club Histórico";
   }
 
   return row.teamName;
@@ -314,7 +314,7 @@ function buildShareText(summary: FinalGameSummary): string {
     `Máximo asistente: ${topAssister}`,
     `Porterías a cero: ${summary.cleanSheets}`,
     "",
-    "¿Serías capaz de crear un once mejor?",
+    "¿Serías capaz de crear un Athletic mejor?",
   ].join("\n");
 }
 
