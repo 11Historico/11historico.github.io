@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.53 — Supercopa en directo, partido a partido
+
+- Los partidos de la Supercopa se reproducen con marcador y goles en directo, como en Liga, en vez de mostrar solo el resultado.
+- El veredicto de la Supercopa aparece al terminar el último partido.
+- Versionado a `v0.25.53` / `0.25.53`.
+
 ## v0.25.52 — Clasificación de la fase de liga europea
 
 - Botón "Ver clasificación europea" en la pantalla de liga, en modo carrera con torneo europeo.

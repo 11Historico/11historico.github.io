@@ -230,11 +230,12 @@ function PlaybackSpeedControl() {
 }
 
 function getMatchSequenceTag(result: MatchResult): string {
+  if (result.roundName?.startsWith("Supercopa")) return result.roundName;
   if (result.competition === "cup") return `Copa del Rey · ${result.roundName ?? ""}`.trim();
   return `LaLiga · Jornada ${result.matchday}`;
 }
 
-function MatchSequence({
+export function MatchSequence({
   result,
   onPlayingChange,
 }: {
@@ -273,7 +274,11 @@ function MatchSequence({
     <article className={`last-result-card match-sequence ${result.competition === "cup" ? "match-sequence-cup" : "match-sequence-league"}`}>
       <div className="last-result-top">
         {isFinal ? (
-          <span className={getResultClass(result)}>{getResultBadge(result)}</span>
+          result.userTeamPlayed === false ? (
+            <span className="match-sequence-clock">Final</span>
+          ) : (
+            <span className={getResultClass(result)}>{getResultBadge(result)}</span>
+          )
         ) : (
           <span className="match-sequence-clock">{frame.stage === "preview" ? "Previa" : `${frame.minute}'`}</span>
         )}
