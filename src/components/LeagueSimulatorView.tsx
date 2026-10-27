@@ -381,8 +381,8 @@ export function LeagueSimulatorView({
 
   const [lastResult, setLastResult] = useState<MatchResult | undefined>(undefined);
   const [isAutoSimulating, setIsAutoSimulating] = useState(false);
-  const [isEuropeanTableOpen, setIsEuropeanTableOpen] = useState(false);
-  const [isPalmaresOpen, setIsPalmaresOpen] = useState(false);
+  // Pestaña de consulta bajo las acciones: la jornada (por defecto), la clasificación europea o el palmarés.
+  const [consultTab, setConsultTab] = useState<"jornada" | "europa" | "palmares">("jornada");
   const [isSequencePlaying, setIsSequencePlaying] = useState(false);
   const playbackMultiplier = getMatchPlaybackMultiplier(useMatchPlaybackSpeed());
   const [pendingWheelOffer, setPendingWheelOfferState] = useState<SeasonLuckWheelOffer | undefined>(
@@ -863,26 +863,56 @@ export function LeagueSimulatorView({
                 >
                   Saltar hasta próximo evento
                 </button>
-
-                {europeanTournament && (
-                  <button type="button" className="tertiary-league-button" onClick={() => setIsEuropeanTableOpen((open) => !open)}>
-                    {isEuropeanTableOpen ? "Ocultar clasificación europea" : "Ver clasificación europea"}
-                  </button>
-                )}
-
-                {isCareerMode && careerTrophyCounts && (
-                  <button type="button" className="tertiary-league-button" onClick={() => setIsPalmaresOpen((open) => !open)}>
-                    {isPalmaresOpen ? "Ocultar palmarés" : "Ver palmarés"}
-                  </button>
-                )}
               </div>
             )}
           </div>
 
-          {europeanTournament && isEuropeanTableOpen && <EuropeanLeagueTable tournament={europeanTournament} />}
+          {(europeanTournament || (isCareerMode && careerTrophyCounts)) && (
+            <div className="league-consult-tabs" role="tablist" aria-label="Consultar">
+              <button
+                type="button"
+                role="tab"
+                className="league-consult-tab"
+                aria-selected={consultTab === "jornada"}
+                onClick={() => setConsultTab("jornada")}
+              >
+                Jornada
+              </button>
+              {europeanTournament && (
+                <button
+                  type="button"
+                  role="tab"
+                  className="league-consult-tab"
+                  aria-selected={consultTab === "europa"}
+                  onClick={() => setConsultTab("europa")}
+                >
+                  Clasificación europea
+                </button>
+              )}
+              {isCareerMode && careerTrophyCounts && (
+                <button
+                  type="button"
+                  role="tab"
+                  className="league-consult-tab"
+                  aria-selected={consultTab === "palmares"}
+                  onClick={() => setConsultTab("palmares")}
+                >
+                  Palmarés
+                </button>
+              )}
+            </div>
+          )}
 
-          {isCareerMode && careerTrophyCounts && isPalmaresOpen && (
-            <PalmaresTrophyCase trophyCounts={careerTrophyCounts} variant="career" />
+          {consultTab === "europa" && europeanTournament && (
+            <div role="tabpanel" aria-label="Clasificación europea">
+              <EuropeanLeagueTable tournament={europeanTournament} />
+            </div>
+          )}
+
+          {consultTab === "palmares" && isCareerMode && careerTrophyCounts && (
+            <div role="tabpanel" aria-label="Palmarés">
+              <PalmaresTrophyCase trophyCounts={careerTrophyCounts} variant="career" />
+            </div>
           )}
 
           {pendingCupFixture && (

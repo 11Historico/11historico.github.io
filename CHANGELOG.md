@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.57 — Pantalla de liga: acciones de juego y pestañas de consulta
+
+- La fila de acciones de la liga queda solo para jugar: Simular partido europeo, Simular y Saltar hasta próximo evento.
+- La clasificación europea y el palmarés se consultan en pestañas bajo las acciones ("Jornada", "Clasificación europea", "Palmarés").
+- Versionado a `v0.25.57` / `0.25.57`.
+
 ## v0.25.56 — Pruebas E2E de las novedades
 
 - Pruebas de navegador para la clasificación europea, el palmarés en la liga, el partido europeo en directo, la Supercopa en directo y el palmarés abierto en la pantalla final.
