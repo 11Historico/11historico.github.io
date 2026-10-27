@@ -11,6 +11,8 @@ import type {
   TeamRating,
   RivalTeam,
 } from "../types/game";
+import type { CareerTrophyCounts } from "../types/career";
+import PalmaresTrophyCase from "./PalmaresTrophyCase";
 
 import {
   canFinishSeason,
@@ -72,6 +74,7 @@ interface LeagueSimulatorViewProps {
   isCareerMode?: boolean;
   leagueRivals?: RivalTeam[];
   careerCompletedSeasons?: number;
+  careerTrophyCounts?: CareerTrophyCounts;
   initialContext?: UserLeagueSimulationContext;
   onContextChange?: (context: UserLeagueSimulationContext) => void;
   onSeasonLuckWheelPlayerChange?: (context: UserLeagueSimulationContext) => void;
@@ -355,6 +358,7 @@ export function LeagueSimulatorView({
   isCareerMode = false,
   leagueRivals,
   careerCompletedSeasons = 0,
+  careerTrophyCounts,
   initialContext,
   onContextChange,
   onSeasonLuckWheelPlayerChange,
@@ -371,6 +375,7 @@ export function LeagueSimulatorView({
 
   const [lastResult, setLastResult] = useState<MatchResult | undefined>(undefined);
   const [isAutoSimulating, setIsAutoSimulating] = useState(false);
+  const [isPalmaresOpen, setIsPalmaresOpen] = useState(false);
   const [isSequencePlaying, setIsSequencePlaying] = useState(false);
   const playbackMultiplier = getMatchPlaybackMultiplier(useMatchPlaybackSpeed());
   const [pendingWheelOffer, setPendingWheelOfferState] = useState<SeasonLuckWheelOffer | undefined>(
@@ -851,9 +856,19 @@ export function LeagueSimulatorView({
                 >
                   Saltar hasta próximo evento
                 </button>
+
+                {isCareerMode && careerTrophyCounts && (
+                  <button type="button" className="tertiary-league-button" onClick={() => setIsPalmaresOpen((open) => !open)}>
+                    {isPalmaresOpen ? "Ocultar palmarés" : "Ver palmarés"}
+                  </button>
+                )}
               </div>
             )}
           </div>
+
+          {isCareerMode && careerTrophyCounts && isPalmaresOpen && (
+            <PalmaresTrophyCase trophyCounts={careerTrophyCounts} variant="career" />
+          )}
 
           {pendingCupFixture && (
             <section className="cup-event-card">
