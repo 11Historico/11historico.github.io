@@ -2,8 +2,8 @@
 //
 // European Tournament Skeleton (v0.24.1a) — pool de rivales europeos y
 // utilidades para elegirlos de forma determinista a partir de una semilla.
-// Champions y Europa League usan nombres genéricos. Conference League usa nombres
-// reales de clubes (v0.25.48), sin escudos ni equipaciones.
+// Los rivales son clubes reales (nombres, sin escudos ni equipaciones). Cada pool
+// tiene 20 clubes para que las temporadas no repitan siempre los mismos rivales.
 
 import type { EuropeanCompetition, EuropeanOpponent } from "./europeanTypes";
 
@@ -17,29 +17,49 @@ const EUROPA_LEAGUE_RATING_RANGE: [number, number] = [76, 88];
 const CONFERENCE_LEAGUE_RATING_RANGE: [number, number] = [70, 82];
 
 const CHAMPIONS_LEAGUE_POOL: OpponentSeed[] = [
-  { name: "München Rot", country: "Alemania" },
-  { name: "Manchester Blue", country: "Inglaterra" },
-  { name: "Milano Nero", country: "Italia" },
-  { name: "Paris Étoile", country: "Francia" },
-  { name: "Amsterdam Rouge", country: "Países Bajos" },
-  { name: "Lisboa Verde", country: "Portugal" },
-  { name: "London Azzurro", country: "Inglaterra" },
-  { name: "Torino Granata", country: "Italia" },
-  { name: "Wien Imperial", country: "Austria" },
-  { name: "Zürich Cristal", country: "Suiza" },
+  { name: "Bayern München", country: "Alemania" },
+  { name: "Manchester City", country: "Inglaterra" },
+  { name: "Inter de Milán", country: "Italia" },
+  { name: "Paris Saint-Germain", country: "Francia" },
+  { name: "Arsenal", country: "Inglaterra" },
+  { name: "Liverpool", country: "Inglaterra" },
+  { name: "Chelsea", country: "Inglaterra" },
+  { name: "Napoli", country: "Italia" },
+  { name: "Benfica", country: "Portugal" },
+  { name: "FC Porto", country: "Portugal" },
+  { name: "Ajax", country: "Países Bajos" },
+  { name: "PSV Eindhoven", country: "Países Bajos" },
+  { name: "Celtic", country: "Escocia" },
+  { name: "Galatasaray", country: "Turquía" },
+  { name: "Fenerbahçe", country: "Turquía" },
+  { name: "Club Brugge", country: "Bélgica" },
+  { name: "Red Bull Salzburgo", country: "Austria" },
+  { name: "Borussia Dortmund", country: "Alemania" },
+  { name: "RB Leipzig", country: "Alemania" },
+  { name: "Sporting CP", country: "Portugal" },
 ];
 
 const EUROPA_LEAGUE_POOL: OpponentSeed[] = [
-  { name: "Brussel Azul", country: "Bélgica" },
-  { name: "Praha Dourada", country: "República Checa" },
-  { name: "Warszawa Blanco", country: "Polonia" },
-  { name: "Glasgow Gris", country: "Escocia" },
-  { name: "Zagreb Rojo", country: "Croacia" },
-  { name: "Bucuresti Amarillo", country: "Rumanía" },
-  { name: "Belgrade Negro", country: "Serbia" },
-  { name: "Sofia Celeste", country: "Bulgaria" },
-  { name: "Budapest Coral", country: "Hungría" },
-  { name: "Bratislava Índigo", country: "Eslovaquia" },
+  { name: "AS Roma", country: "Italia" },
+  { name: "Lazio", country: "Italia" },
+  { name: "Olympique de Marsella", country: "Francia" },
+  { name: "Olympique de Lyon", country: "Francia" },
+  { name: "LOSC Lille", country: "Francia" },
+  { name: "Eintracht Fráncfort", country: "Alemania" },
+  { name: "Bayer Leverkusen", country: "Alemania" },
+  { name: "VfB Stuttgart", country: "Alemania" },
+  { name: "Aston Villa", country: "Inglaterra" },
+  { name: "Tottenham Hotspur", country: "Inglaterra" },
+  { name: "West Ham United", country: "Inglaterra" },
+  { name: "Rangers", country: "Escocia" },
+  { name: "Anderlecht", country: "Bélgica" },
+  { name: "Ferencváros", country: "Hungría" },
+  { name: "Slavia Praga", country: "República Checa" },
+  { name: "Lech Poznań", country: "Polonia" },
+  { name: "Dinamo Zagreb", country: "Croacia" },
+  { name: "Estrella Roja", country: "Serbia" },
+  { name: "Olympiacos", country: "Grecia" },
+  { name: "PAOK", country: "Grecia" },
 ];
 
 const CONFERENCE_LEAGUE_POOL: OpponentSeed[] = [
