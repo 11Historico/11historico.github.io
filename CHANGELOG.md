@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.52 — Clasificación de la fase de liga europea
+
+- Botón "Ver clasificación europea" en la pantalla de liga, en modo carrera con torneo europeo.
+- La tabla incluye tus partidos y los de tus rivales, simulados con el mismo motor.
+- Versionado a `v0.25.52` / `0.25.52`.
+
 ## v0.25.51 — Partido europeo con progreso en directo, como en Liga
 
 - Los partidos europeos muestran el marcador gol a gol durante el tiempo reglamentario, igual que en Liga.
