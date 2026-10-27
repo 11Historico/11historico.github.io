@@ -189,6 +189,7 @@ function CareerShareRetentionPanel({
 
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], text: shareText });
+        trackEvent("share_image");
         setShareStatus("Imagen compartida.");
         return;
       }
@@ -200,6 +201,7 @@ function CareerShareRetentionPanel({
       link.click();
       // Liberar la URL al instante puede cancelar la descarga en algunos navegadores.
       setTimeout(() => URL.revokeObjectURL(url), 1000);
+      trackEvent("share_image");
       setShareStatus("Imagen descargada.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;

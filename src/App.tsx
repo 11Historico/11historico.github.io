@@ -817,6 +817,7 @@ export default function App() {
   function handleContinueCareerAfterSeason() {
     if (!careerSeasonResult || !careerObjectiveResult?.survives || !finalSummary) return;
 
+    trackEvent("season_complete");
     const nextCompletedSeasons = careerCompletedSeasons + 1;
     const nextSeasonLabel = getCareerSeasonLabelFromIndex(nextCompletedSeasons);
 

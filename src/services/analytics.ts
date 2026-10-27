@@ -1,6 +1,7 @@
 // src/services/analytics.ts
 //
-// Analítica sin cookies (v0.25.13). Solo dos eventos: inicio de carrera y Game Over.
+// Analítica sin cookies (v0.25.13). Solo los eventos de AnalyticsEvent, sin propiedades.
+// Cada evento nuevo debe figurar en public/privacidad.html ("Medición de uso").
 // Está desactivada salvo que la compilación defina VITE_ANALYTICS_HOST con la URL del
 // sitio del proveedor. Sin esa variable no se carga ningún script ni se envía nada.
 // No se escriben cookies ni localStorage, y ninguna propiedad lleva datos de partida.
@@ -10,7 +11,9 @@ export type AnalyticsEvent =
   | "game_over"
   | "global_ranking_submit"
   | "challenge_copy"
-  | "challenge_open";
+  | "challenge_open"
+  | "share_image"
+  | "season_complete";
 
 interface GoatCounterApi {
   count: (options: { path: string; title: string; event: boolean }) => void;

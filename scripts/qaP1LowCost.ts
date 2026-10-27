@@ -58,6 +58,21 @@ function testPrivacyPageExistsAndLinked(): void {
   logOk("La nota de privacidad existe y se enlaza desde el ranking global");
 }
 
+// v0.25.65: la nota de privacidad debe contar tantas acciones como eventos tiene AnalyticsEvent.
+function testPrivacyPageListsEveryAnalyticsEvent(): void {
+  const page = read("public/privacidad.html");
+  const analytics = read("src/services/analytics.ts");
+  const eventCount = (analytics.match(/^\s*\| "[a-z_]+"/gm) ?? []).length;
+  const countWords = ["cero", "una", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez"];
+
+  assert(eventCount > 0 && eventCount < countWords.length, `Número de eventos de analítica inesperado: ${eventCount}.`);
+  assert(
+    page.includes(`${countWords[eventCount]} acciones del juego`),
+    `La nota de privacidad debe hablar de ${countWords[eventCount]} acciones del juego (una por evento de AnalyticsEvent).`,
+  );
+  logOk(`La nota de privacidad cuenta los ${eventCount} eventos de analítica`);
+}
+
 function testVisibleFocusIsGlobal(): void {
   const css = read("src/index.css");
 
@@ -71,5 +86,6 @@ testHtmlLanguageAndSocialPreview();
 testPreviewImageIsPng1200x630();
 testDependabotCoversNpmAndActions();
 testPrivacyPageExistsAndLinked();
+testPrivacyPageListsEveryAnalyticsEvent();
 testVisibleFocusIsGlobal();
 console.log("QA P1 low cost OK");
