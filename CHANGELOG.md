@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.56 — Pruebas E2E de las novedades
+
+- Pruebas de navegador para la clasificación europea, el palmarés en la liga, el partido europeo en directo, la Supercopa en directo y el palmarés abierto en la pantalla final.
+- Solo pruebas: la app no cambia.
+- Versionado a `v0.25.56` / `0.25.56`.
+
 ## v0.25.55 — Semifinal europea: pasan los 2 primeros
 
 - El pase a semifinales europeas depende de la posición en la clasificación de la fase de liga: pasan los 2 primeros. Sustituye a la regla de 10 puntos.

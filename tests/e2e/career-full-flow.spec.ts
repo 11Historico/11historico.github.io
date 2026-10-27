@@ -94,5 +94,9 @@ Texto: ${text}`);
   // La imagen para compartir se descarga (o se comparte, si el navegador lo permite).
   await page.getByRole("button", { name: "Compartir imagen" }).click();
   await expect(page.getByText(/Imagen (descargada|compartida)\./)).toBeVisible();
+
+  // El resumen completo abre el palmarés por defecto (v0.25.54).
+  await page.getByRole("button", { name: "Ver resumen completo" }).click();
+  await expect(page.getByRole("heading", { name: "Vitrina histórica" })).toBeVisible();
   expect(pageErrors).toEqual([]);
 });
