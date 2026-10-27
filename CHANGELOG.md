@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.61 — Regla de nombres del equipo en los textos
+
+- Regla mixta: "Athletic Club Histórico" en titulares, marcadores y tablas; "Tu equipo" en textos de estado y objetivos; "el Athletic" se mantiene en la narrativa (ruleta, crónicas europeas, etiquetas de época).
+- Cambian 11 textos: diagnóstico de Liga, motivo de Supercopa, local/visitante y desenlace de semifinal europea, objetivo europeo cerrado y el marcador de la previa europea, que pasa de "Athletic Club" a "Athletic Club Histórico".
+- Solo textos: no cambian reglas, ratings ni simulación.
+- Versionado a `v0.25.61` / `0.25.61`.
+
 ## v0.25.60 — Secuencia de partido y camisetas en módulos propios
 
 - `MatchSequence` pasa a `src/components/MatchSequence.tsx` y `TeamKitIcon` / `TeamWithKit` a `src/components/TeamKitIcon.tsx`. `getResultBadge` y `getResultClass` pasan a `matchSequenceTimeline.ts`.

@@ -1959,22 +1959,22 @@ export function getCurrentLeagueDiagnosis(context: UserLeagueSimulationContext):
   }
 
   if (position === 1) {
-    return "El Athletic Club Histórico lidera la Liga.";
+    return "Tu equipo lidera la Liga.";
   }
 
   if (position <= 4) {
-    return "El Athletic Club Histórico está compitiendo en zona Champions.";
+    return "Tu equipo está compitiendo en zona Champions.";
   }
 
   if (position <= 6) {
-    return "El Athletic Club Histórico está en pelea europea.";
+    return "Tu equipo está en pelea europea.";
   }
 
   if (position <= 10) {
-    return "El Athletic Club Histórico está haciendo una temporada correcta, pero le falta regularidad.";
+    return "Tu equipo está haciendo una temporada correcta, pero le falta regularidad.";
   }
 
-  return "El Athletic Club Histórico necesita mejorar resultados para acercarse a la zona alta.";
+  return "Tu equipo necesita mejorar resultados para acercarse a la zona alta.";
 }
 
 
