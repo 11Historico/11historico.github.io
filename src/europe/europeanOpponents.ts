@@ -1,8 +1,9 @@
 // src/europe/europeanOpponents.ts
 //
-// European Tournament Skeleton (v0.24.1a) — pool de rivales europeos
-// genéricos (sin datos reales protegidos ni escudos externos) y utilidades
-// para elegirlos de forma determinista a partir de una semilla.
+// European Tournament Skeleton (v0.24.1a) — pool de rivales europeos y
+// utilidades para elegirlos de forma determinista a partir de una semilla.
+// Champions y Europa League usan nombres genéricos. Conference League usa nombres
+// reales de clubes (v0.25.48), sin escudos ni equipaciones.
 
 import type { EuropeanCompetition, EuropeanOpponent } from "./europeanTypes";
 
@@ -42,16 +43,16 @@ const EUROPA_LEAGUE_POOL: OpponentSeed[] = [
 ];
 
 const CONFERENCE_LEAGUE_POOL: OpponentSeed[] = [
-  { name: "Tirana Roja", country: "Albania" },
-  { name: "Chisinau Azul", country: "Moldavia" },
-  { name: "Reykjavik Blanco", country: "Islandia" },
-  { name: "Nicosia Dorado", country: "Chipre" },
-  { name: "Vaduz Gris", country: "Liechtenstein" },
-  { name: "Yerevan Celeste", country: "Armenia" },
-  { name: "Tbilisi Verde", country: "Georgia" },
-  { name: "Baku Naranja", country: "Azerbaiyán" },
-  { name: "Podgorica Morado", country: "Montenegro" },
-  { name: "Valletta Amarillo", country: "Malta" },
+  { name: "KF Tirana", country: "Albania" },
+  { name: "Zimbru Chișinău", country: "Moldavia" },
+  { name: "Víkingur Reykjavík", country: "Islandia" },
+  { name: "APOEL", country: "Chipre" },
+  { name: "FC Vaduz", country: "Liechtenstein" },
+  { name: "Pyunik", country: "Armenia" },
+  { name: "Dinamo Tbilisi", country: "Georgia" },
+  { name: "Qarabağ", country: "Azerbaiyán" },
+  { name: "Budućnost Podgorica", country: "Montenegro" },
+  { name: "Valletta FC", country: "Malta" },
 ];
 
 function getPoolForCompetition(competition: EuropeanCompetition): OpponentSeed[] {

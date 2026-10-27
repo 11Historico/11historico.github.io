@@ -34,7 +34,6 @@ interface EuropeanMatchEventProps {
   tournament: EuropeanTournamentState;
   match: EuropeanTournamentMatch;
   userTeamRating: number;
-  onSimulate: () => void;
   onContinue: () => void;
 }
 
@@ -188,7 +187,6 @@ export function EuropeanMatchEvent({
   tournament,
   match,
   userTeamRating,
-  onSimulate,
   onContinue,
 }: EuropeanMatchEventProps) {
   const summary = getEuropeanTournamentSummary(tournament);
@@ -289,12 +287,6 @@ export function EuropeanMatchEvent({
       </div>
 
       <div className="european-match-event-actions">
-        {!isPlayed && (
-          <button type="button" className="secondary-league-button european-match-event-button" onClick={onSimulate}>
-            Simular partido europeo
-          </button>
-        )}
-
         {isPlayed && (
           <button type="button" className="secondary-league-button european-match-event-button" onClick={onContinue}>
             Continuar temporada
