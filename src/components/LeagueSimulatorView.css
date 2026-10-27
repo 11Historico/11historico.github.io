@@ -466,22 +466,9 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* Camiseta a escala (27 × 25 px), como en los últimos resultados. */
 .goal-events-list .team-kit-icon {
-  width: 27px;
-  height: 25px;
-}
-
-.goal-events-list .team-kit-body {
-  left: 6px;
-  top: 5px;
-  width: 16px;
-  height: 18px;
-}
-
-.goal-events-list .team-kit-sleeve {
-  top: 6px;
-  width: 8px;
-  height: 9px;
+  zoom: 0.8;
 }
 
 .goal-events-list small {
@@ -670,22 +657,10 @@
   font-size: 0.82rem;
 }
 
+/* Camiseta a escala (24 × 22 px): zoom reduce también bordes y redondeos,
+   así que conserva la forma de camiseta. */
 .recent-result-scoreline .team-kit-icon {
-  width: 24px;
-  height: 22px;
-}
-
-.recent-result-scoreline .team-kit-body {
-  left: 5px;
-  top: 4px;
-  width: 14px;
-  height: 16px;
-}
-
-.recent-result-scoreline .team-kit-sleeve {
-  top: 5px;
-  width: 7px;
-  height: 8px;
+  zoom: 0.7;
 }
 
 .recent-result-scoreline > span:nth-child(2) {

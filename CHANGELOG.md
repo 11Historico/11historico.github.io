@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.63 — Camisetas pequeñas a escala
+
+- Las camisetas de los últimos resultados y de la lista de goles ya no pierden la forma: se reducen con `zoom` en vez de redimensionar cada pieza.
+- Mismo tamaño en pantalla; la maquetación no cambia.
+- Versionado a `v0.25.63` / `0.25.63`.
+
 ## v0.25.62 — Camisetas en el cuadro de la Copa
 
 - El cuadro de la Copa del Rey de la pantalla final muestra la camiseta de cada equipo junto a su nombre.
