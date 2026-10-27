@@ -167,7 +167,7 @@ function testApplyEuropeanMatchResultUpdatesStats(): void {
   logOk("applyEuropeanMatchResult actualiza puntos, goles y estadísticas");
 }
 
-function testSixMatchesWithTenOrMorePointsAdvanceToSemifinal(): void {
+function testSixWinsAdvanceToSemifinal(): void {
   let tournament = createEuropeanTournamentForQualification({
     seasonNumber: 5,
     qualification: buildQualification({ competition: "champions_league" }),
@@ -176,8 +176,8 @@ function testSixMatchesWithTenOrMorePointsAdvanceToSemifinal(): void {
 
   assert(tournament !== null, "Debe crear torneo.");
 
-  // 3 victorias (9 pts) + 1 empate (1 pt) + 2 derrotas = 10 puntos, 6 partidos.
-  const results: Array<"win" | "draw" | "loss"> = ["win", "win", "win", "draw", "loss", "loss"];
+  // 6 victorias: el usuario termina primero de la fase de liga y pasa a semifinales.
+  const results: Array<"win" | "draw" | "loss"> = ["win", "win", "win", "win", "win", "win"];
 
   for (let index = 0; index < results.length; index += 1) {
     const nextMatch = getNextEuropeanMatch(tournament);
@@ -185,8 +185,8 @@ function testSixMatchesWithTenOrMorePointsAdvanceToSemifinal(): void {
     tournament = playMatch(tournament, nextMatch.id, results[index]);
   }
 
-  assert(tournament.leaguePhasePoints === 10, `Puntos esperados 10, obtenidos ${tournament.leaguePhasePoints}.`);
-  assert(tournament.phase === "semifinal", "Con 10+ puntos debe avanzar a semifinal.");
+  assert(tournament.leaguePhasePoints === 18, `Puntos esperados 18, obtenidos ${tournament.leaguePhasePoints}.`);
+  assert(tournament.phase === "semifinal", "Entre los 2 primeros debe avanzar a semifinal.");
   assert(tournament.qualifiedForSemifinal, "qualifiedForSemifinal debe ser true.");
   assert(tournament.eliminated === false, "No debe estar eliminado.");
   assert(tournament.matches.length === 7, "Debe añadirse el partido de semifinal (7 partidos en total).");
@@ -194,10 +194,10 @@ function testSixMatchesWithTenOrMorePointsAdvanceToSemifinal(): void {
   const semifinalMatch = tournament.matches.find((match) => match.phase === "semifinal");
   assert(semifinalMatch !== undefined && semifinalMatch.status === "scheduled", "La semifinal debe quedar programada.");
 
-  logOk("Tras 6 partidos con 10+ puntos el torneo avanza a semifinal");
+  logOk("Tras 6 victorias el torneo avanza a semifinal (2 primeros)");
 }
 
-function testSixMatchesWithLessThanTenPointsEliminatesUser(): void {
+function testSixLossesEliminatesUser(): void {
   let tournament = createEuropeanTournamentForQualification({
     seasonNumber: 6,
     qualification: buildQualification({ competition: "champions_league" }),
@@ -213,13 +213,13 @@ function testSixMatchesWithLessThanTenPointsEliminatesUser(): void {
     tournament = playMatch(tournament, nextMatch.id, "loss");
   }
 
-  assert(tournament.leaguePhasePoints < 10, "Con derrotas los puntos deben quedar por debajo de 10.");
-  assert(tournament.eliminated === true, "Con menos de 10 puntos debe quedar eliminado.");
+  assert(tournament.leaguePhasePoints === 0, "Con 6 derrotas los puntos deben ser 0.");
+  assert(tournament.eliminated === true, "Fuera de los 2 primeros debe quedar eliminado.");
   assert(tournament.completed === true, "El torneo debe quedar completado (cerrado) al eliminar.");
   assert(tournament.phase === "eliminated", "La fase debe quedar en eliminated.");
   assert(getNextEuropeanMatch(tournament) === null, "No debe haber más partidos pendientes tras eliminar.");
 
-  logOk("Tras 6 partidos con menos de 10 puntos el usuario queda eliminado");
+  logOk("Tras 6 derrotas el usuario queda fuera de los 2 primeros y eliminado");
 }
 
 function testSemifinalAndFinalAreNeverDuplicated(): void {
@@ -273,8 +273,8 @@ testConferenceLeagueOpponentRatingRange();
 testMatchIdsAreUniqueAndMixHomeAway();
 testGetNextEuropeanMatchReturnsFirstScheduled();
 testApplyEuropeanMatchResultUpdatesStats();
-testSixMatchesWithTenOrMorePointsAdvanceToSemifinal();
-testSixMatchesWithLessThanTenPointsEliminatesUser();
+testSixWinsAdvanceToSemifinal();
+testSixLossesEliminatesUser();
 testSemifinalAndFinalAreNeverDuplicated();
 
 console.log("QA european tournament skeleton OK");

@@ -82,7 +82,7 @@ function makeChampionTournament(competition: EuropeanCompetition, seed: string):
   });
   assert(tournament !== null, "Debe crearse un torneo europeo para una clasificación válida.");
 
-  let state = playLeaguePhase(tournament, ["win", "win", "win", "draw", "loss", "loss"]);
+  let state = playLeaguePhase(tournament, ["win", "win", "win", "win", "win", "win"]);
   const semifinal = state.matches.find((match) => match.phase === "semifinal");
   assert(semifinal !== undefined, "Debe existir semifinal.");
   state = applyEuropeanMatchResult(state, semifinal.id, { userGoals: 2, opponentGoals: 0, result: "win" }, 38);

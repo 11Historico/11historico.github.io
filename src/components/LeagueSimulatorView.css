@@ -1117,3 +1117,14 @@
     transition: none;
   }
 }
+
+/* Clasificación europea: los puestos que pasan a semifinales (v0.25.55). */
+.european-league-table-note {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  opacity: 0.8;
+}
+
+.european-league-table .league-table-row-qualify {
+  box-shadow: inset 4px 0 0 #3ddc84;
+}

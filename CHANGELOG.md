@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.55 — Semifinal europea: pasan los 2 primeros
+
+- El pase a semifinales europeas depende de la posición en la clasificación de la fase de liga: pasan los 2 primeros. Sustituye a la regla de 10 puntos.
+- La clasificación europea marca los puestos que pasan.
+- Versionado a `v0.25.55` / `0.25.55`.
+
 ## v0.25.54 — Pantalla de final de temporada: palmarés visible y competiciones diferenciadas
 
 - El palmarés aparece abierto justo después de las estadísticas principales.

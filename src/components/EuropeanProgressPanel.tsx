@@ -8,6 +8,7 @@
 
 import { getEuropeanCompetitionLabel } from "../europe/europeanQualification";
 import {
+  EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS,
   getEuropeanTournamentPhaseLabel,
   getEuropeanTournamentSummary,
 } from "../europe/europeanTournament";
@@ -79,7 +80,9 @@ function getPhaseObjectiveText(tournament: EuropeanTournamentState): string {
     return "Objetivo logrado: campeón europeo, se suma al palmarés al cerrar la temporada.";
   }
   if (tournament.completed) return "Objetivo cerrado: final europea disputada.";
-  if (tournament.phase === "league_phase") return "Objetivo fase inicial: alcanzar 10 puntos para entrar en semifinales.";
+  if (tournament.phase === "league_phase") {
+    return `Objetivo fase inicial: terminar entre los ${EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS} primeros para entrar en semifinales.`;
+  }
   if (tournament.phase === "semifinal") return "Objetivo semifinal: ganar para alcanzar la final europea; perder significa eliminación.";
   if (tournament.phase === "final") return "Objetivo final: ganar para levantar el título europeo, que se sumará al palmarés al cerrar la temporada.";
   return "Objetivo europeo pendiente de comenzar.";
