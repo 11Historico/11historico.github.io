@@ -5,6 +5,7 @@ import type {
 } from "../types/career";
 import type {
   FinalGameSummary,
+  GoalEvent,
   LeagueTableRow,
   MatchResult,
   RivalTeam,
@@ -186,10 +187,38 @@ function forceKnockoutWinner(params: {
     userTeamLost: !userWins,
   };
 
+  // El gol que decide el empate queda registrado al 90' para que la secuencia termine en el marcador.
+  const decidingTeamName = userWins === userIsHome ? result.homeTeamName : result.awayTeamName;
+
   return {
-    result: nextResult,
+    result: {
+      ...nextResult,
+      goalEvents: [...nextResult.goalEvents, { minute: 90, teamName: decidingTeamName }],
+    },
     winner: userWins ? userParticipant : rivalParticipant,
   };
+}
+
+/** Goles con minuto que suman el marcador de un partido entre rivales. Siempre determinista. */
+function buildRivalGoalEvents(params: {
+  homeTeamName: string;
+  awayTeamName: string;
+  homeGoals: number;
+  awayGoals: number;
+  seed: number;
+}): GoalEvent[] {
+  const { homeTeamName, awayTeamName, homeGoals, awayGoals, seed } = params;
+  const scorers = [
+    ...Array.from({ length: homeGoals }, () => homeTeamName),
+    ...Array.from({ length: awayGoals }, () => awayTeamName),
+  ];
+
+  return scorers
+    .map((teamName, index) => ({
+      minute: 1 + Math.floor(seededRandom(seed + 101 + index * 17) * 90),
+      teamName,
+    }))
+    .sort((a, b) => a.minute - b.minute);
 }
 
 function simulateUserSupercopaMatch(params: {
@@ -265,7 +294,7 @@ function simulateRivalSupercopaMatch(params: {
       awayTeamName: away.teamName,
       homeGoals,
       awayGoals,
-      goalEvents: [],
+      goalEvents: buildRivalGoalEvents({ homeTeamName: home.teamName, awayTeamName: away.teamName, homeGoals, awayGoals, seed }),
       userTeamPlayed: false,
     },
   };
