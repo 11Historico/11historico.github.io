@@ -69,7 +69,7 @@ function playLeaguePhase(tournament: EuropeanTournamentState, results: Array<"wi
 }
 
 function toSemifinal(tournament: EuropeanTournamentState): EuropeanTournamentState {
-  return playLeaguePhase(tournament, ["win", "win", "win", "draw", "loss", "loss"]);
+  return playLeaguePhase(tournament, ["win", "win", "win", "win", "win", "win"]);
 }
 
 function winMatch(tournament: EuropeanTournamentState, phase: "semifinal" | "final"): EuropeanTournamentState {
@@ -108,7 +108,7 @@ function makeSemifinalExit(seed: string): EuropeanTournamentState {
 }
 
 function makeLeaguePhaseExit(seed: string): EuropeanTournamentState {
-  const tournament = playLeaguePhase(makeTournament("champions_league", seed), ["win", "draw", "loss", "loss", "draw", "loss"]);
+  const tournament = playLeaguePhase(makeTournament("champions_league", seed), ["loss", "loss", "loss", "loss", "loss", "loss"]);
   assert(tournament.eliminated && tournament.completed, "El torneo QA debe quedar eliminado en fase inicial.");
   assert(tournament.matches.every((match) => match.phase !== "semifinal"), "No debe haber semifinal en una eliminación de fase inicial.");
   return tournament;

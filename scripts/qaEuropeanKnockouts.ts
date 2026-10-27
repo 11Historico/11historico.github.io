@@ -3,6 +3,8 @@
 
 import { readFileSync } from "node:fs";
 import {
+  EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS,
+  getEuropeanLeaguePhaseUserPosition,
   EUROPEAN_LEAGUE_PHASE_MATCH_COUNT,
   applyEuropeanMatchResult,
   createEuropeanTournamentForQualification,
@@ -63,11 +65,11 @@ function playLeaguePhase(tournament: EuropeanTournamentState, results: Array<"wi
 }
 
 function testLeaguePhaseToSemifinal(): void {
-  const tournament = playLeaguePhase(makeTournament("knockout_semifinal"), ["win", "win", "win", "draw", "loss", "loss"]);
+  const tournament = playLeaguePhase(makeTournament("knockout_semifinal"), ["win", "win", "win", "win", "win", "win"]);
 
   assert(tournament.leaguePhasePlayed === EUROPEAN_LEAGUE_PHASE_MATCH_COUNT, "La fase inicial debe cerrar tras 6 partidos.");
-  assert(tournament.leaguePhasePoints === 10, "10 puntos deben clasificar a semifinales.");
-  assert(tournament.phase === "semifinal", "Con 10 puntos el torneo debe avanzar a semifinal.");
+  assert(getEuropeanLeaguePhaseUserPosition(tournament) <= EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS, "Ganar los 6 partidos debe dejar al usuario entre los 2 primeros.");
+  assert(tournament.phase === "semifinal", "Entre los 2 primeros el torneo debe avanzar a semifinal.");
   assert(tournament.qualifiedForSemifinal, "qualifiedForSemifinal debe quedar activo.");
   assert(tournament.matches.filter((match) => match.phase === "semifinal").length === 1, "No debe duplicarse la semifinal.");
   assert(tournament.matches.filter((match) => match.phase === "final").length === 0, "La final no debe existir antes de ganar la semifinal.");
@@ -77,17 +79,17 @@ function testLeaguePhaseToSemifinal(): void {
 }
 
 function testLeaguePhaseElimination(): void {
-  const tournament = playLeaguePhase(makeTournament("knockout_eliminated"), ["win", "draw", "loss", "loss", "draw", "loss"]);
+  const tournament = playLeaguePhase(makeTournament("knockout_eliminated"), ["loss", "loss", "loss", "loss", "loss", "loss"]);
 
-  assert(tournament.leaguePhasePoints < 10, "La muestra QA debe quedarse por debajo de 10 puntos.");
-  assert(tournament.phase === "eliminated", "Menos de 10 puntos debe eliminar al equipo.");
+  assert(getEuropeanLeaguePhaseUserPosition(tournament) > EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS, "Perder los 6 partidos debe dejar al usuario fuera de los 2 primeros.");
+  assert(tournament.phase === "eliminated", "Fuera de los 2 primeros debe eliminar al equipo.");
   assert(tournament.eliminated, "El estado eliminado debe quedar activo.");
   assert(tournament.completed, "Una eliminación debe cerrar el torneo.");
   assert(tournament.currentMatchId === null, "Un eliminado no debe tener partido europeo actual.");
 }
 
 function testSemifinalWinCreatesSingleFinal(): void {
-  let tournament = playLeaguePhase(makeTournament("knockout_final"), ["win", "win", "win", "draw", "loss", "loss"]);
+  let tournament = playLeaguePhase(makeTournament("knockout_final"), ["win", "win", "win", "win", "win", "win"]);
   const semifinal = tournament.matches.find((match) => match.phase === "semifinal");
   assert(semifinal !== undefined, "Debe existir semifinal tras clasificarse.");
 
@@ -104,7 +106,7 @@ function testSemifinalWinCreatesSingleFinal(): void {
 }
 
 function testSemifinalLossEliminates(): void {
-  let tournament = playLeaguePhase(makeTournament("knockout_semifinal_loss"), ["win", "win", "win", "draw", "loss", "loss"]);
+  let tournament = playLeaguePhase(makeTournament("knockout_semifinal_loss"), ["win", "win", "win", "win", "win", "win"]);
   const semifinal = tournament.matches.find((match) => match.phase === "semifinal");
   assert(semifinal !== undefined, "Debe existir semifinal tras clasificarse.");
 
@@ -117,7 +119,7 @@ function testSemifinalLossEliminates(): void {
 }
 
 function testFinalOutcomesDoNotTouchPalmares(): void {
-  let champion = playLeaguePhase(makeTournament("knockout_champion"), ["win", "win", "win", "draw", "loss", "loss"]);
+  let champion = playLeaguePhase(makeTournament("knockout_champion"), ["win", "win", "win", "win", "win", "win"]);
   const semifinal = champion.matches.find((match) => match.phase === "semifinal");
   assert(semifinal !== undefined, "Debe existir semifinal para llegar a la final.");
   champion = applyEuropeanMatchResult(champion, semifinal.id, { userGoals: 2, opponentGoals: 0, result: "win" }, 38);
@@ -133,7 +135,7 @@ function testFinalOutcomesDoNotTouchPalmares(): void {
     "El texto de campeón debe decir que el título se suma al palmarés al cerrar la temporada, no que ya está sumado.",
   );
 
-  let finalist = playLeaguePhase(makeTournament("knockout_finalist"), ["win", "win", "win", "draw", "loss", "loss"]);
+  let finalist = playLeaguePhase(makeTournament("knockout_finalist"), ["win", "win", "win", "win", "win", "win"]);
   const finalistSemi = finalist.matches.find((match) => match.phase === "semifinal");
   assert(finalistSemi !== undefined, "Debe existir semifinal para finalista.");
   finalist = applyEuropeanMatchResult(finalist, finalistSemi.id, { userGoals: 2, opponentGoals: 1, result: "win" }, 38);
@@ -171,9 +173,9 @@ function testUiAndRegistry(): void {
 
 console.log("QA European Knockouts");
 testLeaguePhaseToSemifinal();
-console.log("✓ Fase inicial clasifica a semifinal con 10 puntos");
+console.log("✓ Fase inicial: los 2 primeros pasan a semifinal");
 testLeaguePhaseElimination();
-console.log("✓ Menos de 10 puntos elimina correctamente");
+console.log("✓ Fuera de los 2 primeros elimina correctamente");
 testSemifinalWinCreatesSingleFinal();
 console.log("✓ Semifinal ganada crea una única final");
 testSemifinalLossEliminates();

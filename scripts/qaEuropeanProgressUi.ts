@@ -26,7 +26,7 @@ function testEuropeanProgressPanelComponent(): void {
   assertIncludes(component, "Calendario europeo", "El panel debe exponer calendario europeo.");
   assertIncludes(component, "Próxima noche europea", "El panel debe destacar el próximo partido europeo.");
   assertIncludes(component, "Objetivo fase inicial", "El panel debe explicar el objetivo de fase inicial.");
-  assertIncludes(component, "10 puntos", "El panel debe mostrar la regla simplificada de acceso a semifinales.");
+  assertIncludes(component, "primeros para entrar en semifinales", "El panel debe mostrar la regla de acceso a semifinales (2 primeros).");
   assertIncludes(component, "champion", "El panel debe distinguir campeón pendiente de palmarés.");
   assertIncludes(component, "currentMatchId", "El panel debe marcar el partido europeo actual.");
 

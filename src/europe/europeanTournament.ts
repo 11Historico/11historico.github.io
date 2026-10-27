@@ -18,6 +18,7 @@
 // / Game Over), igual que Liga, Copa y Supercopa.
 
 import { getEuropeanMatchdaySlots } from "./europeanCalendar";
+import { buildEuropeanLeaguePhaseTable } from "./europeanLeagueTable";
 import { pickEuropeanOpponents, pickSingleEuropeanOpponent } from "./europeanOpponents";
 import { getEuropeanCompetitionLabel } from "./europeanQualification";
 import type {
@@ -34,7 +35,14 @@ import type {
 } from "./europeanTypes";
 
 export const EUROPEAN_LEAGUE_PHASE_MATCH_COUNT = 6;
-export const EUROPEAN_LEAGUE_PHASE_QUALIFICATION_POINTS = 10;
+/** Pasan a semifinales los primeros de la tabla de la fase de liga (v0.25.55; antes 10 puntos). */
+export const EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS = 2;
+
+/** Posición del usuario (1 = primero) en la tabla de la fase de liga. */
+export function getEuropeanLeaguePhaseUserPosition(tournament: EuropeanTournamentState): number {
+  const table = buildEuropeanLeaguePhaseTable(tournament, "user");
+  return table.findIndex((row) => row.isUser) + 1;
+}
 
 export interface CreateEuropeanTournamentInput {
   seasonNumber: number;
@@ -242,7 +250,7 @@ export function applyEuropeanMatchResult(
     };
 
     if (state.leaguePhasePlayed >= EUROPEAN_LEAGUE_PHASE_MATCH_COUNT) {
-      if (state.leaguePhasePoints >= EUROPEAN_LEAGUE_PHASE_QUALIFICATION_POINTS) {
+      if (getEuropeanLeaguePhaseUserPosition(state) <= EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS) {
         state = advanceToSemifinal(state, totalLeagueMatchdays);
       } else {
         state = { ...state, phase: "eliminated", eliminated: true, completed: true, currentMatchId: null };
@@ -329,7 +337,7 @@ export function getEuropeanKnockoutStakesText(tournament: EuropeanTournamentStat
   if (tournament.completed) return "Final disputada; el subcampeonato europeo queda registrado como estado del torneo.";
   if (tournament.phase === "final") return "Si ganas, serás campeón europeo y sumará al palmarés al cerrar la temporada; si pierdes, quedarás como finalista.";
   if (tournament.phase === "semifinal") return "Si ganas, jugarás la final europea; si pierdes, quedarás eliminado.";
-  return `Necesitas ${EUROPEAN_LEAGUE_PHASE_QUALIFICATION_POINTS} puntos en la fase inicial para alcanzar semifinales.`;
+  return `Necesitas terminar entre los ${EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS} primeros de la fase de liga para alcanzar semifinales.`;
 }
 
 /**
