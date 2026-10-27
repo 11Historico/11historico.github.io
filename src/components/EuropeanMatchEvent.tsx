@@ -22,6 +22,7 @@ import EuropeanProgressPanel from "./EuropeanProgressPanel";
 import { CompetitionIcon } from "./CompetitionIcon";
 import {
   EUROPEAN_SEQUENCE_TICK_MS,
+  getEuropeanLiveScore,
   getEuropeanSequenceDurationMs,
   getEuropeanSequenceFrame,
   getEuropeanSequenceScore,
@@ -117,7 +118,9 @@ function EuropeanMatchSequence({ match }: { match: EuropeanTournamentMatch }) {
   );
   const frame = getEuropeanSequenceFrame(match, elapsedMs, playbackMultiplier);
   const isFinal = frame.stage === "final";
-  const score = getEuropeanSequenceScore(match, frame.scoreBasis);
+  const score = frame.stage === "regular" && frame.minute !== undefined
+    ? getEuropeanLiveScore(match.goalEvents, frame.minute)
+    : getEuropeanSequenceScore(match, frame.scoreBasis);
   const leftGoals = score ? (match.isHome ? score.userGoals : score.opponentGoals) : null;
   const rightGoals = score ? (match.isHome ? score.opponentGoals : score.userGoals) : null;
 

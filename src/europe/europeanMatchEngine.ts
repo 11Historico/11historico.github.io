@@ -12,9 +12,10 @@
 // tocar `matchEngine.ts` ni sus probabilidades.
 
 import { simulateMatch } from "../simulation/matchEngine";
-import type { RivalTeam, RivalTeamRatings, TeamRating } from "../types/game";
+import type { MatchResult, RivalTeam, RivalTeamRatings, TeamRating } from "../types/game";
 import type {
   EuropeanCompetition,
+  EuropeanGoalEvent,
   EuropeanKnockoutDecision,
   EuropeanMatchOutcome,
   EuropeanPenaltyShootout,
@@ -47,6 +48,16 @@ export interface SimulateEuropeanMatchOutput {
   regularTimeUserGoals?: number;
   regularTimeOpponentGoals?: number;
   penaltyShootout?: EuropeanPenaltyShootout;
+  /** Goles del tiempo reglamentario con minuto, para reproducir el partido como en Liga. */
+  goalEvents: EuropeanGoalEvent[];
+}
+
+function toEuropeanGoalEvents(matchResult: MatchResult, isHome: boolean): EuropeanGoalEvent[] {
+  return matchResult.goalEvents.map((goal) => ({
+    minute: goal.minute,
+    isUserGoal: (goal.teamName === matchResult.homeTeamName) === isHome,
+    ...(goal.scorerName ? { scorerName: goal.scorerName } : {}),
+  }));
 }
 
 // Goles esperados por equipo en 30' de prórroga con igualdad de rating: menos
@@ -192,9 +203,9 @@ function seedToNumber(seed?: string | number): number | undefined {
 }
 
 /**
- * Simula un partido europeo reutilizando `simulateMatch`. No genera
- * estadísticas individuales (goleadores/asistentes): esta fase solo necesita
- * el marcador y el resultado.
+ * Simula un partido europeo reutilizando `simulateMatch`. Devuelve el marcador,
+ * el resultado y los goles del tiempo reglamentario con minuto, para reproducir
+ * la secuencia del partido como en Liga. No devuelve goleadores individuales.
  */
 export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): SimulateEuropeanMatchOutput {
   const { userTeamRating, opponentRating, isHome, competition, seed, isKnockout = false } = input;
@@ -220,13 +231,14 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
     : matchResult.userTeamDrew
       ? "draw"
       : "loss";
+  const goalEvents = toEuropeanGoalEvents(matchResult, isHome);
 
   if (!isKnockout) {
-    return { userGoals, opponentGoals, result };
+    return { userGoals, opponentGoals, result, goalEvents };
   }
 
   if (result !== "draw") {
-    return { userGoals, opponentGoals, result, decidedBy: "regular_time" };
+    return { userGoals, opponentGoals, result, decidedBy: "regular_time", goalEvents };
   }
 
   // Empate a los 90' en semifinal/final: prórroga y, si sigue igual, penaltis.
@@ -247,6 +259,7 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
       decidedBy: "extra_time",
       regularTimeUserGoals: userGoals,
       regularTimeOpponentGoals: opponentGoals,
+      goalEvents,
     };
   }
 
@@ -260,5 +273,6 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
     regularTimeUserGoals: userGoals,
     regularTimeOpponentGoals: opponentGoals,
     penaltyShootout,
+    goalEvents,
   };
 }

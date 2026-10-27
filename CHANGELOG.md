@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.51 — Partido europeo con progreso en directo, como en Liga
+
+- Los partidos europeos muestran el marcador gol a gol durante el tiempo reglamentario, igual que en Liga.
+- Previa y 90' usan la misma duración que la secuencia de Liga.
+- Versionado a `v0.25.51` / `0.25.51`.
+
 ## v0.25.48 — Rivales reales en la Conference League y botón de partido europeo
 
 - Los rivales de la Conference League son clubes reales de esos países, sin escudos ni equipaciones.

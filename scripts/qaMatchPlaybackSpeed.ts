@@ -44,10 +44,10 @@ function testLeagueSequenceScales(): void {
 
 function testEuropeanSequenceScales(): void {
   const penaltiesMatch = { decidedBy: "penalties" as const };
-  assert(getEuropeanSequenceDurationMs(penaltiesMatch, 1) === 6400, "Europa con penaltis normal dura 6,4 s.");
-  assert(getEuropeanSequenceDurationMs(penaltiesMatch, 1.5) === 9600, "Europa con penaltis lenta dura 9,6 s.");
+  assert(getEuropeanSequenceDurationMs(penaltiesMatch, 1) === 6800, "Europa con penaltis normal dura 6,8 s.");
+  assert(getEuropeanSequenceDurationMs(penaltiesMatch, 1.5) === 10200, "Europa con penaltis lenta dura 10,2 s.");
   assert(getEuropeanSequenceFrame(penaltiesMatch, 2800, 0.5).stage === "penalties", "Con velocidad rápida la tanda empieza a los 2,4 s.");
-  assert(getEuropeanSequenceFrame(penaltiesMatch, 3200, 0.5).stage === "final", "Con velocidad rápida el final llega a los 3,2 s.");
+  assert(getEuropeanSequenceFrame(penaltiesMatch, 3400, 0.5).stage === "final", "Con velocidad rápida el final llega a los 3,4 s.");
   logOk("La secuencia europea se escala con la velocidad");
 }
 

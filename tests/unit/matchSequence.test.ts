@@ -4,6 +4,7 @@ import {
   EUROPEAN_SEQUENCE_PENALTIES_MS,
   EUROPEAN_SEQUENCE_PREVIEW_MS,
   EUROPEAN_SEQUENCE_REGULAR_MS,
+  getEuropeanLiveScore,
   getEuropeanSequenceDurationMs,
   getEuropeanSequenceFrame,
   getEuropeanSequenceScore,
@@ -88,7 +89,21 @@ describe("secuencia europea", () => {
   });
 
   it("la velocidad escala la duración europea", () => {
-    expect(getEuropeanSequenceDurationMs(penalties, getMatchPlaybackMultiplier("fast"))).toBe(3200);
-    expect(getEuropeanSequenceDurationMs(penalties, getMatchPlaybackMultiplier("slow"))).toBe(9600);
+    // Previa 1000 + tramo normal 2800 (igual que Liga) + prórroga 1400 + penaltis 1600 = 6800 ms.
+    expect(getEuropeanSequenceDurationMs(penalties, getMatchPlaybackMultiplier("fast"))).toBe(3400);
+    expect(getEuropeanSequenceDurationMs(penalties, getMatchPlaybackMultiplier("slow"))).toBe(10200);
+  });
+
+  it("el marcador en directo cuenta solo los goles hasta el minuto actual", () => {
+    const goals = [
+      { minute: 10, isUserGoal: true },
+      { minute: 55, isUserGoal: false },
+      { minute: 80, isUserGoal: true },
+    ];
+
+    expect(getEuropeanLiveScore(goals, 9)).toEqual({ userGoals: 0, opponentGoals: 0 });
+    expect(getEuropeanLiveScore(goals, 55)).toEqual({ userGoals: 1, opponentGoals: 1 });
+    expect(getEuropeanLiveScore(goals, 90)).toEqual({ userGoals: 2, opponentGoals: 1 });
+    expect(getEuropeanLiveScore(undefined, 90)).toEqual({ userGoals: 0, opponentGoals: 0 });
   });
 });
