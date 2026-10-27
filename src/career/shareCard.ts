@@ -22,7 +22,7 @@ export function getShareCardContent(entry: CareerLocalRankingEntry): ShareCardCo
   const seasons = entry.completedSeasons === 1 ? "1 temporada superada" : `${entry.completedSeasons} temporadas superadas`;
 
   return {
-    title: "Mi Once Histórico",
+    title: "Mi Athletic Histórico",
     seasons,
     points: `Puntos: ${entry.arcadeScore}`,
     palmares: `Palmarés: ${formatCareerTrophyCounts(entry.trophyCounts)}`,

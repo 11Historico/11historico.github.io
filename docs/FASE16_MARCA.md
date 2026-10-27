@@ -5,7 +5,7 @@ Documento de trabajo para la asesoría jurídica. Resume qué referencias al clu
 ## 1. Estado de la decisión
 
 - **Marca del producto:** "Once Histórico" (v0.25.44). Sustituye a "Futbol11" y a "Athletic Club Histórico" en título, metadatos, manifiesto, privacidad, imagen para compartir y portada.
-- **Equipo del usuario dentro del juego:** "Once Histórico" (v0.25.45, `USER_TEAM_NAME`).
+- **Equipo del usuario dentro del juego:** "Athletic Club Histórico" otra vez desde v0.25.47. La versión 0.25.45 lo cambió a "Once Histórico" y la 0.25.47 lo revierte, por decisión del usuario. Con el nombre del club vuelve la camiseta roja y blanca, que es la equipación del club real. Esto reabre el punto de imagen de esta fase y debe revisarlo la asesoría.
 - **Nota de no afiliación** en el pie de la portada y en la página de privacidad (v0.25.46). Texto: "Proyecto de aficionados. No está afiliado ni respaldado por el Athletic Club, LaLiga, la RFEF ni la UEFA."
 - **Opción elegida:** A. Mantener las referencias históricas al club con la nota de no afiliación.
 

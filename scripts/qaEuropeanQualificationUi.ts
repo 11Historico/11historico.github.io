@@ -30,15 +30,15 @@ function testComponentExistsAndUsesCorrectLabels(): void {
   assert(component.includes("Por ganar la Copa del Rey"), "Debe mostrar el motivo 'Por ganar la Copa del Rey'.");
   assert(component.includes("La Copa mejora tu plaza europea"), "Debe mostrar el motivo 'La Copa mejora tu plaza europea'.");
   assert(
-    component.includes("El Once Histórico jugará la Champions League la próxima temporada."),
+    component.includes("El Athletic jugará la Champions League la próxima temporada."),
     "Debe incluir el texto narrativo de Champions League.",
   );
   assert(
-    component.includes("El Once Histórico jugará la Europa League la próxima temporada."),
+    component.includes("El Athletic jugará la Europa League la próxima temporada."),
     "Debe incluir el texto narrativo de Europa League.",
   );
   assert(
-    component.includes("El Once Histórico jugará la Conference League la próxima temporada."),
+    component.includes("El Athletic jugará la Conference League la próxima temporada."),
     "Debe incluir el texto narrativo de Conference League.",
   );
   assert(

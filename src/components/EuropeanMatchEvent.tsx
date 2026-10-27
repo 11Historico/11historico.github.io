@@ -76,7 +76,7 @@ function getCompetitionBadge(competition: EuropeanCompetition): string {
 
 function getPhaseNarrative(tournament: EuropeanTournamentState, match: EuropeanTournamentMatch): string {
   if (tournament.completed && tournament.champion) {
-    return "El Once Histórico ha conquistado Europa; el título se sumará al palmarés histórico al cerrar la temporada.";
+    return "El Athletic ha conquistado Europa; el título se sumará al palmarés histórico al cerrar la temporada.";
   }
   // eliminated se comprueba antes que "completed && !champion": una
   // eliminación en fase inicial o semifinal también deja completed=true, y
@@ -84,9 +84,9 @@ function getPhaseNarrative(tournament: EuropeanTournamentState, match: EuropeanT
   // eliminación en fase de grupos que nunca llegó a la final.
   if (tournament.eliminated) return "El sueño europeo termina aquí, pero la temporada nacional continúa.";
   if (tournament.completed && !tournament.champion) {
-    return "El Once Histórico ha sido finalista europeo; el resultado queda registrado sin sumar título al palmarés.";
+    return "El Athletic ha sido finalista europeo; el resultado queda registrado sin sumar título al palmarés.";
   }
-  if (match.phase === "final") return "Final europea a partido único: ganar significa ser campeón y sumar el título al palmarés al cerrar la temporada; perder deja al Once Histórico como finalista.";
+  if (match.phase === "final") return "Final europea a partido único: ganar significa ser campeón y sumar el título al palmarés al cerrar la temporada; perder deja al Athletic como finalista.";
   if (match.phase === "semifinal") return "Semifinal europea a partido único: ganar abre la final; perder cierra la aventura europea.";
   if (match.isHome) return "Noche grande en San Mamés: Europa vuelve a Bilbao.";
   return "Salida europea exigente: toca competir lejos de San Mamés.";
@@ -99,7 +99,7 @@ function getProgressPercent(tournament: EuropeanTournamentState): number {
 }
 
 function getKnockoutWinText(match: EuropeanTournamentMatch): string {
-  if (match.phase === "semifinal") return "Victoria: Once Histórico a la final europea";
+  if (match.phase === "semifinal") return "Victoria: Athletic a la final europea";
   if (match.phase === "final") return "Victoria: campeón europeo, se suma al palmarés al cerrar la temporada";
   return "Victoria: suma puntos en fase inicial";
 }
@@ -195,8 +195,8 @@ export function EuropeanMatchEvent({
   const isPlayed = match.status === "played";
   const isKnockoutMatch = match.phase === "semifinal" || match.phase === "final";
   const homeAwayText = match.isHome
-    ? "El Once Histórico jugará como local"
-    : "El Once Histórico jugará como visitante";
+    ? "El Athletic jugará como local"
+    : "El Athletic jugará como visitante";
   const progressPercent = getProgressPercent(tournament);
   const phaseLabel = getEuropeanTournamentPhaseLabel(match.phase);
 
@@ -235,7 +235,7 @@ export function EuropeanMatchEvent({
 
       <div className="european-match-event-scoreboard" aria-label="Previa europea">
         <article className="european-match-event-team european-match-event-team-user">
-          <span>Once Histórico</span>
+          <span>Athletic Club</span>
           <strong>{Math.round(userTeamRating)}</strong>
           <small>{match.isHome ? "Local · San Mamés" : "Visitante"}</small>
         </article>

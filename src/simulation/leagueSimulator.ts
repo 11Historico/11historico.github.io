@@ -1058,7 +1058,7 @@ export function simulateNextUserLeagueMatch(
   const otherFixtures = pendingFixtures.filter((fixture) => !fixture.includesUserTeam);
 
   if (!userFixture) {
-    throw new Error(`No se encontró partido del Once Histórico en la jornada ${context.state.currentMatchday}.`);
+    throw new Error(`No se encontró partido del Athletic Club Histórico en la jornada ${context.state.currentMatchday}.`);
   }
 
   const { rival, venue } = getRivalFromFixture(userFixture, context.rivals);
@@ -1837,7 +1837,7 @@ export function createFinalLeagueSummary(params: {
   const row = summary.row;
 
   if (!row) {
-    throw new Error("No se pudo generar el resumen final: Once Histórico no está en la tabla.");
+    throw new Error("No se pudo generar el resumen final: Athletic Club Histórico no está en la tabla.");
   }
 
   const topScorer = context.userTeamStats.topScorers[0];
@@ -1916,11 +1916,11 @@ export function createFinalCategory(points: number, position: number, cupWon = f
   }
 
   if (position <= 4) {
-    return "Gran equipo competitivo";
+    return "Gran Athletic competitivo";
   }
 
   if (position <= 6) {
-    return "Equipo europeo";
+    return "Athletic europeo";
   }
 
   if (position <= 10) {
@@ -1959,22 +1959,22 @@ export function getCurrentLeagueDiagnosis(context: UserLeagueSimulationContext):
   }
 
   if (position === 1) {
-    return "El Once Histórico lidera la Liga.";
+    return "El Athletic Club Histórico lidera la Liga.";
   }
 
   if (position <= 4) {
-    return "El Once Histórico está compitiendo en zona Champions.";
+    return "El Athletic Club Histórico está compitiendo en zona Champions.";
   }
 
   if (position <= 6) {
-    return "El Once Histórico está en pelea europea.";
+    return "El Athletic Club Histórico está en pelea europea.";
   }
 
   if (position <= 10) {
-    return "El Once Histórico está haciendo una temporada correcta, pero le falta regularidad.";
+    return "El Athletic Club Histórico está haciendo una temporada correcta, pero le falta regularidad.";
   }
 
-  return "El Once Histórico necesita mejorar resultados para acercarse a la zona alta.";
+  return "El Athletic Club Histórico necesita mejorar resultados para acercarse a la zona alta.";
 }
 
 
