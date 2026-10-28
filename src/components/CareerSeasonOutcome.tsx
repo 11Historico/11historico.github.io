@@ -308,7 +308,8 @@ export function CareerSeasonOutcome({
   });
   const careerShareText = rankingEntry ? buildCareerShareText(rankingEntry) : undefined;
   const challengeEntry = rankingEntry ?? buildCareerLocalRankingEntry({
-    completedSeasons,
+    // La temporada superada cuenta ya en el reto, igual que al pulsar «Continuar carrera» (v0.25.71).
+    completedSeasons: survived ? completedSeasons + 1 : completedSeasons,
     trophyCounts,
     seasonResult,
     bestLeaguePosition,
@@ -410,7 +411,10 @@ export function CareerSeasonOutcome({
         {survived && (
           <section className="career-season-challenge" aria-label="Retar a otros jugadores">
             <h2>Reta a otros jugadores</h2>
-            <p>Comparte tu marca hasta esta temporada: {challengeEntry.arcadeScore} puntos y {challengeEntry.completedSeasons} temporadas superadas.</p>
+            <p>
+              Comparte tu marca hasta esta temporada: {challengeEntry.arcadeScore} puntos y {challengeEntry.completedSeasons}{" "}
+              {challengeEntry.completedSeasons === 1 ? "temporada superada" : "temporadas superadas"}.
+            </p>
             <ChallengeLinkButton link={challengeLinkUrl} />
           </section>
         )}
