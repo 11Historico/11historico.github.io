@@ -101,6 +101,11 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
     await page.waitForTimeout(300);
   }
 
+  // v0.25.72: el local va a la izquierda, juegue en casa o fuera, igual que el marcador.
+  const teams = page.locator(".european-match-event-team");
+  await expect(teams.first()).toContainText("Local");
+  await expect(teams.last()).toContainText("Visitante");
+
   await simulateEuropean.click();
   await expect(page.getByText(/Previa europea|Partido en juego/)).toBeVisible();
   // Durante el partido el marcador va en directo (antes de v0.25.51 mostraba "–" hasta el final).
