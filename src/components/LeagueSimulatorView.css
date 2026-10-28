@@ -212,6 +212,22 @@
   color: #f2d2d7;
 }
 
+/* Próximo partido de Copa o de Europa (v0.25.69): la tarjeta de Copa, más discreta
+   porque todavía no se puede jugar. */
+.next-event-card {
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.next-event-card span {
+  color: #f2d2d7;
+}
+
+.next-event-card h2 {
+  font-size: 1.15rem;
+}
+
 /* Tarjetas */
 .last-result-card,
 .season-stats-card,

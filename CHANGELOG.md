@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.69 — Orden de las tarjetas por próximo evento
+
+- En la pantalla de Liga, las tarjetas de partido van en el orden en que se juegan: arriba el próximo partido, después la siguiente competición y luego la siguiente.
+- Las próximas eliminatorias de Copa y los próximos partidos europeos se ven antes de que toque jugarlos, en una tarjeta «Próximo» con jornada, rival y campo.
+- El resultado europeo ya no se queda arriba: se cierra solo al jugar el siguiente partido de Liga o Copa.
+- Sin cambios de reglas: un partido europeo pendiente sigue bloqueando la Liga.
+- Versionado a `v0.25.69` / `0.25.69`.
+
 ## v0.25.68 — CSS de las camisetas en su propio archivo
 
 - Las reglas de las camisetas pasan de `LeagueSimulatorView.css` a `TeamKitIcon.css`, en el mismo orden.

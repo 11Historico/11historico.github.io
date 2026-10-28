@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from "react";
 
-import { getEuropeanCompetitionLabel } from "../europe/europeanQualification";
+import { getEuropeanCompetitionIconKind, getEuropeanCompetitionLabel } from "../europe/europeanQualification";
 import { USER_TEAM_NAME } from "../simulation/leagueTable";
 import {
   EUROPEAN_KNOCKOUT_TIE_RULE_TEXT,
@@ -214,7 +214,7 @@ export function EuropeanMatchEvent({
         </div>
         <span className="european-match-event-badge">
           <CompetitionIcon
-            kind={match.competition === "champions_league" ? "champions" : match.competition === "europa_league" ? "europa" : "conference"}
+            kind={getEuropeanCompetitionIconKind(match.competition)}
           />
           {getCompetitionBadge(match.competition)}
         </span>
