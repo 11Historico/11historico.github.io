@@ -1,8 +1,6 @@
 // src/components/TeamKitIcon.tsx
 
-// Los estilos de las camisetas siguen en LeagueSimulatorView.css: están
-// repartidos por el archivo y algunas reglas dependen del orden.
-import "./LeagueSimulatorView.css";
+import "./TeamKitIcon.css";
 
 function normalizeTeamNameForKit(teamName: string): string {
   return teamName

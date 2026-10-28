@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.68 — CSS de las camisetas en su propio archivo
+
+- Las reglas de las camisetas pasan de `LeagueSimulatorView.css` a `TeamKitIcon.css`, en el mismo orden.
+- La pantalla final y los cuadros de Copa ya no cargan los estilos de la Liga: su CSS de camisetas baja de 15,68 kB a 5,80 kB.
+- Sin cambios visibles: capturas idénticas antes y después.
+- Versionado a `v0.25.68` / `0.25.68`.
+
 ## v0.25.67 — Botón «Saltar» y método de valoración en español
 
 - Los botones «Saltar» de la secuencia de partido (Liga, Copa, Supercopa y Europa) ya no salen con el borde y la letra del navegador.
