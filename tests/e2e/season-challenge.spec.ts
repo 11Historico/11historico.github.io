@@ -77,4 +77,10 @@ test("una temporada superada ofrece el reto con la marca actual", async ({ page 
 
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   expect(copied).toMatch(/\?reto=[A-Za-z0-9_-]+$/);
+
+  // v0.25.70: la temporada superada también deja consultar el palmarés.
+  const palmaresButton = page.getByRole("button", { name: "Ver palmarés" });
+  await palmaresButton.click();
+  await expect(page.getByRole("heading", { name: "Vitrina histórica" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ocultar palmarés" })).toHaveAttribute("aria-expanded", "true");
 });

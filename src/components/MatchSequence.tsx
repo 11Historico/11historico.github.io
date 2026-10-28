@@ -1,7 +1,7 @@
 // src/components/MatchSequence.tsx
 // Secuencia de partido de Liga, Copa y Supercopa (previa, minutos y goles).
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 
 import type { MatchResult } from "../types/game";
 import { CompetitionIcon } from "./CompetitionIcon";
@@ -42,11 +42,12 @@ export function MatchSequence({
   const homeGoals = isFinal ? result.homeGoals : countGoalsForTeam(frame.visibleGoals, result.homeTeamName);
   const awayGoals = isFinal ? result.awayGoals : countGoalsForTeam(frame.visibleGoals, result.awayTeamName);
 
-  useEffect(() => {
+  // En layout: la vista retiene la clasificación antes del primer pintado del partido.
+  useLayoutEffect(() => {
     onPlayingChange(!isFinal);
   }, [isFinal, onPlayingChange]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     return () => onPlayingChange(false);
   }, [onPlayingChange]);
 

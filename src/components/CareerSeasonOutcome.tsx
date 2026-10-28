@@ -293,6 +293,7 @@ export function CareerSeasonOutcome({
   bestLeaguePosition,
 }: CareerSeasonOutcomeProps) {
   const survived = objectiveResult.survives;
+  const [showPalmares, setShowPalmares] = useState(false);
   const xiAverage = getSelectedPlayersAverage(selectedPlayers);
   const finalTrophies = getFinalCareerTrophyCounts(trophyCounts, seasonResult, europeanTournament);
   const localRankingEntries = !survived && rankingEntry ? loadCareerLocalRanking() : [];
@@ -414,10 +415,27 @@ export function CareerSeasonOutcome({
           </section>
         )}
 
+        {survived && showPalmares && (
+          <section id="career-season-palmares" className="career-game-over-palmares-showcase" aria-label="Palmarés de carrera">
+            <PalmaresTrophyCase summary={summary} trophyCounts={finalTrophies} variant="career" />
+          </section>
+        )}
+
         <div className="career-outcome-actions">
           {survived && onContinueCareer && (
             <button type="button" className="primary-home-button" onClick={onContinueCareer}>
               Continuar carrera
+            </button>
+          )}
+          {survived && (
+            <button
+              type="button"
+              className="secondary-home-button"
+              aria-expanded={showPalmares}
+              aria-controls="career-season-palmares"
+              onClick={() => setShowPalmares((current) => !current)}
+            >
+              {showPalmares ? "Ocultar palmarés" : "Ver palmarés"}
             </button>
           )}
           {!survived && onRestart && (
