@@ -51,6 +51,13 @@ const COMPETITION_PRIORITY: Record<EuropeanCompetition, number> = {
 
 const NO_QUALIFICATION_PRIORITY = 0;
 
+/** Icono de cada competición (ver CompetitionIconKind en src/components/CompetitionIcon.tsx). */
+export function getEuropeanCompetitionIconKind(competition: EuropeanCompetition): "champions" | "europa" | "conference" {
+  if (competition === "champions_league") return "champions";
+  if (competition === "europa_league") return "europa";
+  return "conference";
+}
+
 export function getEuropeanCompetitionLabel(competition: EuropeanCompetition | null): string {
   if (competition === "champions_league") return "Champions League";
   if (competition === "europa_league") return "Europa League";

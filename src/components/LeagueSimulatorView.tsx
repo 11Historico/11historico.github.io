@@ -1,6 +1,6 @@
 // src/components/LeagueSimulatorView.tsx
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import type {
   Formation,
@@ -45,7 +45,13 @@ import {
 import SeasonLuckWheelModal from "./SeasonLuckWheelModal";
 import { EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS, shouldPlayEuropeanMatchAtLeagueMatchday } from "../europe/europeanCalendar";
 import { simulateEuropeanMatch } from "../europe/europeanMatchEngine";
-import { applyEuropeanMatchResult, isEuropeanKnockoutMatch } from "../europe/europeanTournament";
+import {
+  applyEuropeanMatchResult,
+  getEuropeanTournamentPhaseLabel,
+  getNextEuropeanMatch,
+  isEuropeanKnockoutMatch,
+} from "../europe/europeanTournament";
+import { getEuropeanCompetitionIconKind, getEuropeanCompetitionLabel } from "../europe/europeanQualification";
 import type { EuropeanTournamentMatch, EuropeanTournamentState } from "../europe/europeanTypes";
 import EuropeanMatchEvent from "./EuropeanMatchEvent";
 import { CompetitionIcon } from "./CompetitionIcon";
@@ -53,6 +59,7 @@ import EuropeanLeagueTable from "./EuropeanLeagueTable";
 import { MatchSequence } from "./MatchSequence";
 import { TeamWithKit } from "./TeamKitIcon";
 import { getResultBadge, getResultClass } from "./matchSequenceTimeline";
+import { getLeagueEventSlots, type LeagueEventKind } from "./leagueEventOrder";
 import {
   MATCH_PLAYBACK_SPEED_OPTIONS,
   getMatchPlaybackMultiplier,
@@ -223,6 +230,17 @@ export function LeagueSimulatorView({
 
   const pendingEuropeanMatch = shouldPlayEuropeanMatchAtLeagueMatchday(europeanTournament, leagueMatchesPlayed + 1);
   const europeanEventMatch = justPlayedEuropeanMatch ?? pendingEuropeanMatch;
+  const nextEuropeanMatch = getNextEuropeanMatch(europeanTournament);
+  const currentCupFixture = context.cupState.status === "active" ? context.cupState.fixtures[context.cupState.currentRoundIndex] : undefined;
+  const upcomingCupFixture = currentCupFixture && !currentCupFixture.played ? currentCupFixture : undefined;
+  const eventSlots = getLeagueEventSlots({
+    leagueMatchesPlayed,
+    leagueCompleted: context.state.completed,
+    hasLastResult: Boolean(lastResult),
+    cupFixture: upcomingCupFixture,
+    justPlayedEuropeanMatch,
+    nextEuropeanMatch,
+  });
 
   const commitContext = useCallback((nextContext: UserLeagueSimulationContext) => {
     const contextWithCoach = {
@@ -395,6 +413,7 @@ export function LeagueSimulatorView({
 
       commitContext(simulation.context);
       setLastResult(simulation.result);
+      setJustPlayedEuropeanMatch(undefined);
 
       const wheelOffered = maybeOfferSeasonLuckWheel({
         previousContext: context,
@@ -476,6 +495,7 @@ export function LeagueSimulatorView({
 
     commitContext(simulation.nextContext);
     setLastResult(simulation.lastResult);
+    setJustPlayedEuropeanMatch(undefined);
 
     if (!simulation.wheelOffered) {
       finishIfReady(simulation.nextContext);
@@ -493,6 +513,7 @@ export function LeagueSimulatorView({
 
     commitContext(simulation.context);
     setLastResult(simulation.result);
+    setJustPlayedEuropeanMatch(undefined);
 
     const wheelOffered = maybeOfferSeasonLuckWheel({
       previousContext: context,
@@ -560,6 +581,7 @@ export function LeagueSimulatorView({
 
     commitContext(nextContext);
     setLastResult(lastUserResult);
+    setJustPlayedEuropeanMatch(undefined);
 
     if (!wheelOffered) {
       finishIfReady(nextContext);
@@ -570,6 +592,62 @@ export function LeagueSimulatorView({
     if (context.state.completed || pendingCupFixture || pendingEuropeanMatch) return;
     setIsAutoSimulating((current) => !current);
   }
+
+  // Una tarjeta por competición. Lo pendiente usa la tarjeta completa; lo que viene después, una compacta.
+  const eventCards: Record<LeagueEventKind, ReactNode> = {
+    copa: upcomingCupFixture && (pendingCupFixture ? (
+      <section key="copa" className="cup-event-card">
+        <span>
+          <CompetitionIcon kind="copa" />
+          Copa del Rey
+        </span>
+        <h2>{pendingCupFixture.roundName}</h2>
+        <p>
+          Rival: {getCupRivalDisplayName(pendingCupFixture.rivalTeamId)} · Partido {pendingCupFixture.venue === "home" ? "en San Mamés" : "fuera de casa"}
+        </p>
+      </section>
+    ) : (
+      <section key="copa" className="cup-event-card next-event-card" aria-label="Próximo partido de Copa">
+        <span>
+          <CompetitionIcon kind="copa" />
+          Próximo · Copa del Rey
+        </span>
+        <h2>{upcomingCupFixture.roundName}</h2>
+        <p>
+          Tras la jornada {upcomingCupFixture.gateMatchday} de Liga · Rival: {getCupRivalDisplayName(upcomingCupFixture.rivalTeamId)} ·{" "}
+          {upcomingCupFixture.venue === "home" ? "En San Mamés" : "Fuera de casa"}
+        </p>
+      </section>
+    )),
+    europa: europeanTournament && (europeanEventMatch ? (
+      <EuropeanMatchEvent
+        key="europa"
+        tournament={europeanTournament}
+        match={europeanEventMatch}
+        userTeamRating={effectiveTeamRating.overall}
+        onContinue={handleContinueAfterEuropeanMatch}
+      />
+    ) : nextEuropeanMatch && (
+      <section key="europa" className="cup-event-card next-event-card" aria-label="Próximo partido europeo">
+        <span>
+          <CompetitionIcon kind={getEuropeanCompetitionIconKind(nextEuropeanMatch.competition)} />
+          Próximo · {getEuropeanCompetitionLabel(nextEuropeanMatch.competition)}
+        </span>
+        <h2>{getEuropeanTournamentPhaseLabel(nextEuropeanMatch.phase)}</h2>
+        <p>
+          Antes de la jornada {nextEuropeanMatch.matchday} de Liga · Rival: {nextEuropeanMatch.opponent.name} ·{" "}
+          {nextEuropeanMatch.isHome ? "En San Mamés" : "Fuera de casa"}
+        </p>
+      </section>
+    )),
+    liga: lastResult && (
+      <MatchSequence
+        key={`${lastResult.competition}-${lastResult.matchday}-${lastResult.roundName ?? ""}-${lastResult.homeTeamName}-${lastResult.homeGoals}-${lastResult.awayGoals}`}
+        result={lastResult}
+        onPlayingChange={setIsSequencePlaying}
+      />
+    ),
+  };
 
   return (
     <section className="league-simulator-view">
@@ -699,28 +777,8 @@ export function LeagueSimulatorView({
             </div>
           )}
 
-          {pendingCupFixture && (
-            <section className="cup-event-card">
-              <span>
-                <CompetitionIcon kind="copa" />
-                Copa del Rey
-              </span>
-              <h2>{pendingCupFixture.roundName}</h2>
-              <p>
-                Rival: {getCupRivalDisplayName(pendingCupFixture.rivalTeamId)} · Partido {pendingCupFixture.venue === "home" ? "en San Mamés" : "fuera de casa"}
-              </p>
-            </section>
-          )}
-
-          {europeanTournament && europeanEventMatch && (
-            <EuropeanMatchEvent
-              tournament={europeanTournament}
-              match={europeanEventMatch}
-              userTeamRating={effectiveTeamRating.overall}
-              onContinue={handleContinueAfterEuropeanMatch}
-            />
-          )}
-
+          {/* Tarjetas de partido en el orden en que se juegan (v0.25.69, leagueEventOrder.ts). */}
+          {eventSlots.map(({ kind }) => eventCards[kind])}
           {context.seasonLuckWheel?.used && (
             <section className="season-luck-wheel-status-card">
               <span>Ruleta de la temporada</span>
@@ -731,14 +789,6 @@ export function LeagueSimulatorView({
                   : "Decidiste no jugar la ruleta. Esta temporada ya no volverá a aparecer."}
               </p>
             </section>
-          )}
-
-          {lastResult && (
-            <MatchSequence
-              key={`${lastResult.competition}-${lastResult.matchday}-${lastResult.roundName ?? ""}-${lastResult.homeTeamName}-${lastResult.homeGoals}-${lastResult.awayGoals}`}
-              result={lastResult}
-              onPlayingChange={setIsSequencePlaying}
-            />
           )}
 
           <section className="season-stats-card">

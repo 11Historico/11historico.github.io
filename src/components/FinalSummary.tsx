@@ -12,8 +12,8 @@ import type {
   TeamRating,
 } from "../types/game";
 import type { CareerTrophyCounts } from "../types/career";
-import { getFinalTableEuropeanSpot, type FinalTableEuropeanSpot } from "../europe/europeanQualification";
-import type { EuropeanCompetition, EuropeanQualificationResult } from "../europe/europeanTypes";
+import { getEuropeanCompetitionIconKind, getFinalTableEuropeanSpot, type FinalTableEuropeanSpot } from "../europe/europeanQualification";
+import type { EuropeanQualificationResult } from "../europe/europeanTypes";
 
 import SelectedTeamBoard from "./SelectedTeamBoard";
 import PalmaresTrophyCase from "./PalmaresTrophyCase";
@@ -645,12 +645,6 @@ function HistoryPanel({ history }: { history: GameHistoryEntry[] }) {
 }
 
 
-function getEuropeanCompetitionIcon(competition: EuropeanCompetition): CompetitionIconKind {
-  if (competition === "champions_league") return "champions";
-  if (competition === "europa_league") return "europa";
-  return "conference";
-}
-
 function FinalAccordion({
   title,
   eyebrow,
@@ -794,7 +788,7 @@ export function FinalSummary({
             <FinalAccordion
               title="Torneo europeo"
               eyebrow="Fase inicial, semifinal y final"
-              competition={getEuropeanCompetitionIcon(europeanTournament.competition)}
+              competition={getEuropeanCompetitionIconKind(europeanTournament.competition)}
               defaultOpen
             >
               <EuropeanTournamentPanel tournament={europeanTournament} />
@@ -805,7 +799,7 @@ export function FinalSummary({
             <FinalAccordion
               title="Clasificación europea"
               eyebrow={europeanQualification.qualified ? europeanQualification.shortLabel : "Sin billete europeo"}
-              competition={europeanQualification.competition ? getEuropeanCompetitionIcon(europeanQualification.competition) : undefined}
+              competition={europeanQualification.competition ? getEuropeanCompetitionIconKind(europeanQualification.competition) : undefined}
               defaultOpen
             >
               <EuropeanQualificationCard result={europeanQualification} />

@@ -107,6 +107,13 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   await expect(page.getByText("Partido en juego")).toBeVisible();
   await expect(page.locator(".european-match-sequence-live-score strong").first()).toHaveText(/^\d+$/);
   await expect(page.getByText("Resultado europeo")).toBeVisible({ timeout: 15_000 });
+
+  // v0.25.69: al seguir con la Liga, el resultado europeo deja paso al partido de Liga
+  // y la Conference pasa a una tarjeta de próximo partido.
+  await page.getByRole("button", { name: /^Simular$/ }).click();
+  await expect(page.getByRole("region", { name: "Evento europeo" })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Próximo partido europeo" })).toBeVisible();
+  await page.getByRole("button", { name: "Parar simulación" }).click();
   expect(pageErrors).toEqual([]);
 });
 
