@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.71 — El reto cuenta la temporada superada
+
+- En la pantalla de temporada superada, el reto ya cuenta esa temporada: los puntos y las temporadas superadas son los mismos que tendrás al pulsar «Continuar carrera». Antes, tras superar la primera temporada salía «0 puntos y 0 temporadas superadas».
+- «1 temporada superada» en singular, en esa pantalla y en el aviso de reto recibido.
+- Versionado a `v0.25.71` / `0.25.71`.
+
 ## v0.25.70 — Puntos al acabar el partido y palmarés en la temporada superada
 
 - En la pantalla de Liga, los puntos, la posición, la clasificación, los últimos resultados y las estadísticas se actualizan al acabar el partido en directo, no al empezar. Antes, el +3 de una victoria se veía desde el minuto 0, aunque el marcador fuera perdiendo.

@@ -20,7 +20,7 @@ export function ChallengeBanner({ challenge, onDismiss }: ChallengeBannerProps) 
         <span className="challenge-banner-eyebrow">Reto recibido</span>
         <strong>{challenge.arcadeScore} puntos</strong>
         <p>
-          {challenge.completedSeasons} temporadas superadas · Mejor Liga {challenge.bestLeaguePosition}.º
+          {challenge.completedSeasons} {challenge.completedSeasons === 1 ? "temporada superada" : "temporadas superadas"} · Mejor Liga {challenge.bestLeaguePosition}.º
         </p>
         <small>Palmarés: {formatCareerTrophyCounts(challenge.trophyCounts)}</small>
       </div>

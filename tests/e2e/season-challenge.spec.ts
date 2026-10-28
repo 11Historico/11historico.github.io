@@ -70,7 +70,8 @@ test("una temporada superada ofrece el reto con la marca actual", async ({ page 
 
   const challenge = page.getByRole("region", { name: "Retar a otros jugadores" });
   await expect(challenge).toBeVisible();
-  await expect(challenge).toContainText(/\d+ puntos y \d+ temporadas superadas/);
+  // v0.25.71: la temporada recién superada ya cuenta (la partida guardada trae 3).
+  await expect(challenge).toContainText(/\d+ puntos y 4 temporadas superadas/);
 
   await challenge.getByRole("button", { name: "Copiar enlace de reto" }).click();
   await expect(challenge.getByRole("status").first()).toHaveText("Enlace de reto copiado.");
