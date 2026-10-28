@@ -105,6 +105,11 @@ function testWiring(): void {
   for (const path of ["src/components/CareerSupercopa.tsx", "src/components/FinalSummary.tsx"]) {
     assert(!read(path).includes('from "./LeagueSimulatorView"'), `${path} no debe importar de LeagueSimulatorView.`);
   }
+  // v0.25.68: las camisetas tienen su propia hoja; la de la Liga solo ajusta su tamaño por contexto.
+  const kit = read("src/components/TeamKitIcon.tsx");
+  assert(kit.includes('import "./TeamKitIcon.css";'), "TeamKitIcon debe cargar su propia hoja de estilos.");
+  assert(!kit.includes("LeagueSimulatorView.css"), "TeamKitIcon no debe cargar la hoja de la Liga.");
+  assert(!/^\.team-kit-/m.test(css), "Los colores y la forma de las camisetas van en TeamKitIcon.css, no en LeagueSimulatorView.css.");
   logOk("La vista usa la secuencia, espera a que termine y la Copa tiene estilo propio");
 }
 
