@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.72 — Local y visitante en los partidos europeos
+
+- En la tarjeta del partido europeo, el equipo local va a la izquierda y el visitante a la derecha, como en el marcador del resultado. Antes, tu equipo salía siempre a la izquierda, también fuera de casa, y el marcador parecía al revés.
+- El rival indica si es local o visitante junto a su país.
+- Versionado a `v0.25.72` / `0.25.72`.
+
 ## v0.25.71 — El reto cuenta la temporada superada
 
 - En la pantalla de temporada superada, el reto ya cuenta esa temporada: los puntos y las temporadas superadas son los mismos que tendrás al pulsar «Continuar carrera». Antes, tras superar la primera temporada salía «0 puntos y 0 temporadas superadas».

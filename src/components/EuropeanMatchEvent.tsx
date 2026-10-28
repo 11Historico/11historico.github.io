@@ -201,6 +201,20 @@ export function EuropeanMatchEvent({
     : "Tu equipo jugará como visitante";
   const progressPercent = getProgressPercent(tournament);
   const phaseLabel = getEuropeanTournamentPhaseLabel(match.phase);
+  const userTeamCard = (
+    <article className="european-match-event-team european-match-event-team-user">
+      <span>{USER_TEAM_NAME}</span>
+      <strong>{Math.round(userTeamRating)}</strong>
+      <small>{match.isHome ? "Local · San Mamés" : "Visitante"}</small>
+    </article>
+  );
+  const rivalTeamCard = (
+    <article className="european-match-event-team european-match-event-team-rival">
+      <span>{match.opponent.name}</span>
+      <strong>{match.opponent.rating}</strong>
+      <small>{match.isHome ? `Visitante · ${match.opponent.country}` : `Local · ${match.opponent.country}`}</small>
+    </article>
+  );
 
   return (
     <section className={getEventClass(tournament, match)} aria-label="Evento europeo">
@@ -235,18 +249,11 @@ export function EuropeanMatchEvent({
         </div>
       )}
 
+      {/* Local a la izquierda, como el marcador del resultado (v0.25.72). */}
       <div className="european-match-event-scoreboard" aria-label="Previa europea">
-        <article className="european-match-event-team european-match-event-team-user">
-          <span>{USER_TEAM_NAME}</span>
-          <strong>{Math.round(userTeamRating)}</strong>
-          <small>{match.isHome ? "Local · San Mamés" : "Visitante"}</small>
-        </article>
+        {match.isHome ? userTeamCard : rivalTeamCard}
         <div className="european-match-event-versus">VS</div>
-        <article className="european-match-event-team european-match-event-team-rival">
-          <span>{match.opponent.name}</span>
-          <strong>{match.opponent.rating}</strong>
-          <small>{match.opponent.country}</small>
-        </article>
+        {match.isHome ? rivalTeamCard : userTeamCard}
       </div>
 
       {isPlayed && (
