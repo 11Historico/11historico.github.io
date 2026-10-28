@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.70 — Puntos al acabar el partido y palmarés en la temporada superada
+
+- En la pantalla de Liga, los puntos, la posición, la clasificación, los últimos resultados y las estadísticas se actualizan al acabar el partido en directo, no al empezar. Antes, el +3 de una victoria se veía desde el minuto 0, aunque el marcador fuera perdiendo.
+- Revisado el cálculo de puntos: cada partido suma 3, 1 o 0 según su marcador. Nueva prueba que lo comprueba partido a partido.
+- La pantalla de temporada superada tiene un botón «Ver palmarés» con la vitrina de la carrera, incluidos los títulos de esa temporada.
+- Versionado a `v0.25.70` / `0.25.70`.
+
 ## v0.25.69 — Orden de las tarjetas por próximo evento
 
 - En la pantalla de Liga, las tarjetas de partido van en el orden en que se juegan: arriba el próximo partido, después la siguiente competición y luego la siguiente.

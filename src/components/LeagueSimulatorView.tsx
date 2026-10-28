@@ -171,6 +171,8 @@ export function LeagueSimulatorView({
   );
 
   const [lastResult, setLastResult] = useState<MatchResult | undefined>(undefined);
+  // Contexto justo antes de lastResult: se muestra mientras se reproduce el partido (ver shownContext).
+  const [contextBeforeResult, setContextBeforeResult] = useState<UserLeagueSimulationContext | undefined>(undefined);
   const [isAutoSimulating, setIsAutoSimulating] = useState(false);
   // Pestaña de consulta bajo las acciones: la jornada (por defecto), la clasificación europea o el palmarés.
   const [consultTab, setConsultTab] = useState<"jornada" | "europa" | "palmares">("jornada");
@@ -206,27 +208,40 @@ export function LeagueSimulatorView({
     [context.state.table]
   );
 
+  // Mientras se reproduce el partido, la clasificación, los puntos y los resultados siguen
+  // como antes de jugarlo: así no se ve el +3 antes del final (v0.25.70).
+  const shownContext = isSequencePlaying && contextBeforeResult ? contextBeforeResult : context;
+
+  const shownUserSummary = useMemo(
+    () =>
+      getUserLeagueSummary({
+        table: shownContext.state.table,
+      }),
+    [shownContext.state.table]
+  );
+
   const displayTable = useMemo(
-    () => getDisplayTable(context.state.table),
-    [context.state.table]
+    () => getDisplayTable(shownContext.state.table),
+    [shownContext.state.table]
   );
 
   const recentResults = useMemo(
-    () => [...context.state.results].filter((result) => result.userTeamPlayed).reverse().slice(0, 5),
-    [context.state.results]
+    () => [...shownContext.state.results].filter((result) => result.userTeamPlayed).reverse().slice(0, 5),
+    [shownContext.state.results]
   );
 
   const recentCupResults = useMemo(
-    () => [...context.cupState.results].reverse().slice(0, 3),
-    [context.cupState.results]
+    () => [...shownContext.cupState.results].reverse().slice(0, 3),
+    [shownContext.cupState.results]
   );
 
   const diagnosis = getCurrentLeagueDiagnosis(context);
   const pendingCupFixture = getPendingCupFixture(context);
   const userRow = userSummary.row;
-  const userPosition = userSummary.position;
   const leagueMatchesPlayed = userRow?.played ?? 0;
-  const leagueProgressLabel = `Jornada ${Math.min(leagueMatchesPlayed + 1, 38)} / 38`;
+  const shownUserRow = shownUserSummary.row;
+  const shownMatchesPlayed = shownUserRow?.played ?? 0;
+  const leagueProgressLabel = `Jornada ${Math.min(shownMatchesPlayed + 1, 38)} / 38`;
 
   const pendingEuropeanMatch = shouldPlayEuropeanMatchAtLeagueMatchday(europeanTournament, leagueMatchesPlayed + 1);
   const europeanEventMatch = justPlayedEuropeanMatch ?? pendingEuropeanMatch;
@@ -413,6 +428,7 @@ export function LeagueSimulatorView({
 
       commitContext(simulation.context);
       setLastResult(simulation.result);
+      setContextBeforeResult(context);
       setJustPlayedEuropeanMatch(undefined);
 
       const wheelOffered = maybeOfferSeasonLuckWheel({
@@ -450,9 +466,15 @@ export function LeagueSimulatorView({
 
   function simulateLeagueUntilNextEvent(params: {
     initialContext: UserLeagueSimulationContext;
-  }): { nextContext: UserLeagueSimulationContext; lastResult?: MatchResult; wheelOffered: boolean } {
+  }): {
+    nextContext: UserLeagueSimulationContext;
+    lastResult?: MatchResult;
+    contextBeforeLastResult?: UserLeagueSimulationContext;
+    wheelOffered: boolean;
+  } {
     let nextContext = params.initialContext;
     let lastResult: MatchResult | undefined;
+    let contextBeforeLastResult: UserLeagueSimulationContext | undefined;
     let wheelOffered = false;
 
     while (
@@ -469,6 +491,7 @@ export function LeagueSimulatorView({
 
       nextContext = simulation.context;
       lastResult = simulation.result;
+      contextBeforeLastResult = previousContext;
 
       if (!simulation.result || simulation.stoppedForCup) {
         break;
@@ -485,7 +508,7 @@ export function LeagueSimulatorView({
       }
     }
 
-    return { nextContext, lastResult, wheelOffered };
+    return { nextContext, lastResult, contextBeforeLastResult, wheelOffered };
   }
 
   function handleSimulateFullSeason() {
@@ -495,6 +518,7 @@ export function LeagueSimulatorView({
 
     commitContext(simulation.nextContext);
     setLastResult(simulation.lastResult);
+    setContextBeforeResult(simulation.contextBeforeLastResult);
     setJustPlayedEuropeanMatch(undefined);
 
     if (!simulation.wheelOffered) {
@@ -513,6 +537,7 @@ export function LeagueSimulatorView({
 
     commitContext(simulation.context);
     setLastResult(simulation.result);
+    setContextBeforeResult(context);
     setJustPlayedEuropeanMatch(undefined);
 
     const wheelOffered = maybeOfferSeasonLuckWheel({
@@ -531,6 +556,7 @@ export function LeagueSimulatorView({
 
     let nextContext = context;
     let lastUserResult: MatchResult | undefined;
+    let contextBeforeLastResult: UserLeagueSimulationContext | undefined;
     let wheelOffered = false;
 
     while (nextContext.cupState.status === "active") {
@@ -539,7 +565,10 @@ export function LeagueSimulatorView({
       if (!pendingCup) {
         const leagueSimulation = simulateLeagueUntilNextEvent({ initialContext: nextContext });
         nextContext = leagueSimulation.nextContext;
-        lastUserResult = leagueSimulation.lastResult ?? lastUserResult;
+        if (leagueSimulation.lastResult) {
+          lastUserResult = leagueSimulation.lastResult;
+          contextBeforeLastResult = leagueSimulation.contextBeforeLastResult;
+        }
         wheelOffered = leagueSimulation.wheelOffered;
 
         if (wheelOffered || !getPendingCupFixture(nextContext)) {
@@ -556,6 +585,7 @@ export function LeagueSimulatorView({
 
       nextContext = cupSimulation.context;
       lastUserResult = cupSimulation.result;
+      contextBeforeLastResult = previousContext;
 
       if (!cupSimulation.result) {
         break;
@@ -575,12 +605,16 @@ export function LeagueSimulatorView({
     if (!wheelOffered && nextContext.cupState.status !== "active") {
       const leagueSimulation = simulateLeagueUntilNextEvent({ initialContext: nextContext });
       nextContext = leagueSimulation.nextContext;
-      lastUserResult = leagueSimulation.lastResult ?? lastUserResult;
+      if (leagueSimulation.lastResult) {
+        lastUserResult = leagueSimulation.lastResult;
+        contextBeforeLastResult = leagueSimulation.contextBeforeLastResult;
+      }
       wheelOffered = leagueSimulation.wheelOffered;
     }
 
     commitContext(nextContext);
     setLastResult(lastUserResult);
+    setContextBeforeResult(contextBeforeLastResult);
     setJustPlayedEuropeanMatch(undefined);
 
     if (!wheelOffered) {
@@ -671,8 +705,8 @@ export function LeagueSimulatorView({
 
         <div className="league-main-card">
           <span>Posición actual</span>
-          <strong>{userPosition ?? "--"}º</strong>
-          <small>{userRow ? `${userRow.points} puntos · ${leagueMatchesPlayed}/38` : "Sin partidos"}</small>
+          <strong>{shownUserSummary.position ?? "--"}º</strong>
+          <small>{shownUserRow ? `${shownUserRow.points} puntos · ${shownMatchesPlayed}/38` : "Sin partidos"}</small>
           <em>Dificultad {getDifficultyLabel(difficulty)}</em>
         </div>
       </header>
@@ -797,19 +831,19 @@ export function LeagueSimulatorView({
             <div className="season-stats-grid">
               <div>
                 <span>Goles a favor</span>
-                <strong>{context.userTeamStats.goalsFor}</strong>
+                <strong>{shownContext.userTeamStats.goalsFor}</strong>
               </div>
               <div>
                 <span>Goles en contra</span>
-                <strong>{context.userTeamStats.goalsAgainst}</strong>
+                <strong>{shownContext.userTeamStats.goalsAgainst}</strong>
               </div>
               <div>
                 <span>Porterías a cero</span>
-                <strong>{context.userTeamStats.cleanSheets}</strong>
+                <strong>{shownContext.userTeamStats.cleanSheets}</strong>
               </div>
               <div>
                 <span>Partidos Liga</span>
-                <strong>{userRow?.played ?? 0}/38</strong>
+                <strong>{shownMatchesPlayed}/38</strong>
               </div>
             </div>
           </section>
@@ -818,7 +852,7 @@ export function LeagueSimulatorView({
             <div>
               <h2>Máximos goleadores</h2>
               <ol>
-                {context.userTeamStats.topScorers.slice(0, 5).map((player) => (
+                {shownContext.userTeamStats.topScorers.slice(0, 5).map((player) => (
                   <li key={`scorer_${player.playerId}`}>
                     <span>{player.playerName}</span>
                     <strong>{player.goals}</strong>
@@ -830,7 +864,7 @@ export function LeagueSimulatorView({
             <div>
               <h2>Máximos asistentes</h2>
               <ol>
-                {context.userTeamStats.topAssisters.slice(0, 5).map((player) => (
+                {shownContext.userTeamStats.topAssisters.slice(0, 5).map((player) => (
                   <li key={`assist_${player.playerId}`}>
                     <span>{player.playerName}</span>
                     <strong>{player.assists}</strong>
@@ -871,7 +905,7 @@ export function LeagueSimulatorView({
 
           <section className="recent-results-card">
             <h2>Copa del Rey</h2>
-            <p className="cup-status-text">{getCupStatusLabel(context.cupState)}</p>
+            <p className="cup-status-text">{getCupStatusLabel(shownContext.cupState)}</p>
 
             <div className="recent-results-list">
               {recentCupResults.map((result) => (
@@ -891,7 +925,7 @@ export function LeagueSimulatorView({
           <section className="recent-results-card">
             <div className="recent-results-heading">
               <h2>Últimos resultados de Liga</h2>
-              <span>{leagueMatchesPlayed}/38</span>
+              <span>{shownMatchesPlayed}/38</span>
             </div>
 
             {recentResults.length === 0 && (
