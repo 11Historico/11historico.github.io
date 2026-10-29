@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.73 — Nueva dirección: 11historico.github.io
+
+- La web pasa a `https://11historico.github.io/`. El repositorio se ha transferido a la organización `11Historico` y se llama `11historico.github.io`.
+- Enlaces actualizados: vista previa en redes (`index.html`), enlace para compartir de la portada, pie de la imagen de la carrera, README y página de privacidad.
+- La dirección antigua, `ikeritu.github.io/11Historico/`, ya no funciona.
+- Versionado a `v0.25.73` / `0.25.73`.
+
 ## v0.25.72 — Local y visitante en los partidos europeos
 
 - En la tarjeta del partido europeo, el equipo local va a la izquierda y el visitante a la derecha, como en el marcador del resultado. Antes, tu equipo salía siempre a la izquierda, también fuera de casa, y el marcador parecía al revés.

@@ -29,7 +29,7 @@ export function getShareCardContent(entry: CareerLocalRankingEntry): ShareCardCo
     bestLeague: `Mejor Liga: ${entry.bestLeaguePosition}.º`,
     lastSeason: `Última temporada: ${entry.lastSeasonLabel} · ${entry.lastLeaguePosition}.º`,
     europe: europe ? `Mejor hito europeo: ${europe}` : undefined,
-    footer: "Once Histórico · ikeritu.github.io/11Historico",
+    footer: "Once Histórico · 11historico.github.io",
   };
 }
 

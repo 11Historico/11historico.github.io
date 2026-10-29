@@ -20,15 +20,15 @@ describe("enlace de reto", () => {
   });
 
   it("el enlace solo lleva la marca, sin nick ni fechas", () => {
-    const link = buildChallengeLink(summary, "https://ikeritu.github.io/11Historico/");
+    const link = buildChallengeLink(summary, "https://11historico.github.io/");
     const url = new URL(link);
     expect([...url.searchParams.keys()]).toEqual([CHALLENGE_QUERY_PARAM]);
     expect(link).not.toMatch(/nick|fecha|createdAt|careerId/i);
   });
 
   it("conserva la URL base al construir el enlace", () => {
-    const link = buildChallengeLink(summary, "https://ikeritu.github.io/11Historico/");
-    expect(link.startsWith("https://ikeritu.github.io/11Historico/?reto=")).toBe(true);
+    const link = buildChallengeLink(summary, "https://11historico.github.io/");
+    expect(link.startsWith("https://11historico.github.io/?reto=")).toBe(true);
   });
 
   it("rechaza valores vacíos, mal formados o fuera de rango", () => {

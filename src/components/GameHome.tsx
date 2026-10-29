@@ -25,7 +25,7 @@ interface GameHomeProps {
 
 
 const FEEDBACK_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfSHQS1PVKoWNl8u7mTrYO2Fchuj-2UC82Ap4AVktUnBrBZ8A/viewform?usp=publish-editor";
-const PUBLIC_GAME_URL = "https://ikeritu.github.io/11Historico/";
+const PUBLIC_GAME_URL = "https://11historico.github.io/";
 const SHARE_TEXT = "Construye tu once histórico, sobrevive temporada a temporada y compite en Liga, Copa y Europa.";
 
 export function GameHome({
