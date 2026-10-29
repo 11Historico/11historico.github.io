@@ -369,6 +369,29 @@ export interface GoalEvent {
   assistName?: string;
 }
 
+/**
+ * Factor que decidió el partido según lo que pasó en el motor (v0.25.74).
+ * Solo explica el resultado: calcularlo no cambia ningún marcador.
+ */
+export type MatchKeyFactor =
+  | "mentality_win"
+  | "mentality_loss"
+  | "lead_lost"
+  | "upset"
+  | "overconfidence"
+  | "giant_killing"
+  | "attack_win"
+  | "clean_sheet_win"
+  | "home_win"
+  | "away_win"
+  | "away_draw"
+  | "even_draw"
+  | "stronger_rival"
+  | "away_loss"
+  | "bad_day"
+  | "extra_time_win"
+  | "extra_time_loss";
+
 export interface MatchResult {
   fixtureId: string;
   matchday: number;
@@ -389,6 +412,7 @@ export interface MatchResult {
   userTeamLost?: boolean;
 
   cleanSheetForUserTeam?: boolean;
+  keyFactor?: MatchKeyFactor;
 }
 
 // ==========================

@@ -1,0 +1,34 @@
+.match-odds {
+  display: grid;
+  gap: 6px;
+}
+
+.match-odds-bar {
+  display: flex;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.match-odds-win {
+  background: #58d68d;
+}
+
+.match-odds-draw {
+  background: #ffe08a;
+}
+
+.match-odds-loss {
+  background: #ff6363;
+}
+
+.match-odds p {
+  margin: 0;
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.match-odds small {
+  opacity: 0.8;
+}

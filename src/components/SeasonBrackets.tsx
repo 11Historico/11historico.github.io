@@ -15,6 +15,7 @@ import { getEuropeanMatchDecisionText } from "../europe/europeanTournament";
 import type { EuropeanTournamentMatch } from "../europe/europeanTypes";
 import type { MatchResult } from "../types/game";
 // Solo en Copa: los rivales europeos van sin equipaciones (ver europeanOpponents.ts).
+import { isExtraTimeFactor } from "./matchSequenceTimeline";
 import { TeamKitIcon } from "./TeamKitIcon";
 
 import "./SeasonBrackets.css";
@@ -48,6 +49,7 @@ function CupMatchCard({ result }: { result: MatchResult }) {
     <div className="season-bracket-match">
       <TeamLine name={result.homeTeamName} goals={result.homeGoals} won={winner === "home"} />
       <TeamLine name={result.awayTeamName} goals={result.awayGoals} won={winner === "away"} />
+      {isExtraTimeFactor(result.keyFactor) && <small className="season-bracket-decision">Decidido en la prórroga</small>}
     </div>
   );
 }

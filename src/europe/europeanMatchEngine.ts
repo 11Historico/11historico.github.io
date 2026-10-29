@@ -12,7 +12,8 @@
 // tocar `matchEngine.ts` ni sus probabilidades.
 
 import { simulateMatch } from "../simulation/matchEngine";
-import type { MatchResult, RivalTeam, RivalTeamRatings, TeamRating } from "../types/game";
+import type { MatchOdds } from "../simulation/matchEngine";
+import type { MatchKeyFactor, MatchResult, RivalTeam, RivalTeamRatings, TeamRating } from "../types/game";
 import type {
   EuropeanCompetition,
   EuropeanGoalEvent,
@@ -50,6 +51,8 @@ export interface SimulateEuropeanMatchOutput {
   penaltyShootout?: EuropeanPenaltyShootout;
   /** Goles del tiempo reglamentario con minuto, para reproducir el partido como en Liga. */
   goalEvents: EuropeanGoalEvent[];
+  /** Factor que decidió el partido en 90 minutos (v0.25.74). Ausente si hubo prórroga o penaltis. */
+  keyFactor?: MatchKeyFactor;
 }
 
 function toEuropeanGoalEvents(matchResult: MatchResult, isHome: boolean): EuropeanGoalEvent[] {
@@ -203,6 +206,26 @@ function seedToNumber(seed?: string | number): number | undefined {
 }
 
 /**
+ * Probabilidad aproximada en 90 minutos para la previa europea (v0.25.74). Simula
+ * el mismo cruce con semillas propias y no toca la semilla del partido real.
+ */
+export function estimateEuropeanMatchOdds(
+  input: Omit<SimulateEuropeanMatchInput, "seed" | "isKnockout">,
+  samples = 300,
+): MatchOdds {
+  let win = 0;
+  let draw = 0;
+
+  for (let index = 1; index <= samples; index += 1) {
+    const outcome = simulateEuropeanMatch({ ...input, seed: `odds_${index}`, isKnockout: false });
+    if (outcome.result === "win") win += 1;
+    else if (outcome.result === "draw") draw += 1;
+  }
+
+  return { win: win / samples, draw: draw / samples, loss: (samples - win - draw) / samples };
+}
+
+/**
  * Simula un partido europeo reutilizando `simulateMatch`. Devuelve el marcador,
  * el resultado y los goles del tiempo reglamentario con minuto, para reproducir
  * la secuencia del partido como en Liga. No devuelve goleadores individuales.
@@ -234,11 +257,11 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
   const goalEvents = toEuropeanGoalEvents(matchResult, isHome);
 
   if (!isKnockout) {
-    return { userGoals, opponentGoals, result, goalEvents };
+    return { userGoals, opponentGoals, result, goalEvents, keyFactor: matchResult.keyFactor };
   }
 
   if (result !== "draw") {
-    return { userGoals, opponentGoals, result, decidedBy: "regular_time", goalEvents };
+    return { userGoals, opponentGoals, result, decidedBy: "regular_time", goalEvents, keyFactor: matchResult.keyFactor };
   }
 
   // Empate a los 90' en semifinal/final: prórroga y, si sigue igual, penaltis.
