@@ -228,6 +228,36 @@
   font-size: 1.15rem;
 }
 
+/* Previa del próximo partido (v0.25.74). */
+.next-match-preview {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.next-match-preview > span {
+  color: #f2d2d7;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.next-match-preview > strong {
+  overflow-wrap: anywhere;
+}
+
+/* Factor que decidió el partido (v0.25.74). */
+.match-key-factor {
+  margin: 10px 0 0;
+  color: #ffe08a;
+  font-weight: 700;
+}
+
 /* Tarjetas */
 .last-result-card,
 .season-stats-card,

@@ -13,6 +13,8 @@
 // mecanismo interno no se toca en esta fase. Ver docs/v0_24_0c_EUROPA_QUALIFICATION_FOUNDATION.md
 // para la justificación de mantener ambos sistemas por separado.
 
+import type { MatchKeyFactor } from "../types/game";
+
 export type EuropeanCompetition =
   | "champions_league"
   | "europa_league"
@@ -105,6 +107,8 @@ export interface EuropeanTournamentMatch {
   penaltyShootout?: EuropeanPenaltyShootout;
   /** Goles del tiempo reglamentario con minuto. Ausente en partidos anteriores a v0.25.51. */
   goalEvents?: EuropeanGoalEvent[];
+  /** Factor que decidió el partido (v0.25.74). */
+  keyFactor?: MatchKeyFactor;
 }
 
 export interface EuropeanTournamentState {

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.74 — El partido se explica
+
+- **Previa del partido:** antes de cada partido de Liga, Copa y Europa se ven el rival, el campo, las medias, quién es favorito y la probabilidad de victoria, empate y derrota en 90 minutos.
+- **Factor decisivo:** al acabar cada partido, una frase cuenta qué lo decidió según lo que pasó en el motor. Por ejemplo, «Tu defensa dejó la portería a cero», «Costó cerrar el partido: el rival arañó el empate» o «Exceso de confianza: eras muy favorito y no pudiste ganar».
+- **Prórroga en Copa y Supercopa:** el gol que deshace un empate aparece como gol de la prórroga, con su minuto, y el cuadro de Copa marca «Decidido en la prórroga». Antes, el marcador cambiaba al final sin explicación.
+- **Sin cambios en los resultados:** mismos marcadores, ganadores y clasificaciones que antes, comprobado comparando miles de partidos simulados antes y después.
+- Versionado a `v0.25.74` / `0.25.74`.
+
 ## v0.25.73 — Nueva dirección: 11historico.github.io
 
 - La web pasa a `https://11historico.github.io/`. El repositorio se ha transferido a la organización `11Historico` y se llama `11historico.github.io`.

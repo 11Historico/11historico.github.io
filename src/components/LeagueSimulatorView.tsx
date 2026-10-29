@@ -21,6 +21,7 @@ import {
   getCupRivalDisplayName,
   getCupStatusLabel,
   getCurrentLeagueDiagnosis,
+  getNextUserMatchPreview,
   getPendingCupFixture,
   simulateNextCupMatch,
   simulateNextUserLeagueMatch,
@@ -56,6 +57,7 @@ import type { EuropeanTournamentMatch, EuropeanTournamentState } from "../europe
 import EuropeanMatchEvent from "./EuropeanMatchEvent";
 import { CompetitionIcon } from "./CompetitionIcon";
 import EuropeanLeagueTable from "./EuropeanLeagueTable";
+import { MatchOddsBar } from "./MatchOddsBar";
 import { MatchSequence } from "./MatchSequence";
 import { TeamWithKit } from "./TeamKitIcon";
 import { getResultBadge, getResultClass } from "./matchSequenceTimeline";
@@ -236,6 +238,11 @@ export function LeagueSimulatorView({
   );
 
   const diagnosis = getCurrentLeagueDiagnosis(context);
+  // Previa del siguiente partido de Liga o Copa (v0.25.74). El europeo tiene la suya en su tarjeta.
+  const matchPreview = useMemo(
+    () => getNextUserMatchPreview({ context, teamRating: effectiveTeamRating, selectedPlayers }),
+    [context, effectiveTeamRating, selectedPlayers]
+  );
   const pendingCupFixture = getPendingCupFixture(context);
   const userRow = userSummary.row;
   const leagueMatchesPlayed = userRow?.played ?? 0;
@@ -717,6 +724,23 @@ export function LeagueSimulatorView({
             <div>
               <h2>{pendingCupFixture ? "Toca Copa del Rey" : pendingEuropeanMatch ? "Noche europea" : context.state.completed ? "Liga terminada" : "Próximo paso"}</h2>
               <p>{isAutoSimulating ? `${leagueProgressLabel} · Simulación automática en marcha.` : diagnosis}</p>
+              {matchPreview && !pendingEuropeanMatch && (
+                <section className="next-match-preview" aria-label="Previa del próximo partido">
+                  <span>
+                    Próximo partido · {matchPreview.competition === "cup" ? "Copa del Rey" : "LaLiga"} · {matchPreview.label} ·{" "}
+                    {matchPreview.venue === "home" ? "En San Mamés" : "Fuera de casa"}
+                  </span>
+                  <strong>
+                    {matchPreview.venue === "home"
+                      ? `${USER_TEAM_NAME} (${matchPreview.userOverall}) vs ${matchPreview.rivalName} (${matchPreview.rivalOverall})`
+                      : `${matchPreview.rivalName} (${matchPreview.rivalOverall}) vs ${USER_TEAM_NAME} (${matchPreview.userOverall})`}
+                  </strong>
+                  <MatchOddsBar
+                    odds={matchPreview.odds}
+                    note={matchPreview.competition === "cup" ? "en 90 minutos; si hay empate, prórroga" : undefined}
+                  />
+                </section>
+              )}
               <PlaybackSpeedControl />
             </div>
 

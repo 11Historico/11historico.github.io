@@ -2,6 +2,7 @@
 
 import type {
   GoalEvent,
+  MatchKeyFactor,
   MatchResult,
   RivalTeam,
   TeamRating,
@@ -230,10 +231,16 @@ function applyUnderdogAndDrawVariance(params: {
 }): {
   userGoals: number;
   rivalGoals: number;
+  /** El rival sumó un gol a una victoria del usuario (solo informa; ver getMatchKeyFactor). */
+  rivalClosedGap: boolean;
+  /** El rival sumó un gol a un empate. */
+  upset: boolean;
 } {
   const { userGoals } = params;
   let { rivalGoals } = params;
   const { teamRating, rival, userIsHome, random } = params;
+  let rivalClosedGap = false;
+  let upset = false;
 
   const userAverage = getAverageUserRating(teamRating);
   const rivalAverage = getAverageRivalRating(rival);
@@ -257,6 +264,7 @@ function applyUnderdogAndDrawVariance(params: {
 
     if (random.next() < drawChance) {
       rivalGoals += 1;
+      rivalClosedGap = true;
     }
   }
 
@@ -273,13 +281,55 @@ function applyUnderdogAndDrawVariance(params: {
 
     if (random.next() < upsetChance) {
       rivalGoals += 1;
+      upset = true;
     }
   }
 
   return {
     userGoals,
     rivalGoals,
+    rivalClosedGap,
+    upset,
   };
+}
+
+/**
+ * Factor que decidió el partido (v0.25.74). Solo lee lo que ya ha pasado en
+ * simulateMatch: no tira ningún número aleatorio, así que no cambia resultados.
+ */
+function getMatchKeyFactor(params: {
+  userGoals: number;
+  rivalGoals: number;
+  userIsHome: boolean;
+  userAverage: number;
+  rivalAverage: number;
+  userIsHugeFavorite: boolean;
+  rivalClosedGap: boolean;
+  upset: boolean;
+  mentalityGoal?: "user" | "rival";
+}): MatchKeyFactor {
+  const { userGoals, rivalGoals, userIsHome, userAverage, rivalAverage } = params;
+  const rivalIsStronger = rivalAverage >= userAverage + 3;
+
+  if (userGoals > rivalGoals) {
+    if (params.mentalityGoal === "user") return "mentality_win";
+    if (rivalIsStronger) return "giant_killing";
+    if (userGoals >= 3) return "attack_win";
+    if (rivalGoals === 0) return "clean_sheet_win";
+    return userIsHome ? "home_win" : "away_win";
+  }
+
+  if (params.mentalityGoal === "rival" && userGoals < rivalGoals) return "mentality_loss";
+  if (params.userIsHugeFavorite) return "overconfidence";
+
+  if (userGoals === rivalGoals) {
+    if (params.rivalClosedGap) return "lead_lost";
+    return userIsHome ? "even_draw" : "away_draw";
+  }
+
+  if (params.upset) return "upset";
+  if (rivalIsStronger) return "stronger_rival";
+  return userIsHome ? "bad_day" : "away_loss";
 }
 
 /**
@@ -538,12 +588,15 @@ export function simulateMatch(params: SimulateMatchParams): MatchResult {
    * existe una pequeña probabilidad de gol decisivo.
    */
   const mentalityDiff = teamRating.mentality - rival.ratings.mentality;
+  let mentalityGoal: "user" | "rival" | undefined;
 
   if (userGoals === rivalGoals && Math.abs(mentalityDiff) >= 8 && random.next() < 0.18) {
     if (mentalityDiff > 0) {
       userGoals += 1;
+      mentalityGoal = "user";
     } else {
       rivalGoals += 1;
+      mentalityGoal = "rival";
     }
   }
 
@@ -578,6 +631,19 @@ export function simulateMatch(params: SimulateMatchParams): MatchResult {
   const userTeamWon = userGoals > rivalGoals;
   const userTeamDrew = userGoals === rivalGoals;
   const userTeamLost = userGoals < rivalGoals;
+  const userAverage = getAverageUserRating(teamRating);
+  const rivalAverage = getAverageRivalRating(rival);
+  const keyFactor = getMatchKeyFactor({
+    userGoals,
+    rivalGoals,
+    userIsHome,
+    userAverage,
+    rivalAverage,
+    userIsHugeFavorite: userAverage - rivalAverage >= 10,
+    rivalClosedGap: varianceAdjusted.rivalClosedGap,
+    upset: varianceAdjusted.upset,
+    mentalityGoal,
+  });
 
   return {
     fixtureId,
@@ -592,7 +658,35 @@ export function simulateMatch(params: SimulateMatchParams): MatchResult {
     userTeamDrew,
     userTeamLost,
     cleanSheetForUserTeam: rivalGoals === 0,
+    keyFactor,
   };
+}
+
+export interface MatchOdds {
+  win: number;
+  draw: number;
+  loss: number;
+}
+
+/**
+ * Probabilidad aproximada de victoria, empate y derrota en 90 minutos para la
+ * previa (v0.25.74). Simula el mismo partido con semillas fijas: usa todas las
+ * reglas del motor y no toca el partido real, que se juega con su propia semilla.
+ */
+export function estimateMatchOdds(
+  params: Omit<SimulateMatchParams, "fixtureId" | "matchday" | "seed">,
+  samples = 300,
+): MatchOdds {
+  let win = 0;
+  let draw = 0;
+
+  for (let seed = 1; seed <= samples; seed += 1) {
+    const result = simulateMatch({ ...params, fixtureId: "odds", matchday: 0, seed });
+    if (result.userTeamWon) win += 1;
+    else if (result.userTeamDrew) draw += 1;
+  }
+
+  return { win: win / samples, draw: draw / samples, loss: (samples - win - draw) / samples };
 }
 
 /**

@@ -187,13 +187,16 @@ function forceKnockoutWinner(params: {
     userTeamLost: !userWins,
   };
 
-  // El gol que decide el empate queda registrado al 90' para que la secuencia termine en el marcador.
+  // El gol que decide el empate se muestra como gol de la prórroga (91'-119', v0.25.74),
+  // con una tirada aparte: el ganador y el marcador no cambian.
   const decidingTeamName = userWins === userIsHome ? result.homeTeamName : result.awayTeamName;
+  const extraTimeMinute = 91 + Math.floor(seededRandom(seed + 7) * 29);
 
   return {
     result: {
       ...nextResult,
-      goalEvents: [...nextResult.goalEvents, { minute: 90, teamName: decidingTeamName }],
+      goalEvents: [...nextResult.goalEvents, { minute: extraTimeMinute, teamName: decidingTeamName }],
+      keyFactor: userWins ? "extra_time_win" : "extra_time_loss",
     },
     winner: userWins ? userParticipant : rivalParticipant,
   };

@@ -38,8 +38,10 @@ import {
 } from "./leagueTable";
 
 import {
+  estimateMatchOdds,
   simulateMatch,
   updateUserPlayerStatsFromMatch,
+  type MatchOdds,
   type MatchVenue,
 } from "./matchEngine";
 
@@ -1643,6 +1645,17 @@ export function simulateNextCupMatch(
     const userAdvantage = (cupContext.userRating.mentality - cupContext.rival.ratings.mentality) / 88;
     const underdogTiePenalty = rivalIsHomeUnderdog ? roundTieChaos * 0.12 : 0;
     const userWinsTieBreaker = seededRandom(tieBreakerSeed) < clamp(0.5 + userAdvantage - underdogTiePenalty, 0.32, 0.68);
+    // v0.25.74: el gol que deshace el empate se muestra como gol de la prórroga, con su
+    // minuto (91'-119'). Usa una tirada aparte: el ganador y el marcador no cambian.
+    const extraTimeGoal = {
+      minute: 91 + Math.floor(seededRandom(tieBreakerSeed + 7) * 29),
+      teamName: userWinsTieBreaker === userIsHome ? cupResult.homeTeamName : cupResult.awayTeamName,
+    };
+    cupResult = {
+      ...cupResult,
+      goalEvents: [...cupResult.goalEvents, extraTimeGoal],
+      keyFactor: userWinsTieBreaker ? "extra_time_win" : "extra_time_loss",
+    };
 
 
     if (userWinsTieBreaker) {
@@ -1934,6 +1947,65 @@ export function createFinalCategory(points: number, position: number, cupWon = f
   return "Proyecto fallido";
 }
 
+
+export interface UserMatchPreview {
+  competition: "league" | "cup";
+  /** Jornada de Liga o ronda de Copa. */
+  label: string;
+  rivalName: string;
+  rivalOverall: number;
+  userOverall: number;
+  venue: MatchVenue;
+  odds: MatchOdds;
+}
+
+/**
+ * Previa del próximo partido del usuario (v0.25.74): el de Copa si está pendiente
+ * y, si no, el siguiente de Liga. Usa el mismo rival, campo y ajustes que el
+ * partido real, y estima las probabilidades con el motor (ver estimateMatchOdds).
+ */
+export function getNextUserMatchPreview(params: {
+  context: UserLeagueSimulationContext;
+  teamRating: TeamRating;
+  selectedPlayers: SelectedPlayer[];
+}): UserMatchPreview | undefined {
+  const { context, teamRating, selectedPlayers } = params;
+  const pendingCupFixture = getPendingCupFixture(context);
+
+  if (pendingCupFixture) {
+    const { rival, venue } = getCupRivalFromFixture(pendingCupFixture);
+    const cupContext = applyCupRivalContext({ rival, userRating: teamRating, venue, roundId: pendingCupFixture.roundId });
+    const userRating = applyCoachCompetitionBoostToTeamRating(cupContext.userRating, getCoachCompetitionBoost(context, "cup"));
+
+    return {
+      competition: "cup",
+      label: pendingCupFixture.roundName,
+      rivalName: cupContext.rival.name,
+      rivalOverall: Math.round(cupContext.rival.ratings.overall),
+      userOverall: Math.round(userRating.overall),
+      venue,
+      odds: estimateMatchOdds({ userTeamName: USER_TEAM_NAME, rival: cupContext.rival, venue, teamRating: userRating, selectedPlayers }),
+    };
+  }
+
+  if (context.state.completed) return undefined;
+
+  const userFixture = getPendingFixturesForCurrentMatchday(context.state).find((fixture) => fixture.includesUserTeam);
+  if (!userFixture) return undefined;
+
+  const { rival, venue } = getRivalFromFixture(userFixture, context.rivals);
+  const formAdjustedRival = applySeasonFormToRival(rival, context.leagueSeasonSalt ?? SIMULATION_SESSION_SALT);
+
+  return {
+    competition: "league",
+    label: `Jornada ${userFixture.matchday}`,
+    rivalName: formAdjustedRival.name,
+    rivalOverall: Math.round(formAdjustedRival.ratings.overall),
+    userOverall: Math.round(teamRating.overall),
+    venue,
+    odds: estimateMatchOdds({ userTeamName: USER_TEAM_NAME, rival: formAdjustedRival, venue, teamRating, selectedPlayers }),
+  };
+}
 
 export function getCurrentLeagueDiagnosis(context: UserLeagueSimulationContext): string {
   const pendingCupFixture = getPendingCupFixture(context);

@@ -10,9 +10,11 @@ import {
   MATCH_SEQUENCE_TICK_MS,
   countGoalsForTeam,
   getMatchSequenceDurationMs,
+  getMatchKeyFactorText,
   getMatchSequenceFrame,
   getResultBadge,
   getResultClass,
+  isExtraTimeFactor,
 } from "./matchSequenceTimeline";
 import { getMatchPlaybackMultiplier, useMatchPlaybackSpeed } from "./matchPlaybackSpeed";
 
@@ -68,7 +70,10 @@ export function MatchSequence({
           result.userTeamPlayed === false ? (
             <span className="match-sequence-clock">Final</span>
           ) : (
-            <span className={getResultClass(result)}>{getResultBadge(result)}</span>
+            <span className={getResultClass(result)}>
+              {getResultBadge(result)}
+              {isExtraTimeFactor(result.keyFactor) ? " en la prórroga" : ""}
+            </span>
           )
         ) : (
           <span className="match-sequence-clock">{frame.stage === "preview" ? "Previa" : `${frame.minute}'`}</span>
@@ -88,6 +93,10 @@ export function MatchSequence({
       <div className="match-sequence-progress" aria-hidden="true">
         <span style={{ width: `${(elapsedMs / durationMs) * 100}%` }} />
       </div>
+
+      {isFinal && result.userTeamPlayed !== false && getMatchKeyFactorText(result.keyFactor) && (
+        <p className="match-key-factor">{getMatchKeyFactorText(result.keyFactor)}</p>
+      )}
 
       {frame.visibleGoals.length > 0 ? (
         <ul className="goal-events-list" aria-live="polite">

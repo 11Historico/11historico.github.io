@@ -21,6 +21,7 @@ import { getEuropeanMatchdaySlots } from "./europeanCalendar";
 import { buildEuropeanLeaguePhaseTable } from "./europeanLeagueTable";
 import { pickEuropeanOpponents, pickSingleEuropeanOpponent } from "./europeanOpponents";
 import { getEuropeanCompetitionLabel } from "./europeanQualification";
+import type { MatchKeyFactor } from "../types/game";
 import type {
   EuropeanCompetition,
   EuropeanGoalEvent,
@@ -126,6 +127,7 @@ export interface EuropeanMatchResultInput {
   regularTimeOpponentGoals?: number;
   penaltyShootout?: EuropeanPenaltyShootout;
   goalEvents?: EuropeanGoalEvent[];
+  keyFactor?: MatchKeyFactor;
 }
 
 function createFollowUpMatch(params: {
@@ -225,6 +227,7 @@ export function applyEuropeanMatchResult(
     ...(outcome.regularTimeOpponentGoals !== undefined ? { regularTimeOpponentGoals: outcome.regularTimeOpponentGoals } : {}),
     ...(outcome.penaltyShootout ? { penaltyShootout: outcome.penaltyShootout } : {}),
     ...(outcome.goalEvents ? { goalEvents: outcome.goalEvents } : {}),
+    ...(outcome.keyFactor ? { keyFactor: outcome.keyFactor } : {}),
   };
 
   const matches = [...tournament.matches];

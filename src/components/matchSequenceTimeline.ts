@@ -4,7 +4,7 @@
 // Convierte el tiempo transcurrido en fotograma (fase, minuto y goles visibles)
 // usando solo los `goalEvents` que ya genera el motor. No cambia la simulación.
 
-import type { GoalEvent, MatchResult } from "../types/game";
+import type { GoalEvent, MatchKeyFactor, MatchResult } from "../types/game";
 
 export const MATCH_SEQUENCE_PREVIEW_MS = 1000;
 export const MATCH_SEQUENCE_PLAY_MS = 2800;
@@ -66,4 +66,34 @@ export function getResultClass(result: MatchResult): string {
   if (result.userTeamWon) return "result-badge result-badge-win";
   if (result.userTeamDrew) return "result-badge result-badge-draw";
   return "result-badge result-badge-loss";
+}
+
+// Factor que decidió el partido (v0.25.74): lo calcula el motor sin cambiar el resultado.
+// Los textos no dicen el campo concreto: la Supercopa se juega en sede neutral.
+const KEY_FACTOR_TEXT: Record<MatchKeyFactor, string> = {
+  mentality_win: "La mentalidad decidió un partido igualado a tu favor.",
+  mentality_loss: "El rival tuvo más mentalidad y decidió un partido igualado.",
+  lead_lost: "Costó cerrar el partido: el rival arañó el empate.",
+  upset: "Partido igualado que acabó cayendo del lado del rival.",
+  overconfidence: "Exceso de confianza: eras muy favorito y no pudiste ganar.",
+  giant_killing: "Victoria de mérito ante un rival superior.",
+  attack_win: "Tu ataque pudo con su defensa.",
+  clean_sheet_win: "Tu defensa dejó la portería a cero.",
+  home_win: "Tu equipo fue mejor y lo reflejó en el marcador.",
+  away_win: "Victoria trabajada fuera de casa.",
+  away_draw: "Punto sumado fuera de casa.",
+  even_draw: "Partido igualado: ninguno encontró la forma de ganarlo.",
+  stronger_rival: "El rival era superior y lo demostró.",
+  away_loss: "Fuera de casa costó competir.",
+  bad_day: "Día torcido: el equipo no estuvo a su nivel.",
+  extra_time_win: "Empate a los 90 minutos: lo resolviste en la prórroga.",
+  extra_time_loss: "Empate a los 90 minutos: el rival lo resolvió en la prórroga.",
+};
+
+export function getMatchKeyFactorText(factor: MatchKeyFactor | undefined): string | undefined {
+  return factor ? KEY_FACTOR_TEXT[factor] : undefined;
+}
+
+export function isExtraTimeFactor(factor: MatchKeyFactor | undefined): boolean {
+  return factor === "extra_time_win" || factor === "extra_time_loss";
 }

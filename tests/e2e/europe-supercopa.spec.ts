@@ -89,6 +89,9 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await loadSave(page, europeanSave());
 
+  // v0.25.74: previa con probabilidades antes de cada partido.
+  await expect(page.getByRole("region", { name: "Previa del próximo partido" })).toContainText(/Victoria \d+\s%/);
+
   const simulateEuropean = page.getByRole("button", { name: "Simular partido europeo" });
   for (let step = 0; step < 20 && !(await simulateEuropean.isVisible()); step += 1) {
     const cup = page.getByRole("button", { name: "Simular partido de Copa" });
@@ -105,6 +108,7 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   const teams = page.locator(".european-match-event-team");
   await expect(teams.first()).toContainText("Local");
   await expect(teams.last()).toContainText("Visitante");
+  await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-odds")).toContainText(/Victoria \d+\s%/);
 
   await simulateEuropean.click();
   await expect(page.getByText(/Previa europea|Partido en juego/)).toBeVisible();
@@ -112,6 +116,7 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   await expect(page.getByText("Partido en juego")).toBeVisible();
   await expect(page.locator(".european-match-sequence-live-score strong").first()).toHaveText(/^\d+$/);
   await expect(page.getByText("Resultado europeo")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-key-factor")).not.toBeEmpty();
 
   // v0.25.69: al seguir con la Liga, el resultado europeo deja paso al partido de Liga
   // y la Conference pasa a una tarjeta de próximo partido.
