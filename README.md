@@ -143,7 +143,7 @@ Juego web en React + TypeScript para construir un once histórico del Athletic C
 
 ## Estado actual
 
-Versión pública actual: `v0.25.72_STABLE_PUBLIC_RELEASE`.
+Versión pública actual: `v0.25.73_STABLE_PUBLIC_RELEASE`.
 
 Base jugable cerrada:
 
@@ -158,7 +158,7 @@ No reabrir balance de Liga/Copa salvo decisión expresa.
 GitHub Pages:
 
 ```text
-https://ikeritu.github.io/11Historico/
+https://11historico.github.io/
 ```
 
 ## Capturas
