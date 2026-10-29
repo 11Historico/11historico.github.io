@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.73 — Copia de la web en Cloudflare Pages
+
+- El workflow de despliegue puede publicar también en Cloudflare Pages, con una dirección gratuita del tipo `nombre.pages.dev`. Publica el mismo `dist` que GitHub Pages, después de pasar todas las comprobaciones.
+- Queda desactivado hasta configurar la cuenta de Cloudflare: ver `docs/v0_25_73_CLOUDFLARE_PAGES.md`.
+- GitHub Pages sigue igual.
+- Versionado a `v0.25.73` / `0.25.73`.
+
 ## v0.25.72 — Local y visitante en los partidos europeos
 
 - En la tarjeta del partido europeo, el equipo local va a la izquierda y el visitante a la derecha, como en el marcador del resultado. Antes, tu equipo salía siempre a la izquierda, también fuera de casa, y el marcador parecía al revés.
