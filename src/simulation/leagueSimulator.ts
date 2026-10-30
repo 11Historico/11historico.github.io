@@ -7,6 +7,7 @@ import type {
   LeagueFixture,
   LeagueSimulationState,
   MatchApproach,
+  MatchLineDuel,
   MatchResult,
   RivalTeam,
   SelectedPlayer,
@@ -41,6 +42,7 @@ import {
 import {
   COACH_SPECIALIST_SKILL,
   estimateMatchOdds,
+  getMatchLineDuel,
   simulateMatch,
   updateUserPlayerStatsFromMatch,
   type MatchOdds,
@@ -1964,6 +1966,7 @@ export interface UserMatchPreview {
   userOverall: number;
   venue: MatchVenue;
   odds: MatchOdds;
+  lineDuel: MatchLineDuel;
 }
 
 /**
@@ -2002,6 +2005,7 @@ export function getNextUserMatchPreview(params: {
         approach,
         coachSkills: context.selectedCoach?.coachSeason.skills,
       }),
+      lineDuel: getMatchLineDuel(userRating, cupContext.rival),
     };
   }
 
@@ -2021,6 +2025,7 @@ export function getNextUserMatchPreview(params: {
     userOverall: Math.round(teamRating.overall),
     venue,
     odds: estimateMatchOdds({ userTeamName: USER_TEAM_NAME, rival: formAdjustedRival, venue, teamRating, selectedPlayers }),
+    lineDuel: getMatchLineDuel(teamRating, formAdjustedRival),
   };
 }
 

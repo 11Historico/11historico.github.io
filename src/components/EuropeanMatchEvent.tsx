@@ -29,7 +29,9 @@ import {
   getEuropeanSequenceScore,
 } from "./europeanMatchSequenceTimeline";
 import { getMatchPlaybackMultiplier, useMatchPlaybackSpeed } from "./matchPlaybackSpeed";
-import { getMatchApproachEffectText, getMatchKeyFactorText } from "./matchSequenceTimeline";
+import { MatchDominanceBar } from "./MatchDominanceBar";
+import { MatchIcon } from "./MatchIcon";
+import { getMatchApproachEffectText, getMatchKeyFactorIcon, getMatchKeyFactorText } from "./matchSequenceTimeline";
 
 import "./EuropeanMatchEvent.css";
 
@@ -159,7 +161,12 @@ function EuropeanMatchSequence({ match }: { match: EuropeanTournamentMatch }) {
             <span>{getResultLabel(match)}</span>
           </div>
           {getEuropeanMatchDecisionText(match) && <small>{getEuropeanMatchDecisionText(match)}</small>}
-          {getMatchKeyFactorText(match.keyFactor) && <p className="match-key-factor">{getMatchKeyFactorText(match.keyFactor)}</p>}
+          {match.keyFactor && (
+            <p className="match-key-factor">
+              <MatchIcon kind={getMatchKeyFactorIcon(match.keyFactor)} />
+              {getMatchKeyFactorText(match.keyFactor)}
+            </p>
+          )}
           {getMatchApproachEffectText(match.approachEffect) && <p className="match-approach-effect">{getMatchApproachEffectText(match.approachEffect)}</p>}
         </>
       ) : (
@@ -186,6 +193,8 @@ function EuropeanMatchSequence({ match }: { match: EuropeanTournamentMatch }) {
       <div className="european-match-sequence-progress" aria-hidden="true">
         <span style={{ width: `${progressPercent}%` }} />
       </div>
+
+      {match.expectedGoals && <MatchDominanceBar expectedGoals={match.expectedGoals} started={frame.stage !== "preview"} />}
     </div>
   );
 }

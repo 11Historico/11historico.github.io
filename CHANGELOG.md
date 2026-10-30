@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.25.76 — El partido se ve
+
+- **Líneas en la previa:** en Liga, Copa y Supercopa ves tu ataque contra su defensa y tu defensa contra su ataque.
+- **Crónica:** al acabar, una línea cuenta qué duelo explicó el resultado, como «Tu ataque (91) superó a su defensa (74)». Solo aparece si el marcador y los ratings dicen lo mismo.
+- **Barra de dominio:** muestra el reparto de los goles esperados de cada equipo, y refleja el planteamiento que elijas.
+- **Mini campo con tu once:** en Liga, Copa y Supercopa, quien marca se resalta en oro y quien asiste en blanco, a medida que ocurre.
+- **Iconos:** nuevos para planteamientos y factores del partido. La Supercopa ya usa su propio icono en la tarjeta del partido.
+- **Sin cambios en los resultados:** mismos marcadores, ganadores y clasificaciones que antes, comprobado comparando miles de partidos simulados.
+
 ## v0.25.75 — Planteamiento y perfil del entrenador
 
 - **Planteamiento:** antes de cada partido de Copa y Europa, y una vez para toda la Supercopa, eliges Defensivo, Equilibrado u Ofensivo. La previa recalcula las probabilidades al cambiar de opción. Atacar rinde más al favorito y cerrarse al inferior.

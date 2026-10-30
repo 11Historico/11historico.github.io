@@ -4,7 +4,15 @@
 // Convierte el tiempo transcurrido en fotograma (fase, minuto y goles visibles)
 // usando solo los `goalEvents` que ya genera el motor. No cambia la simulación.
 
-import type { GoalEvent, MatchApproachEffect, MatchKeyFactor, MatchResult } from "../types/game";
+import type {
+  GoalEvent,
+  MatchApproachEffect,
+  MatchExpectedGoals,
+  MatchKeyFactor,
+  MatchLineDuel,
+  MatchResult,
+} from "../types/game";
+import type { MatchIconKind } from "./MatchIcon";
 
 export const MATCH_SEQUENCE_PREVIEW_MS = 1000;
 export const MATCH_SEQUENCE_PLAY_MS = 2800;
@@ -92,6 +100,92 @@ const KEY_FACTOR_TEXT: Record<MatchKeyFactor, string> = {
 
 export function getMatchKeyFactorText(factor: MatchKeyFactor | undefined): string | undefined {
   return factor ? KEY_FACTOR_TEXT[factor] : undefined;
+}
+
+const KEY_FACTOR_ICON: Record<MatchKeyFactor, MatchIconKind> = {
+  mentality_win: "mentality",
+  mentality_loss: "mentality",
+  lead_lost: "warning",
+  upset: "warning",
+  overconfidence: "warning",
+  giant_killing: "merit",
+  attack_win: "attacking",
+  clean_sheet_win: "defensive",
+  home_win: "merit",
+  away_win: "merit",
+  away_draw: "balanced",
+  even_draw: "balanced",
+  stronger_rival: "warning",
+  away_loss: "warning",
+  bad_day: "warning",
+  extra_time_win: "extra_time",
+  extra_time_loss: "extra_time",
+};
+
+export function getMatchKeyFactorIcon(factor: MatchKeyFactor): MatchIconKind {
+  return KEY_FACTOR_ICON[factor];
+}
+
+/** Línea de la previa: las mismas líneas que usa el motor (v0.25.76). */
+export function getLineDuelSummary(duel: MatchLineDuel): string {
+  return `Tu ataque ${duel.userAttack} contra su defensa ${duel.rivalDefense} · Tu defensa ${duel.userDefense} contra su ataque ${duel.rivalAttack}`;
+}
+
+/**
+ * Crónica del partido (v0.25.76): la línea que explica el resultado, solo si el
+ * marcador y los ratings dicen lo mismo. Si no, no se cuenta nada que no pasó.
+ */
+export function getLineDuelText(result: MatchResult): string | undefined {
+  const duel = result.lineDuel;
+
+  if (!duel || isExtraTimeFactor(result.keyFactor)) return undefined;
+
+  const highGoals = Math.max(result.homeGoals, result.awayGoals);
+  const lowGoals = Math.min(result.homeGoals, result.awayGoals);
+  const userGoals = result.userTeamLost ? lowGoals : highGoals;
+  const rivalGoals = result.userTeamWon ? lowGoals : highGoals;
+  const attackEdge = duel.userAttack - duel.rivalDefense;
+  const defenseEdge = duel.userDefense - duel.rivalAttack;
+
+  if (result.userTeamWon) {
+    if (userGoals >= 2 && attackEdge > 0) return `Tu ataque (${duel.userAttack}) superó a su defensa (${duel.rivalDefense}).`;
+    if (rivalGoals === 0 && defenseEdge > 0) return `Tu defensa (${duel.userDefense}) frenó a su ataque (${duel.rivalAttack}).`;
+    return undefined;
+  }
+
+  if (result.userTeamLost) {
+    if (rivalGoals >= 2 && defenseEdge < 0) return `Su ataque (${duel.rivalAttack}) superó a tu defensa (${duel.userDefense}).`;
+    if (userGoals === 0 && attackEdge < 0) return `Su defensa (${duel.rivalDefense}) frenó a tu ataque (${duel.userAttack}).`;
+    return undefined;
+  }
+
+  if (userGoals === 0 && attackEdge < 0) return `Su defensa (${duel.rivalDefense}) frenó a tu ataque (${duel.userAttack}).`;
+  return undefined;
+}
+
+/** Reparto de los goles esperados, de local a visitante, en porcentaje (v0.25.76). */
+export function getMatchDominance(expectedGoals: MatchExpectedGoals): { home: number; away: number; userIsHome: boolean } {
+  const { user, rival, userIsHome } = expectedGoals;
+  const total = user + rival;
+  const homeShare = total > 0 ? (userIsHome ? user : rival) / total : 0.5;
+  const home = Math.round(homeShare * 100);
+
+  return { home, away: 100 - home, userIsHome };
+}
+
+/** Jugadores que ya han marcado o asistido, para el mini campo. El gol manda sobre la asistencia. */
+export function getGoalContributions(goals: GoalEvent[]): Record<string, "goal" | "assist"> {
+  const contributions: Record<string, "goal" | "assist"> = {};
+
+  for (const goal of goals) {
+    if (goal.assistName && !contributions[goal.assistName]) contributions[goal.assistName] = "assist";
+  }
+
+  for (const goal of goals) {
+    if (goal.scorerName) contributions[goal.scorerName] = "goal";
+  }
+
+  return contributions;
 }
 
 /**

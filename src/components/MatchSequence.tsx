@@ -3,14 +3,20 @@
 
 import { useEffect, useLayoutEffect, useState } from "react";
 
-import type { MatchResult } from "../types/game";
+import type { Formation, MatchResult, SelectedPlayer } from "../types/game";
 import { CompetitionIcon } from "./CompetitionIcon";
+import { MatchDominanceBar } from "./MatchDominanceBar";
+import { MatchIcon } from "./MatchIcon";
+import TacticalPitch from "./TacticalPitch";
 import { TeamKitIcon, TeamWithKit } from "./TeamKitIcon";
 import {
   MATCH_SEQUENCE_TICK_MS,
   countGoalsForTeam,
+  getGoalContributions,
+  getLineDuelText,
   getMatchSequenceDurationMs,
   getMatchApproachEffectText,
+  getMatchKeyFactorIcon,
   getMatchKeyFactorText,
   getMatchSequenceFrame,
   getResultBadge,
@@ -31,9 +37,12 @@ function getMatchSequenceTag(result: MatchResult): string {
 export function MatchSequence({
   result,
   onPlayingChange,
+  pitch,
 }: {
   result: MatchResult;
   onPlayingChange: (playing: boolean) => void;
+  /** Tu once, para el mini campo (v0.25.76). No se muestra en partidos entre rivales. */
+  pitch?: { formation: Formation; selectedPlayers: SelectedPlayer[] };
 }) {
   const playbackMultiplier = getMatchPlaybackMultiplier(useMatchPlaybackSpeed());
   const durationMs = getMatchSequenceDurationMs(playbackMultiplier);
@@ -44,6 +53,8 @@ export function MatchSequence({
   const isFinal = frame.stage === "final";
   const homeGoals = isFinal ? result.homeGoals : countGoalsForTeam(frame.visibleGoals, result.homeTeamName);
   const awayGoals = isFinal ? result.awayGoals : countGoalsForTeam(frame.visibleGoals, result.awayTeamName);
+  const showPitch = pitch && result.userTeamPlayed !== false;
+  const lineDuelText = isFinal ? getLineDuelText(result) : undefined;
 
   // En layout: la vista retiene la clasificación antes del primer pintado del partido.
   useLayoutEffect(() => {
@@ -80,7 +91,7 @@ export function MatchSequence({
           <span className="match-sequence-clock">{frame.stage === "preview" ? "Previa" : `${frame.minute}'`}</span>
         )}
         <span className="match-sequence-tag">
-          <CompetitionIcon kind={result.competition === "cup" ? "copa" : "liga"} />
+          <CompetitionIcon kind={result.roundName?.startsWith("Supercopa") ? "supercopa" : result.competition === "cup" ? "copa" : "liga"} />
           {getMatchSequenceTag(result)}
         </span>
       </div>
@@ -95,28 +106,49 @@ export function MatchSequence({
         <span style={{ width: `${(elapsedMs / durationMs) * 100}%` }} />
       </div>
 
-      {isFinal && result.userTeamPlayed !== false && getMatchKeyFactorText(result.keyFactor) && (
-        <p className="match-key-factor">{getMatchKeyFactorText(result.keyFactor)}</p>
+      {result.expectedGoals && <MatchDominanceBar expectedGoals={result.expectedGoals} started={frame.stage !== "preview"} />}
+
+      {isFinal && result.userTeamPlayed !== false && result.keyFactor && (
+        <p className="match-key-factor">
+          <MatchIcon kind={getMatchKeyFactorIcon(result.keyFactor)} />
+          {getMatchKeyFactorText(result.keyFactor)}
+        </p>
       )}
+
+      {lineDuelText && <p className="match-line-duel">{lineDuelText}</p>}
 
       {isFinal && getMatchApproachEffectText(result.approachEffect) && (
         <p className="match-approach-effect">{getMatchApproachEffectText(result.approachEffect)}</p>
       )}
 
-      {frame.visibleGoals.length > 0 ? (
-        <ul className="goal-events-list" aria-live="polite">
-          {frame.visibleGoals.map((event, index) => (
-            <li key={`${event.minute}_${event.teamName}_${index}`}>
-              <strong>{event.minute}'</strong>
-              <TeamWithKit teamName={event.teamName} />
-              {event.scorerName && <em>{event.scorerName}</em>}
-              {event.assistName && <small>Asistencia: {event.assistName}</small>}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        isFinal && <p className="empty-league-message">Partido sin goles.</p>
-      )}
+      <div className={showPitch ? "match-sequence-body match-sequence-body-pitch" : "match-sequence-body"}>
+        {frame.visibleGoals.length > 0 ? (
+          <ul className="goal-events-list" aria-live="polite">
+            {frame.visibleGoals.map((event, index) => (
+              <li key={`${event.minute}_${event.teamName}_${index}`}>
+                <strong>{event.minute}'</strong>
+                <TeamWithKit teamName={event.teamName} />
+                {event.scorerName && <em>{event.scorerName}</em>}
+                {event.assistName && <small>Asistencia: {event.assistName}</small>}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="empty-league-message">{isFinal ? "Partido sin goles." : " "}</p>
+        )}
+
+        {/* La lista de goles ya lo cuenta en texto: el campo es solo apoyo visual. */}
+        {showPitch && (
+          <div className="match-sequence-pitch" aria-hidden="true">
+            <TacticalPitch
+              formation={pitch.formation}
+              selectedPlayers={pitch.selectedPlayers}
+              compact
+              goalContributions={getGoalContributions(frame.visibleGoals)}
+            />
+          </div>
+        )}
+      </div>
 
       {!isFinal && (
         <button

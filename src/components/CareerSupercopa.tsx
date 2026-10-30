@@ -5,11 +5,12 @@ import type {
   CareerSupercopaResult,
 } from "../types/career";
 import type { SupercopaSemifinalPreview } from "../career/supercopaRules";
-import type { CoachSkills, MatchApproach } from "../types/game";
+import type { CoachSkills, Formation, MatchApproach, SelectedPlayer } from "../types/game";
 
 import { MatchApproachControl } from "./MatchApproachControl";
 import { MatchOddsBar } from "./MatchOddsBar";
 import { MatchSequence } from "./MatchSequence";
+import { getLineDuelSummary } from "./matchSequenceTimeline";
 
 import "./CareerSupercopa.css";
 
@@ -17,6 +18,7 @@ interface CareerSupercopaProps {
   qualification: CareerSupercopaQualification;
   result?: CareerSupercopaResult;
   coachSkills?: CoachSkills;
+  pitch?: { formation: Formation; selectedPlayers: SelectedPlayer[] };
   getSemifinalPreview: (approach: MatchApproach) => SupercopaSemifinalPreview | undefined;
   onSimulate: (approach: MatchApproach) => void;
   onContinue: () => void;
@@ -27,6 +29,7 @@ export function CareerSupercopa({
   qualification,
   result,
   coachSkills,
+  pitch,
   getSemifinalPreview,
   onSimulate,
   onContinue,
@@ -73,6 +76,7 @@ export function CareerSupercopa({
                 <p>
                   Tu semifinal: {preview.venue === "home" ? "en casa contra" : "fuera contra"} <strong>{preview.rivalName}</strong>
                 </p>
+                <small>{getLineDuelSummary(preview.lineDuel)}</small>
                 <MatchOddsBar odds={preview.odds} note="en 90 minutos; si hay empate, prórroga" />
               </>
             )}
@@ -109,6 +113,7 @@ export function CareerSupercopa({
                 <MatchSequence
                   key={match.fixtureId}
                   result={match}
+                  pitch={pitch}
                   onPlayingChange={(playing) => {
                     if (!playing) setPlayingIndex((current) => (current === index ? index + 1 : current));
                   }}

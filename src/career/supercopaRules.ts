@@ -9,6 +9,7 @@ import type {
   GoalEvent,
   LeagueTableRow,
   MatchApproach,
+  MatchLineDuel,
   MatchResult,
   RivalTeam,
   SelectedPlayer,
@@ -16,7 +17,7 @@ import type {
 } from "../types/game";
 import { USER_TEAM_ID } from "../data/laliga2526Teams";
 import { USER_TEAM_NAME } from "../simulation/leagueTable";
-import { estimateMatchOdds, simulateMatch, type MatchOdds, type MatchVenue } from "../simulation/matchEngine";
+import { estimateMatchOdds, getMatchLineDuel, simulateMatch, type MatchOdds, type MatchVenue } from "../simulation/matchEngine";
 
 function sortTable(table: LeagueTableRow[] = []): LeagueTableRow[] {
   return [...table].sort((a, b) => {
@@ -332,6 +333,7 @@ export interface SupercopaSemifinalPreview {
   rivalName: string;
   venue: MatchVenue;
   odds: MatchOdds;
+  lineDuel: MatchLineDuel;
 }
 
 /** Previa de la semifinal del usuario (v0.25.75): la final depende de quién la alcance. */
@@ -355,6 +357,7 @@ export function getSupercopaSemifinalPreview(params: {
     rivalName: rival.name,
     venue,
     odds: estimateMatchOdds({ userTeamName: USER_TEAM_NAME, rival, venue, teamRating, selectedPlayers, approach, coachSkills }),
+    lineDuel: getMatchLineDuel(teamRating, rival),
   };
 }
 

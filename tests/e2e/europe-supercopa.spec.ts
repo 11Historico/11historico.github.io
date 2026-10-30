@@ -123,6 +123,9 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   await expect(page.getByText("Resultado europeo")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-key-factor")).not.toBeEmpty();
   await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-approach-effect")).toContainText("ofensivo");
+  // v0.25.76: barra de dominio; Europa aún no tiene mini campo porque no tiene goleadores.
+  await expect(page.getByRole("region", { name: "Evento europeo" }).getByRole("img", { name: /Dominio según los goles esperados/ })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-sequence-pitch")).toHaveCount(0);
 
   // v0.25.69: al seguir con la Liga, el resultado europeo deja paso al partido de Liga
   // y la Conference pasa a una tarjeta de próximo partido.
@@ -154,6 +157,10 @@ test("la Supercopa se reproduce partido a partido y el veredicto llega al final"
   await expect(page.getByRole("button", { name: /^Jugar Liga/ })).toHaveCount(0);
 
   await expect(page.getByRole("heading", { name: /Campeón de Supercopa|Eliminado en/ })).toBeVisible({ timeout: 30_000 });
+  // v0.25.76: tu partido lleva dominio y mini campo; el partido entre rivales, no.
+  await expect(page.locator(".match-sequence .match-dominance").first()).toBeVisible();
+  await expect(page.locator(".match-sequence-pitch").first()).toBeVisible();
+  await expect(page.locator(".match-sequence-pitch")).toHaveCount(await page.locator(".match-sequence .match-dominance").count());
   await expect(page.getByRole("button", { name: /^Jugar Liga/ })).toBeVisible();
   expect(pageErrors).toEqual([]);
 });

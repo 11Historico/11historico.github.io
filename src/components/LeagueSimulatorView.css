@@ -801,3 +801,59 @@
   outline: 3px solid #ffd166;
   outline-offset: 2px;
 }
+
+/* Goles y mini campo del partido (v0.25.76). */
+.match-sequence-body {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.match-sequence-body-pitch {
+  grid-template-columns: minmax(0, 1fr) 210px;
+  align-items: start;
+}
+
+.match-sequence-pitch .tactical-pitch {
+  min-height: 0;
+}
+
+@media (max-width: 640px) {
+  .match-sequence-body-pitch {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .match-sequence-pitch {
+    width: min(240px, 100%);
+    margin: 0 auto;
+  }
+}
+
+.match-line-duel {
+  margin: 4px 0 0;
+  color: #ffe08a;
+  font-weight: 500;
+}
+
+.next-match-lines {
+  color: #f2d2d7;
+  font-size: 0.82rem;
+}
+
+.match-sequence-pitch .tactical-pitch-compact .tactical-shirt {
+  min-width: 26px;
+  min-height: 22px;
+  padding: 3px 4px;
+  border-width: 1px;
+  font-size: 0.58rem;
+}
+
+.match-sequence-pitch .tactical-pitch-compact .tactical-marker {
+  gap: 2px;
+}
+
+.match-sequence-pitch .tactical-pitch-compact .tactical-marker-filled .tactical-player-name {
+  max-width: 76px;
+  padding: 2px 5px;
+  font-size: 0.56rem;
+}

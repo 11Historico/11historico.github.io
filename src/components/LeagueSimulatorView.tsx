@@ -63,7 +63,7 @@ import { MatchApproachControl } from "./MatchApproachControl";
 import { MatchOddsBar } from "./MatchOddsBar";
 import { MatchSequence } from "./MatchSequence";
 import { TeamWithKit } from "./TeamKitIcon";
-import { getResultBadge, getResultClass } from "./matchSequenceTimeline";
+import { getLineDuelSummary, getResultBadge, getResultClass } from "./matchSequenceTimeline";
 import { getLeagueEventSlots, type LeagueEventKind } from "./leagueEventOrder";
 import {
   MATCH_PLAYBACK_SPEED_OPTIONS,
@@ -709,6 +709,7 @@ export function LeagueSimulatorView({
         key={`${lastResult.competition}-${lastResult.matchday}-${lastResult.roundName ?? ""}-${lastResult.homeTeamName}-${lastResult.homeGoals}-${lastResult.awayGoals}`}
         result={lastResult}
         onPlayingChange={setIsSequencePlaying}
+        pitch={{ formation, selectedPlayers }}
       />
     ),
   };
@@ -758,6 +759,7 @@ export function LeagueSimulatorView({
                       ? `${USER_TEAM_NAME} (${matchPreview.userOverall}) vs ${matchPreview.rivalName} (${matchPreview.rivalOverall})`
                       : `${matchPreview.rivalName} (${matchPreview.rivalOverall}) vs ${USER_TEAM_NAME} (${matchPreview.userOverall})`}
                   </strong>
+                  <small className="next-match-lines">{getLineDuelSummary(matchPreview.lineDuel)}</small>
                   {matchPreview.competition === "cup" && (
                     <MatchApproachControl value={approach} onChange={setApproach} competition="cup" coachSkills={coachSkills} />
                   )}
