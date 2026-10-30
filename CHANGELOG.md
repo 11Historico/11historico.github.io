@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.77 — Europa con tu equipo real
+
+- **Tu perfil cuenta en Europa:** el equipo juega con sus líneas reales, no solo con la media. Con la misma media, un once ofensivo marca y encaja más que uno defensivo.
+- **Misma fuerza:** las líneas se ajustan a tu media europea, así que el perfil reparte la fuerza sin aumentarla.
+- **Goleadores en Europa:** cada gol tuyo muestra autor y asistente, con el mini campo y la crónica. No suman a las estadísticas de la temporada.
+- **Sin cambios en Liga, Copa ni Supercopa:** mismos resultados que antes. Los resultados europeos sí cambian. La medición se puede repetir con `npm run audit:approach`.
+
 ## v0.25.76 — El partido se ve
 
 - **Líneas en la previa:** en Liga, Copa y Supercopa ves tu ataque contra su defensa y tu defensa contra su ataque.

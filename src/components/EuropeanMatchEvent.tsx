@@ -27,11 +27,20 @@ import {
   getEuropeanSequenceDurationMs,
   getEuropeanSequenceFrame,
   getEuropeanSequenceScore,
+  getEuropeanVisibleGoals,
 } from "./europeanMatchSequenceTimeline";
 import { getMatchPlaybackMultiplier, useMatchPlaybackSpeed } from "./matchPlaybackSpeed";
 import { MatchDominanceBar } from "./MatchDominanceBar";
 import { MatchIcon } from "./MatchIcon";
-import { getMatchApproachEffectText, getMatchKeyFactorIcon, getMatchKeyFactorText } from "./matchSequenceTimeline";
+import TacticalPitch from "./TacticalPitch";
+import {
+  getGoalContributions,
+  getLineDuelText,
+  getMatchApproachEffectText,
+  getMatchKeyFactorIcon,
+  getMatchKeyFactorText,
+} from "./matchSequenceTimeline";
+import type { Formation, SelectedPlayer } from "../types/game";
 
 import "./EuropeanMatchEvent.css";
 
@@ -39,8 +48,12 @@ interface EuropeanMatchEventProps {
   tournament: EuropeanTournamentState;
   match: EuropeanTournamentMatch;
   userTeamRating: number;
+  /** Tu once, para el mini campo (v0.25.77). */
+  pitch?: EuropeanMatchPitch;
   onContinue: () => void;
 }
+
+type EuropeanMatchPitch = { formation: Formation; selectedPlayers: SelectedPlayer[] };
 
 function getResultLabel(match: EuropeanTournamentMatch): string {
   if (match.result === "win") return "Victoria";
@@ -114,7 +127,7 @@ function getKnockoutLossText(match: EuropeanTournamentMatch): string {
   return "Derrota: sin puntos en fase inicial";
 }
 
-function EuropeanMatchSequence({ match }: { match: EuropeanTournamentMatch }) {
+function EuropeanMatchSequence({ match, pitch }: { match: EuropeanTournamentMatch; pitch?: EuropeanMatchPitch }) {
   const playbackMultiplier = getMatchPlaybackMultiplier(useMatchPlaybackSpeed());
   const durationMs = getEuropeanSequenceDurationMs(match, playbackMultiplier);
   const [elapsedMs, setElapsedMs] = useState(() =>
@@ -127,6 +140,18 @@ function EuropeanMatchSequence({ match }: { match: EuropeanTournamentMatch }) {
     : getEuropeanSequenceScore(match, frame.scoreBasis);
   const leftGoals = score ? (match.isHome ? score.userGoals : score.opponentGoals) : null;
   const rightGoals = score ? (match.isHome ? score.opponentGoals : score.userGoals) : null;
+  const visibleGoals = getEuropeanVisibleGoals(match.goalEvents, frame);
+  // Si se decidió en 90 minutos, la crónica usa ese marcador; si no, no hay keyFactor y no se cuenta.
+  const lineDuelText = isFinal
+    ? getLineDuelText({
+        lineDuel: match.lineDuel,
+        keyFactor: match.keyFactor,
+        homeGoals: match.userGoals ?? 0,
+        awayGoals: match.opponentGoals ?? 0,
+        userTeamWon: match.result === "win",
+        userTeamLost: match.result === "loss",
+      })
+    : undefined;
 
   useEffect(() => {
     if (isFinal) return undefined;
@@ -167,6 +192,7 @@ function EuropeanMatchSequence({ match }: { match: EuropeanTournamentMatch }) {
               {getMatchKeyFactorText(match.keyFactor)}
             </p>
           )}
+          {lineDuelText && <p className="match-line-duel">{lineDuelText}</p>}
           {getMatchApproachEffectText(match.approachEffect) && <p className="match-approach-effect">{getMatchApproachEffectText(match.approachEffect)}</p>}
         </>
       ) : (
@@ -195,6 +221,35 @@ function EuropeanMatchSequence({ match }: { match: EuropeanTournamentMatch }) {
       </div>
 
       {match.expectedGoals && <MatchDominanceBar expectedGoals={match.expectedGoals} started={frame.stage !== "preview"} />}
+
+      <div className={pitch ? "match-sequence-body match-sequence-body-pitch" : "match-sequence-body"}>
+        {visibleGoals.length > 0 ? (
+          <ul className="goal-events-list" aria-live="polite">
+            {visibleGoals.map((goal, index) => (
+              <li key={`${goal.minute}_${goal.isUserGoal}_${index}`}>
+                <strong>{goal.minute}'</strong>
+                <span>{goal.isUserGoal ? USER_TEAM_NAME : match.opponent.name}</span>
+                {goal.scorerName && <em>{goal.scorerName}</em>}
+                {goal.assistName && <small>Asistencia: {goal.assistName}</small>}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="empty-league-message">{isFinal && !match.decidedBy ? "Partido sin goles." : " "}</p>
+        )}
+
+        {/* La lista de goles ya lo cuenta en texto: el campo es solo apoyo visual. */}
+        {pitch && (
+          <div className="match-sequence-pitch" aria-hidden="true">
+            <TacticalPitch
+              formation={pitch.formation}
+              selectedPlayers={pitch.selectedPlayers}
+              compact
+              goalContributions={getGoalContributions(visibleGoals)}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -203,6 +258,7 @@ export function EuropeanMatchEvent({
   tournament,
   match,
   userTeamRating,
+  pitch,
   onContinue,
 }: EuropeanMatchEventProps) {
   const summary = getEuropeanTournamentSummary(tournament);
@@ -270,7 +326,7 @@ export function EuropeanMatchEvent({
 
       {isPlayed && (
         <div className="european-match-event-result">
-          <EuropeanMatchSequence key={match.id} match={match} />
+          <EuropeanMatchSequence key={match.id} match={match} pitch={pitch} />
         </div>
       )}
 

@@ -114,6 +114,13 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   // v0.25.75: el planteamiento se elige en la previa y el resultado cuenta qué cambió.
   await preview.getByRole("button", { name: "Ofensivo" }).click();
   await expect(preview.getByRole("button", { name: "Ofensivo" })).toHaveAttribute("aria-pressed", "true");
+  // v0.25.77: tus líneas en la previa, con el rival como un solo número.
+  await expect(preview).toContainText("Nivel del rival");
+
+  // Mientras se reproduce un partido de Liga, las estadísticas no se actualizan hasta que acaba.
+  await expect(page.locator(".match-sequence-skip")).toHaveCount(0, { timeout: 15_000 });
+  const seasonGoals = page.locator(".season-stats-grid strong");
+  const seasonGoalsBefore = await seasonGoals.allTextContents();
 
   await simulateEuropean.click();
   await expect(page.getByText(/Previa europea|Partido en juego/)).toBeVisible();
@@ -123,9 +130,10 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   await expect(page.getByText("Resultado europeo")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-key-factor")).not.toBeEmpty();
   await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-approach-effect")).toContainText("ofensivo");
-  // v0.25.76: barra de dominio; Europa aún no tiene mini campo porque no tiene goleadores.
+  // v0.25.76 y v0.25.77: barra de dominio y mini campo. Los goles europeos no suman a las estadísticas.
   await expect(page.getByRole("region", { name: "Evento europeo" }).getByRole("img", { name: /Dominio según los goles esperados/ })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-sequence-pitch")).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-sequence-pitch")).toBeVisible();
+  expect(await seasonGoals.allTextContents()).toEqual(seasonGoalsBefore);
 
   // v0.25.69: al seguir con la Liga, el resultado europeo deja paso al partido de Liga
   // y la Conference pasa a una tarjeta de próximo partido.

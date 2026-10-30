@@ -128,6 +128,10 @@ export function getMatchKeyFactorIcon(factor: MatchKeyFactor): MatchIconKind {
 
 /** Línea de la previa: las mismas líneas que usa el motor (v0.25.76). */
 export function getLineDuelSummary(duel: MatchLineDuel): string {
+  if (duel.rivalHasOnlyOverall) {
+    return `Tu ataque ${duel.userAttack} · Tu defensa ${duel.userDefense} · Nivel del rival ${duel.rivalAttack}`;
+  }
+
   return `Tu ataque ${duel.userAttack} contra su defensa ${duel.rivalDefense} · Tu defensa ${duel.userDefense} contra su ataque ${duel.rivalAttack}`;
 }
 
@@ -135,10 +139,18 @@ export function getLineDuelSummary(duel: MatchLineDuel): string {
  * Crónica del partido (v0.25.76): la línea que explica el resultado, solo si el
  * marcador y los ratings dicen lo mismo. Si no, no se cuenta nada que no pasó.
  */
-export function getLineDuelText(result: MatchResult): string | undefined {
+export function getLineDuelText(
+  result: Pick<MatchResult, "lineDuel" | "keyFactor" | "homeGoals" | "awayGoals" | "userTeamWon" | "userTeamLost">,
+): string | undefined {
   const duel = result.lineDuel;
 
   if (!duel || isExtraTimeFactor(result.keyFactor)) return undefined;
+
+  const onlyOverall = duel.rivalHasOnlyOverall;
+  const toRivalDefense = onlyOverall ? "al rival" : "a su defensa";
+  const toRivalAttack = onlyOverall ? "al rival" : "a su ataque";
+  const rivalAttackName = onlyOverall ? "El rival" : "Su ataque";
+  const rivalDefenseName = onlyOverall ? "El rival" : "Su defensa";
 
   const highGoals = Math.max(result.homeGoals, result.awayGoals);
   const lowGoals = Math.min(result.homeGoals, result.awayGoals);
@@ -148,18 +160,18 @@ export function getLineDuelText(result: MatchResult): string | undefined {
   const defenseEdge = duel.userDefense - duel.rivalAttack;
 
   if (result.userTeamWon) {
-    if (userGoals >= 2 && attackEdge > 0) return `Tu ataque (${duel.userAttack}) superó a su defensa (${duel.rivalDefense}).`;
-    if (rivalGoals === 0 && defenseEdge > 0) return `Tu defensa (${duel.userDefense}) frenó a su ataque (${duel.rivalAttack}).`;
+    if (userGoals >= 2 && attackEdge > 0) return `Tu ataque (${duel.userAttack}) superó ${toRivalDefense} (${duel.rivalDefense}).`;
+    if (rivalGoals === 0 && defenseEdge > 0) return `Tu defensa (${duel.userDefense}) frenó ${toRivalAttack} (${duel.rivalAttack}).`;
     return undefined;
   }
 
   if (result.userTeamLost) {
-    if (rivalGoals >= 2 && defenseEdge < 0) return `Su ataque (${duel.rivalAttack}) superó a tu defensa (${duel.userDefense}).`;
-    if (userGoals === 0 && attackEdge < 0) return `Su defensa (${duel.rivalDefense}) frenó a tu ataque (${duel.userAttack}).`;
+    if (rivalGoals >= 2 && defenseEdge < 0) return `${rivalAttackName} (${duel.rivalAttack}) superó a tu defensa (${duel.userDefense}).`;
+    if (userGoals === 0 && attackEdge < 0) return `${rivalDefenseName} (${duel.rivalDefense}) frenó a tu ataque (${duel.userAttack}).`;
     return undefined;
   }
 
-  if (userGoals === 0 && attackEdge < 0) return `Su defensa (${duel.rivalDefense}) frenó a tu ataque (${duel.userAttack}).`;
+  if (userGoals === 0 && attackEdge < 0) return `${rivalDefenseName} (${duel.rivalDefense}) frenó a tu ataque (${duel.userAttack}).`;
   return undefined;
 }
 
@@ -174,7 +186,7 @@ export function getMatchDominance(expectedGoals: MatchExpectedGoals): { home: nu
 }
 
 /** Jugadores que ya han marcado o asistido, para el mini campo. El gol manda sobre la asistencia. */
-export function getGoalContributions(goals: GoalEvent[]): Record<string, "goal" | "assist"> {
+export function getGoalContributions(goals: Pick<GoalEvent, "scorerName" | "assistName">[]): Record<string, "goal" | "assist"> {
   const contributions: Record<string, "goal" | "assist"> = {};
 
   for (const goal of goals) {

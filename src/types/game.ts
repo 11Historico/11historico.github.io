@@ -420,6 +420,8 @@ export interface MatchLineDuel {
   userDefense: number;
   rivalAttack: number;
   rivalDefense: number;
+  /** Rival europeo: solo tiene una media, así que los textos no hablan de sus líneas (v0.25.77). */
+  rivalHasOnlyOverall?: boolean;
 }
 
 export interface MatchResult {

@@ -180,7 +180,7 @@ function calculateExpectedGoals(params: {
   return roundToOne(clamp(expectedGoals, 0.28, 3.05));
 }
 
-function getAverageUserRating(teamRating: TeamRating): number {
+export function getAverageUserRating(teamRating: TeamRating): number {
   return (
     teamRating.attack * 0.22 +
     teamRating.defense * 0.22 +

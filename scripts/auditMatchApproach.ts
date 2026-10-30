@@ -162,6 +162,55 @@ function auditEurope(): void {
   printTable("Europa · entrenador especialista (+1 a la media)", ["Cruce", "Sin especialista", "Con especialista"], boostRows);
 }
 
+// Perfil real en Europa (v0.25.77): misma media, distinto reparto de líneas.
+function auditEuropeProfile(): void {
+  const profiles: { label: string; lines: (overall: number) => Partial<TeamRating> | undefined }[] = [
+    { label: "Solo media (antes)", lines: () => undefined },
+    { label: "Líneas iguales", lines: () => ({}) },
+    { label: "Muy ofensivo (ataque +8, defensa -8)", lines: (overall) => ({ attack: overall + 8, defense: overall - 8 }) },
+    { label: "Muy defensivo (ataque -8, defensa +8)", lines: (overall) => ({ attack: overall - 8, defense: overall + 8 }) },
+    { label: "Líneas muy por encima de la media (+8)", lines: (overall) => ({ attack: overall + 8, defense: overall + 8, control: overall + 8, physical: overall + 8, mentality: overall + 8, goalkeeping: overall + 8 }) },
+    // Líneas de los onces de prueba de tests/e2e/fixtures: el motor las lleva a la media del cruce.
+    { label: "Once fuerte de prueba", lines: () => ({ attack: 96, defense: 94, control: 96, physical: 95, mentality: 98, goalkeeping: 98 }) },
+    { label: "Once débil de prueba", lines: () => ({ attack: 76, defense: 76, control: 76, physical: 78, mentality: 78, goalkeeping: 78 }) },
+  ];
+
+  const rows = [[76, 84], [82, 82], [88, 80]].flatMap(([userRating, opponentRating]) =>
+    profiles.map(({ label, lines }) => {
+      const custom = lines(userRating);
+      const userProfile = custom && { ...uniformTeam(userRating), ...custom };
+      let points = 0;
+      let knockoutWins = 0;
+      let userGoals = 0;
+      let opponentGoals = 0;
+
+      for (let sample = 0; sample < SAMPLES; sample += 1) {
+        const shared = { userTeamRating: userRating, opponentRating, isHome: sample % 2 === 0, competition: "europa_league" as const, seed: `audit_${sample}`, userProfile };
+        const league = simulateEuropeanMatch(shared);
+        points += league.result === "win" ? 3 : league.result === "draw" ? 1 : 0;
+        userGoals += league.userGoals;
+        opponentGoals += league.opponentGoals;
+        if (simulateEuropeanMatch({ ...shared, isKnockout: true }).result === "win") knockoutWins += 1;
+      }
+
+      return [
+        `${userRating} vs ${opponentRating}`,
+        label,
+        (points / SAMPLES).toFixed(2),
+        percent(knockoutWins / SAMPLES),
+        (userGoals / SAMPLES).toFixed(2),
+        (opponentGoals / SAMPLES).toFixed(2),
+      ];
+    }),
+  );
+
+  printTable(
+    "Europa · perfil del equipo con la misma media",
+    ["Cruce", "Perfil", "Puntos por partido", "Pasa en semifinal o final", "Goles a favor", "Goles en contra"],
+    rows,
+  );
+}
+
 function auditSupercopa(): void {
   const participants = [
     { teamId: USER_TEAM_ID, teamName: "Athletic Club Histórico", source: "league_champion" as const, sourceLabel: "" },
@@ -197,4 +246,5 @@ function auditSupercopa(): void {
 
 auditCup();
 auditEurope();
+auditEuropeProfile();
 auditSupercopa();

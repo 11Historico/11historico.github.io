@@ -110,7 +110,7 @@ function testWiring(): void {
   const card = read("src/components/EuropeanMatchEvent.tsx");
   const css = read("src/components/EuropeanMatchEvent.css");
 
-  assert(card.includes("<EuropeanMatchSequence key={match.id} match={match} />"), "La tarjeta europea debe usar la secuencia.");
+  assert(card.includes("<EuropeanMatchSequence key={match.id} match={match}"), "La tarjeta europea debe usar la secuencia.");
   assert(card.includes("getEuropeanMatchDecisionText(match)"), "El final de la secuencia debe mantener el texto de prórroga y penaltis.");
   assert(css.includes(".european-match-event-card-champions .european-match-sequence-progress span"), "Champions debe tener acento propio.");
   assert(css.includes(".european-match-event-card-conference .european-match-sequence-progress span"), "Conference debe tener acento propio.");

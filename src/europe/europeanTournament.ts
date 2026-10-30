@@ -21,7 +21,7 @@ import { getEuropeanMatchdaySlots } from "./europeanCalendar";
 import { buildEuropeanLeaguePhaseTable } from "./europeanLeagueTable";
 import { pickEuropeanOpponents, pickSingleEuropeanOpponent } from "./europeanOpponents";
 import { getEuropeanCompetitionLabel } from "./europeanQualification";
-import type { MatchApproachEffect, MatchExpectedGoals, MatchKeyFactor } from "../types/game";
+import type { MatchApproachEffect, MatchExpectedGoals, MatchKeyFactor, MatchLineDuel } from "../types/game";
 import type {
   EuropeanCompetition,
   EuropeanGoalEvent,
@@ -130,6 +130,7 @@ export interface EuropeanMatchResultInput {
   keyFactor?: MatchKeyFactor;
   approachEffect?: MatchApproachEffect;
   expectedGoals?: MatchExpectedGoals;
+  lineDuel?: MatchLineDuel;
 }
 
 function createFollowUpMatch(params: {
@@ -232,6 +233,7 @@ export function applyEuropeanMatchResult(
     ...(outcome.keyFactor ? { keyFactor: outcome.keyFactor } : {}),
     ...(outcome.approachEffect ? { approachEffect: outcome.approachEffect } : {}),
     ...(outcome.expectedGoals ? { expectedGoals: outcome.expectedGoals } : {}),
+    ...(outcome.lineDuel ? { lineDuel: outcome.lineDuel } : {}),
   };
 
   const matches = [...tournament.matches];

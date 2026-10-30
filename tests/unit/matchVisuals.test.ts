@@ -59,11 +59,11 @@ describe("datos del motor para la secuencia", () => {
     expect(simulateMatch({ ...params, approach: "defensive" }).expectedGoals!.rival).toBeLessThanOrEqual(simulateMatch(params).expectedGoals!.rival);
   });
 
-  it("Europa da goles esperados pero no líneas, porque aún usa solo la media", () => {
+  it("Europa da goles esperados; sin el perfil del equipo, no da líneas", () => {
     const outcome = simulateEuropeanMatch({ userTeamRating: 85, opponentRating: 80, isHome: false, competition: "europa_league", seed: "x" });
 
     expect(outcome.expectedGoals?.userIsHome).toBe(false);
-    expect(outcome).not.toHaveProperty("lineDuel");
+    expect(outcome.lineDuel).toBeUndefined();
   });
 });
 
