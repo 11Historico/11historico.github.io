@@ -4,7 +4,11 @@ import type {
   CareerSupercopaQualification,
   CareerSupercopaResult,
 } from "../types/career";
+import type { SupercopaSemifinalPreview } from "../career/supercopaRules";
+import type { CoachSkills, MatchApproach } from "../types/game";
 
+import { MatchApproachControl } from "./MatchApproachControl";
+import { MatchOddsBar } from "./MatchOddsBar";
 import { MatchSequence } from "./MatchSequence";
 
 import "./CareerSupercopa.css";
@@ -12,7 +16,9 @@ import "./CareerSupercopa.css";
 interface CareerSupercopaProps {
   qualification: CareerSupercopaQualification;
   result?: CareerSupercopaResult;
-  onSimulate: () => void;
+  coachSkills?: CoachSkills;
+  getSemifinalPreview: (approach: MatchApproach) => SupercopaSemifinalPreview | undefined;
+  onSimulate: (approach: MatchApproach) => void;
   onContinue: () => void;
   onRestart: () => void;
 }
@@ -20,10 +26,14 @@ interface CareerSupercopaProps {
 export function CareerSupercopa({
   qualification,
   result,
+  coachSkills,
+  getSemifinalPreview,
   onSimulate,
   onContinue,
   onRestart,
 }: CareerSupercopaProps) {
+  const [approach, setApproach] = useState<MatchApproach>("balanced");
+  const preview = result ? undefined : getSemifinalPreview(approach);
   // Partido que se está reproduciendo. Cuando termina, se pasa al siguiente.
   const [playingIndex, setPlayingIndex] = useState(0);
   const [shownResult, setShownResult] = useState(result);
@@ -56,8 +66,22 @@ export function CareerSupercopa({
         </div>
 
         {!result && (
+          <section className="career-supercopa-preview" aria-label="Previa de la semifinal">
+            <MatchApproachControl value={approach} onChange={setApproach} competition="supercopa" coachSkills={coachSkills} />
+            {preview && (
+              <>
+                <p>
+                  Tu semifinal: {preview.venue === "home" ? "en casa contra" : "fuera contra"} <strong>{preview.rivalName}</strong>
+                </p>
+                <MatchOddsBar odds={preview.odds} note="en 90 minutos; si hay empate, prórroga" />
+              </>
+            )}
+          </section>
+        )}
+
+        {!result && (
           <div className="career-supercopa-actions">
-            <button type="button" className="primary-home-button" onClick={onSimulate}>
+            <button type="button" className="primary-home-button" onClick={() => onSimulate(approach)}>
               Simular Supercopa
             </button>
             <button type="button" className="secondary-home-button" onClick={onRestart}>

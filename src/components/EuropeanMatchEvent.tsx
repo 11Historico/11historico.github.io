@@ -7,11 +7,10 @@
 // los títulos europeos sí se suman al palmarés, al cerrar la temporada
 // (ver src/career/europeanTrophies.ts).
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { getEuropeanCompetitionIconKind, getEuropeanCompetitionLabel } from "../europe/europeanQualification";
 import { USER_TEAM_NAME } from "../simulation/leagueTable";
-import { estimateEuropeanMatchOdds } from "../europe/europeanMatchEngine";
 import {
   EUROPEAN_KNOCKOUT_TIE_RULE_TEXT,
   getEuropeanMatchDecisionText,
@@ -30,8 +29,7 @@ import {
   getEuropeanSequenceScore,
 } from "./europeanMatchSequenceTimeline";
 import { getMatchPlaybackMultiplier, useMatchPlaybackSpeed } from "./matchPlaybackSpeed";
-import { getMatchKeyFactorText } from "./matchSequenceTimeline";
-import { MatchOddsBar } from "./MatchOddsBar";
+import { getMatchApproachEffectText, getMatchKeyFactorText } from "./matchSequenceTimeline";
 
 import "./EuropeanMatchEvent.css";
 
@@ -162,6 +160,7 @@ function EuropeanMatchSequence({ match }: { match: EuropeanTournamentMatch }) {
           </div>
           {getEuropeanMatchDecisionText(match) && <small>{getEuropeanMatchDecisionText(match)}</small>}
           {getMatchKeyFactorText(match.keyFactor) && <p className="match-key-factor">{getMatchKeyFactorText(match.keyFactor)}</p>}
+          {getMatchApproachEffectText(match.approachEffect) && <p className="match-approach-effect">{getMatchApproachEffectText(match.approachEffect)}</p>}
         </>
       ) : (
         <>
@@ -205,18 +204,6 @@ export function EuropeanMatchEvent({
     : "Tu equipo jugará como visitante";
   const progressPercent = getProgressPercent(tournament);
   const phaseLabel = getEuropeanTournamentPhaseLabel(match.phase);
-  // Previa (v0.25.74): mismas entradas que handleSimulateEuropeanMatch en LeagueSimulatorView.
-  const odds = useMemo(
-    () => isPlayed
-      ? undefined
-      : estimateEuropeanMatchOdds({
-          userTeamRating,
-          opponentRating: match.opponent.rating,
-          isHome: match.isHome,
-          competition: match.competition,
-        }),
-    [isPlayed, match.competition, match.isHome, match.opponent.rating, userTeamRating],
-  );
   const userTeamCard = (
     <article className="european-match-event-team european-match-event-team-user">
       <span>{USER_TEAM_NAME}</span>
@@ -271,10 +258,6 @@ export function EuropeanMatchEvent({
         <div className="european-match-event-versus">VS</div>
         {match.isHome ? rivalTeamCard : userTeamCard}
       </div>
-
-      {odds && (
-        <MatchOddsBar odds={odds} note={isKnockoutMatch ? "en 90 minutos; si hay empate, prórroga y penaltis" : undefined} />
-      )}
 
       {isPlayed && (
         <div className="european-match-event-result">

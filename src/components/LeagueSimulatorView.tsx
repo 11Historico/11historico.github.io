@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import type {
   Formation,
   GameDifficulty,
+  MatchApproach,
   MatchResult,
   SelectedCoach,
   SelectedPlayer,
@@ -19,6 +20,7 @@ import {
   createFinalLeagueSummary,
   createUserLeagueSimulation,
   getCupRivalDisplayName,
+  getCoachCompetitionBoost,
   getCupStatusLabel,
   getCurrentLeagueDiagnosis,
   getNextUserMatchPreview,
@@ -45,7 +47,7 @@ import {
 } from "../career/seasonLuckWheel";
 import SeasonLuckWheelModal from "./SeasonLuckWheelModal";
 import { EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS, shouldPlayEuropeanMatchAtLeagueMatchday } from "../europe/europeanCalendar";
-import { simulateEuropeanMatch } from "../europe/europeanMatchEngine";
+import { estimateEuropeanMatchOdds, simulateEuropeanMatch } from "../europe/europeanMatchEngine";
 import {
   applyEuropeanMatchResult,
   getEuropeanTournamentPhaseLabel,
@@ -57,6 +59,7 @@ import type { EuropeanTournamentMatch, EuropeanTournamentState } from "../europe
 import EuropeanMatchEvent from "./EuropeanMatchEvent";
 import { CompetitionIcon } from "./CompetitionIcon";
 import EuropeanLeagueTable from "./EuropeanLeagueTable";
+import { MatchApproachControl } from "./MatchApproachControl";
 import { MatchOddsBar } from "./MatchOddsBar";
 import { MatchSequence } from "./MatchSequence";
 import { TeamWithKit } from "./TeamKitIcon";
@@ -184,6 +187,9 @@ export function LeagueSimulatorView({
     () => initialPendingSeasonLuckWheelOffer
   );
   const [justPlayedEuropeanMatch, setJustPlayedEuropeanMatch] = useState<EuropeanTournamentMatch | undefined>();
+  // Planteamiento para Copa y Europa (v0.25.75). Se mantiene hasta que el usuario lo cambie.
+  const [approach, setApproach] = useState<MatchApproach>("balanced");
+  const coachSkills = selectedCoach.coachSeason.skills;
 
   // Envuelve el setter de estado para que la oferta pendiente también se
   // persista fuera de este componente (ver `initialPendingSeasonLuckWheelOffer`).
@@ -238,10 +244,10 @@ export function LeagueSimulatorView({
   );
 
   const diagnosis = getCurrentLeagueDiagnosis(context);
-  // Previa del siguiente partido de Liga o Copa (v0.25.74). El europeo tiene la suya en su tarjeta.
+  // Previa del siguiente partido de Liga o Copa (v0.25.74).
   const matchPreview = useMemo(
-    () => getNextUserMatchPreview({ context, teamRating: effectiveTeamRating, selectedPlayers }),
-    [context, effectiveTeamRating, selectedPlayers]
+    () => getNextUserMatchPreview({ context, teamRating: effectiveTeamRating, selectedPlayers, approach }),
+    [approach, context, effectiveTeamRating, selectedPlayers]
   );
   const pendingCupFixture = getPendingCupFixture(context);
   const userRow = userSummary.row;
@@ -252,6 +258,19 @@ export function LeagueSimulatorView({
 
   const pendingEuropeanMatch = shouldPlayEuropeanMatchAtLeagueMatchday(europeanTournament, leagueMatchesPlayed + 1);
   const europeanEventMatch = justPlayedEuropeanMatch ?? pendingEuropeanMatch;
+  // Un entrenador especialista en Europa suma +1, como el de Copa en la Copa (v0.25.75).
+  const europeanUserRating = effectiveTeamRating.overall + getCoachCompetitionBoost(context, "europe");
+  const europeanOdds = useMemo(
+    () => pendingEuropeanMatch && estimateEuropeanMatchOdds({
+      userTeamRating: europeanUserRating,
+      opponentRating: pendingEuropeanMatch.opponent.rating,
+      isHome: pendingEuropeanMatch.isHome,
+      competition: pendingEuropeanMatch.competition,
+      approach,
+      coachSkills,
+    }),
+    [approach, coachSkills, europeanUserRating, pendingEuropeanMatch]
+  );
   const nextEuropeanMatch = getNextEuropeanMatch(europeanTournament);
   const currentCupFixture = context.cupState.status === "active" ? context.cupState.fixtures[context.cupState.currentRoundIndex] : undefined;
   const upcomingCupFixture = currentCupFixture && !currentCupFixture.played ? currentCupFixture : undefined;
@@ -390,12 +409,14 @@ export function LeagueSimulatorView({
     if (!europeanTournament || !pendingEuropeanMatch) return;
 
     const outcome = simulateEuropeanMatch({
-      userTeamRating: effectiveTeamRating.overall,
+      userTeamRating: europeanUserRating,
       opponentRating: pendingEuropeanMatch.opponent.rating,
       isHome: pendingEuropeanMatch.isHome,
       competition: pendingEuropeanMatch.competition,
       seed: `${gameId}_${pendingEuropeanMatch.id}`,
       isKnockout: isEuropeanKnockoutMatch(pendingEuropeanMatch),
+      approach,
+      coachSkills,
     });
 
     const nextTournament = applyEuropeanMatchResult(
@@ -540,6 +561,7 @@ export function LeagueSimulatorView({
       context,
       teamRating: effectiveTeamRating,
       selectedPlayers,
+      approach,
     });
 
     commitContext(simulation.context);
@@ -588,6 +610,7 @@ export function LeagueSimulatorView({
         context: nextContext,
         teamRating: effectiveTeamRating,
         selectedPlayers,
+        approach,
       });
 
       nextContext = cupSimulation.context;
@@ -665,7 +688,7 @@ export function LeagueSimulatorView({
         key="europa"
         tournament={europeanTournament}
         match={europeanEventMatch}
-        userTeamRating={effectiveTeamRating.overall}
+        userTeamRating={europeanUserRating}
         onContinue={handleContinueAfterEuropeanMatch}
       />
     ) : nextEuropeanMatch && (
@@ -724,7 +747,7 @@ export function LeagueSimulatorView({
             <div>
               <h2>{pendingCupFixture ? "Toca Copa del Rey" : pendingEuropeanMatch ? "Noche europea" : context.state.completed ? "Liga terminada" : "Próximo paso"}</h2>
               <p>{isAutoSimulating ? `${leagueProgressLabel} · Simulación automática en marcha.` : diagnosis}</p>
-              {matchPreview && !pendingEuropeanMatch && (
+              {matchPreview && (pendingCupFixture || !pendingEuropeanMatch) && (
                 <section className="next-match-preview" aria-label="Previa del próximo partido">
                   <span>
                     Próximo partido · {matchPreview.competition === "cup" ? "Copa del Rey" : "LaLiga"} · {matchPreview.label} ·{" "}
@@ -735,9 +758,30 @@ export function LeagueSimulatorView({
                       ? `${USER_TEAM_NAME} (${matchPreview.userOverall}) vs ${matchPreview.rivalName} (${matchPreview.rivalOverall})`
                       : `${matchPreview.rivalName} (${matchPreview.rivalOverall}) vs ${USER_TEAM_NAME} (${matchPreview.userOverall})`}
                   </strong>
+                  {matchPreview.competition === "cup" && (
+                    <MatchApproachControl value={approach} onChange={setApproach} competition="cup" coachSkills={coachSkills} />
+                  )}
                   <MatchOddsBar
                     odds={matchPreview.odds}
                     note={matchPreview.competition === "cup" ? "en 90 minutos; si hay empate, prórroga" : undefined}
+                  />
+                </section>
+              )}
+              {pendingEuropeanMatch && europeanOdds && !pendingCupFixture && (
+                <section className="next-match-preview" aria-label="Previa del próximo partido">
+                  <span>
+                    Próximo partido · {getEuropeanCompetitionLabel(pendingEuropeanMatch.competition)} ·{" "}
+                    {getEuropeanTournamentPhaseLabel(pendingEuropeanMatch.phase)} · {pendingEuropeanMatch.isHome ? "En San Mamés" : "Fuera de casa"}
+                  </span>
+                  <strong>
+                    {pendingEuropeanMatch.isHome
+                      ? `${USER_TEAM_NAME} (${Math.round(europeanUserRating)}) vs ${pendingEuropeanMatch.opponent.name} (${pendingEuropeanMatch.opponent.rating})`
+                      : `${pendingEuropeanMatch.opponent.name} (${pendingEuropeanMatch.opponent.rating}) vs ${USER_TEAM_NAME} (${Math.round(europeanUserRating)})`}
+                  </strong>
+                  <MatchApproachControl value={approach} onChange={setApproach} competition="europe" coachSkills={coachSkills} />
+                  <MatchOddsBar
+                    odds={europeanOdds}
+                    note={isEuropeanKnockoutMatch(pendingEuropeanMatch) ? "en 90 minutos; si hay empate, prórroga y penaltis" : undefined}
                   />
                 </section>
               )}

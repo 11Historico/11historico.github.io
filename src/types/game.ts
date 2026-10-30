@@ -392,6 +392,21 @@ export type MatchKeyFactor =
   | "extra_time_win"
   | "extra_time_loss";
 
+/** Planteamiento que elige el usuario en Copa, Europa y Supercopa (v0.25.75). */
+export type MatchApproach = "defensive" | "balanced" | "attacking";
+
+/**
+ * Qué cambió el planteamiento: marcador a los 90 minutos con el elegido y con
+ * el equilibrado, jugado con las mismas tiradas. Solo si no fue el equilibrado.
+ */
+export interface MatchApproachEffect {
+  approach: MatchApproach;
+  userGoals: number;
+  rivalGoals: number;
+  balancedUserGoals: number;
+  balancedRivalGoals: number;
+}
+
 export interface MatchResult {
   fixtureId: string;
   matchday: number;
@@ -413,6 +428,7 @@ export interface MatchResult {
 
   cleanSheetForUserTeam?: boolean;
   keyFactor?: MatchKeyFactor;
+  approachEffect?: MatchApproachEffect;
 }
 
 // ==========================

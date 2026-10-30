@@ -6,6 +6,7 @@ import type {
   FinalGameSummary,
   LeagueFixture,
   LeagueSimulationState,
+  MatchApproach,
   MatchResult,
   RivalTeam,
   SelectedPlayer,
@@ -38,6 +39,7 @@ import {
 } from "./leagueTable";
 
 import {
+  COACH_SPECIALIST_SKILL,
   estimateMatchOdds,
   simulateMatch,
   updateUserPlayerStatsFromMatch,
@@ -83,6 +85,8 @@ export interface SimulateCupParams {
   selectedPlayers: SelectedPlayer[];
   userTeamName?: string;
   seed?: number;
+  /** Planteamiento del partido de Copa (v0.25.75). La Liga no lo usa. */
+  approach?: MatchApproach;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -1151,7 +1155,7 @@ export function simulateFullUserLeague(
   return context;
 }
 
-function getCoachCompetitionBoost(
+export function getCoachCompetitionBoost(
   context: Pick<UserLeagueSimulationContext, "selectedCoach">,
   competition: "league" | "cup" | "europe"
 ): number {
@@ -1168,7 +1172,7 @@ function getCoachCompetitionBoost(
 
   // v0.18.3 — bonus específico de competición limitado:
   // solo +1 si el entrenador es realmente fuerte en esa competición.
-  return typeof competitionSkill === "number" && competitionSkill >= 86 ? 1 : 0;
+  return typeof competitionSkill === "number" && competitionSkill >= COACH_SPECIALIST_SKILL ? 1 : 0;
 }
 
 function applyCoachCompetitionBoostToTeamRating(
@@ -1596,6 +1600,7 @@ export function simulateNextCupMatch(
     selectedPlayers,
     userTeamName = USER_TEAM_NAME,
     seed,
+    approach,
   } = params;
 
   const pendingCupFixture = getPendingCupFixture(context);
@@ -1625,6 +1630,8 @@ export function simulateNextCupMatch(
     teamRating: applyCoachCompetitionBoostToTeamRating(cupContext.userRating, getCoachCompetitionBoost(context, "cup")),
     selectedPlayers,
     seed: typeof seed === "number" ? seed + context.cupState.results.length + 1000 : undefined,
+    approach,
+    coachSkills: context.selectedCoach?.coachSeason.skills,
   });
 
   let cupResult: MatchResult = {
@@ -1968,8 +1975,10 @@ export function getNextUserMatchPreview(params: {
   context: UserLeagueSimulationContext;
   teamRating: TeamRating;
   selectedPlayers: SelectedPlayer[];
+  /** Solo cuenta en Copa: la Liga se juega sin planteamiento. */
+  approach?: MatchApproach;
 }): UserMatchPreview | undefined {
-  const { context, teamRating, selectedPlayers } = params;
+  const { context, teamRating, selectedPlayers, approach } = params;
   const pendingCupFixture = getPendingCupFixture(context);
 
   if (pendingCupFixture) {
@@ -1984,7 +1993,15 @@ export function getNextUserMatchPreview(params: {
       rivalOverall: Math.round(cupContext.rival.ratings.overall),
       userOverall: Math.round(userRating.overall),
       venue,
-      odds: estimateMatchOdds({ userTeamName: USER_TEAM_NAME, rival: cupContext.rival, venue, teamRating: userRating, selectedPlayers }),
+      odds: estimateMatchOdds({
+        userTeamName: USER_TEAM_NAME,
+        rival: cupContext.rival,
+        venue,
+        teamRating: userRating,
+        selectedPlayers,
+        approach,
+        coachSkills: context.selectedCoach?.coachSeason.skills,
+      }),
     };
   }
 

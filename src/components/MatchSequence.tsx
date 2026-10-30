@@ -10,6 +10,7 @@ import {
   MATCH_SEQUENCE_TICK_MS,
   countGoalsForTeam,
   getMatchSequenceDurationMs,
+  getMatchApproachEffectText,
   getMatchKeyFactorText,
   getMatchSequenceFrame,
   getResultBadge,
@@ -96,6 +97,10 @@ export function MatchSequence({
 
       {isFinal && result.userTeamPlayed !== false && getMatchKeyFactorText(result.keyFactor) && (
         <p className="match-key-factor">{getMatchKeyFactorText(result.keyFactor)}</p>
+      )}
+
+      {isFinal && getMatchApproachEffectText(result.approachEffect) && (
+        <p className="match-approach-effect">{getMatchApproachEffectText(result.approachEffect)}</p>
       )}
 
       {frame.visibleGoals.length > 0 ? (

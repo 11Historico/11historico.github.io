@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.75 — Planteamiento y perfil del entrenador
+
+- **Planteamiento:** antes de cada partido de Copa y Europa, y una vez para toda la Supercopa, eliges Defensivo, Equilibrado u Ofensivo. La previa recalcula las probabilidades al cambiar de opción. Atacar rinde más al favorito y cerrarse al inferior.
+- **Entrenador con perfil:** con habilidad europea de 86 o más suma +1 a tu media en Europa, y con ataque o defensa de 86 o más refuerza el planteamiento que aprovecha. La previa muestra cuándo suma.
+- **Qué cambió tu decisión:** al acabar, una frase compara el marcador con el mismo partido en equilibrado. Por ejemplo, «Tu planteamiento ofensivo cambió el partido: con uno equilibrado habrías empatado 1-1 a los 90 minutos».
+- **Sin cambios en la Liga ni en Equilibrado:** mismos marcadores y clasificaciones que antes, comprobado comparando miles de partidos simulados. La medición de cada opción se puede repetir con `npm run audit:approach`.
+
 ## v0.25.74 — El partido se explica
 
 - **Previa del partido:** antes de cada partido de Liga, Copa y Europa se ven el rival, el campo, las medias, quién es favorito y la probabilidad de victoria, empate y derrota en 90 minutos.

@@ -108,7 +108,12 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   const teams = page.locator(".european-match-event-team");
   await expect(teams.first()).toContainText("Local");
   await expect(teams.last()).toContainText("Visitante");
-  await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-odds")).toContainText(/Victoria \d+\s%/);
+  const preview = page.getByRole("region", { name: "Previa del próximo partido" });
+  await expect(preview.locator(".match-odds")).toContainText(/Victoria \d+\s%/);
+
+  // v0.25.75: el planteamiento se elige en la previa y el resultado cuenta qué cambió.
+  await preview.getByRole("button", { name: "Ofensivo" }).click();
+  await expect(preview.getByRole("button", { name: "Ofensivo" })).toHaveAttribute("aria-pressed", "true");
 
   await simulateEuropean.click();
   await expect(page.getByText(/Previa europea|Partido en juego/)).toBeVisible();
@@ -117,6 +122,7 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   await expect(page.locator(".european-match-sequence-live-score strong").first()).toHaveText(/^\d+$/);
   await expect(page.getByText("Resultado europeo")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-key-factor")).not.toBeEmpty();
+  await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-approach-effect")).toContainText("ofensivo");
 
   // v0.25.69: al seguir con la Liga, el resultado europeo deja paso al partido de Liga
   // y la Conference pasa a una tarjeta de próximo partido.
@@ -134,6 +140,13 @@ test("la Supercopa se reproduce partido a partido y el veredicto llega al final"
 
   await page.locator(".start-league-button-header").click();
   await expect(page.getByRole("heading", { name: "Supercopa de España" })).toBeVisible();
+
+  // v0.25.75: planteamiento para toda la Supercopa, con la previa de la semifinal.
+  const preview = page.getByRole("region", { name: "Previa de la semifinal" });
+  await expect(preview).toContainText(/Victoria \d+\s%/);
+  await preview.getByRole("button", { name: "Defensivo" }).click();
+  await expect(preview.getByRole("button", { name: "Defensivo" })).toHaveAttribute("aria-pressed", "true");
+
   await page.getByRole("button", { name: "Simular Supercopa" }).click();
 
   // Mientras se juegan los partidos no hay veredicto ni botón para seguir.
