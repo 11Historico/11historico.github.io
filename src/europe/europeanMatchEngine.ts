@@ -5,13 +5,15 @@
 // `src/simulation/matchEngine.ts`), en vez de crear un motor nuevo.
 //
 // Como `EuropeanOpponent` solo tiene un rating global (no desglose por
-// línea como `RivalTeam`), se construyen adaptadores mínimos: un
-// `TeamRating`/`RivalTeam` con reparto uniforme a partir del rating recibido.
+// línea como `RivalTeam`), el rival es un `RivalTeam` con reparto uniforme.
+// El usuario juega con sus líneas reales si se pasa `userProfile` (v0.25.77),
+// y si no, con reparto uniforme a partir del rating recibido.
 // Esto reutiliza fielmente las fórmulas de expected-goals, ventaja de
 // local/visitante y varianza ya ajustadas y probadas para Liga/Copa, sin
 // tocar `matchEngine.ts` ni sus probabilidades.
 
 import { simulateMatch } from "../simulation/matchEngine";
+import { getAverageUserRating, getMatchLineDuel } from "../simulation/matchEngine";
 import type { MatchOdds } from "../simulation/matchEngine";
 import type {
   CoachSkills,
@@ -19,9 +21,11 @@ import type {
   MatchApproachEffect,
   MatchExpectedGoals,
   MatchKeyFactor,
+  MatchLineDuel,
   MatchResult,
   RivalTeam,
   RivalTeamRatings,
+  SelectedPlayer,
   TeamRating,
 } from "../types/game";
 import type {
@@ -49,6 +53,10 @@ export interface SimulateEuropeanMatchInput {
   /** Planteamiento del partido (v0.25.75). */
   approach?: MatchApproach;
   coachSkills?: CoachSkills;
+  /** Líneas reales del usuario (v0.25.77). La fuerza sigue siendo `userTeamRating`. */
+  userProfile?: TeamRating;
+  /** Once del usuario, para los goleadores y asistentes del partido. */
+  selectedPlayers?: SelectedPlayer[];
 }
 
 export interface SimulateEuropeanMatchOutput {
@@ -68,6 +76,8 @@ export interface SimulateEuropeanMatchOutput {
   keyFactor?: MatchKeyFactor;
   approachEffect?: MatchApproachEffect;
   expectedGoals?: MatchExpectedGoals;
+  /** Solo con `userProfile` y si se decidió en 90 minutos. */
+  lineDuel?: MatchLineDuel;
 }
 
 function toEuropeanGoalEvents(matchResult: MatchResult, isHome: boolean): EuropeanGoalEvent[] {
@@ -75,6 +85,7 @@ function toEuropeanGoalEvents(matchResult: MatchResult, isHome: boolean): Europe
     minute: goal.minute,
     isUserGoal: (goal.teamName === matchResult.homeTeamName) === isHome,
     ...(goal.scorerName ? { scorerName: goal.scorerName } : {}),
+    ...(goal.assistName ? { assistName: goal.assistName } : {}),
   }));
 }
 
@@ -189,6 +200,33 @@ function buildUniformTeamRating(overall: number): TeamRating {
   };
 }
 
+/**
+ * Las líneas reales del equipo, desplazadas todas lo mismo para que su promedio sea
+ * la media europea (v0.25.77). El perfil reparte la fuerza, no la aumenta: las líneas
+ * suelen estar por encima de la media, y usarlas tal cual inflaría al equipo en Europa.
+ */
+function buildProfileTeamRating(profile: TeamRating, overall: number): TeamRating {
+  const target = clampRating(overall);
+  const offset = target - getAverageUserRating(profile);
+  // Redondeado: el motor redondea los goles esperados, y un resto decimal podría cambiar un partido.
+  const shift = (line: number) => Math.max(40, Math.min(99, Math.round((line + offset) * 100) / 100));
+
+  return {
+    ...profile,
+    attack: shift(profile.attack),
+    defense: shift(profile.defense),
+    control: shift(profile.control),
+    physical: shift(profile.physical),
+    mentality: shift(profile.mentality),
+    goalkeeping: shift(profile.goalkeeping),
+    overall: target,
+  };
+}
+
+function buildUserTeamRating(overall: number, profile?: TeamRating): TeamRating {
+  return profile ? buildProfileTeamRating(profile, overall) : buildUniformTeamRating(overall);
+}
+
 function buildUniformRivalTeam(rating: number, competition: EuropeanCompetition): RivalTeam {
   const clamped = clampRating(rating);
   const ratings: RivalTeamRatings = {
@@ -240,15 +278,26 @@ export function estimateEuropeanMatchOdds(
   return { win: win / samples, draw: draw / samples, loss: (samples - win - draw) / samples };
 }
 
+/** Tus líneas contra el nivel del rival, para la previa europea (v0.25.77). */
+export function getEuropeanLineDuel(
+  input: Pick<SimulateEuropeanMatchInput, "userTeamRating" | "opponentRating" | "competition"> & { userProfile: TeamRating },
+): MatchLineDuel {
+  const teamRating = buildUserTeamRating(input.userTeamRating, input.userProfile);
+  const rival = buildUniformRivalTeam(input.opponentRating, input.competition);
+
+  return { ...getMatchLineDuel(teamRating, rival), rivalHasOnlyOverall: true };
+}
+
 /**
  * Simula un partido europeo reutilizando `simulateMatch`. Devuelve el marcador,
  * el resultado y los goles del tiempo reglamentario con minuto, para reproducir
- * la secuencia del partido como en Liga. No devuelve goleadores individuales.
+ * la secuencia del partido como en Liga. Con `selectedPlayers`, los goles llevan
+ * goleador y asistente, que solo se muestran en el partido (v0.25.77).
  */
 export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): SimulateEuropeanMatchOutput {
-  const { userTeamRating, opponentRating, isHome, competition, seed, isKnockout = false, approach, coachSkills } = input;
+  const { userTeamRating, opponentRating, isHome, competition, seed, isKnockout = false, approach, coachSkills, userProfile, selectedPlayers = [] } = input;
 
-  const teamRating = buildUniformTeamRating(userTeamRating);
+  const teamRating = buildUserTeamRating(userTeamRating, userProfile);
   const rival = buildUniformRivalTeam(opponentRating, competition);
 
   const matchResult = simulateMatch({
@@ -257,7 +306,7 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
     rival,
     venue: isHome ? "home" : "away",
     teamRating,
-    selectedPlayers: [],
+    selectedPlayers,
     seed: seedToNumber(seed),
     approach,
     coachSkills,
@@ -273,13 +322,14 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
       : "loss";
   const goalEvents = toEuropeanGoalEvents(matchResult, isHome);
   const { keyFactor, approachEffect, expectedGoals } = matchResult;
+  const lineDuel = userProfile && matchResult.lineDuel ? { ...matchResult.lineDuel, rivalHasOnlyOverall: true } : undefined;
 
   if (!isKnockout) {
-    return { userGoals, opponentGoals, result, goalEvents, keyFactor, approachEffect, expectedGoals };
+    return { userGoals, opponentGoals, result, goalEvents, keyFactor, approachEffect, expectedGoals, lineDuel };
   }
 
   if (result !== "draw") {
-    return { userGoals, opponentGoals, result, decidedBy: "regular_time", goalEvents, keyFactor, approachEffect, expectedGoals };
+    return { userGoals, opponentGoals, result, decidedBy: "regular_time", goalEvents, keyFactor, approachEffect, expectedGoals, lineDuel };
   }
 
   // Empate a los 90' en semifinal/final: prórroga y, si sigue igual, penaltis.

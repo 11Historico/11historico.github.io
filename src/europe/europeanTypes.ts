@@ -13,7 +13,7 @@
 // mecanismo interno no se toca en esta fase. Ver docs/v0_24_0c_EUROPA_QUALIFICATION_FOUNDATION.md
 // para la justificación de mantener ambos sistemas por separado.
 
-import type { MatchApproachEffect, MatchExpectedGoals, MatchKeyFactor } from "../types/game";
+import type { MatchApproachEffect, MatchExpectedGoals, MatchKeyFactor, MatchLineDuel } from "../types/game";
 
 export type EuropeanCompetition =
   | "champions_league"
@@ -84,6 +84,8 @@ export interface EuropeanGoalEvent {
   minute: number;
   isUserGoal: boolean;
   scorerName?: string;
+  /** Solo se muestran en el partido: no suman a las estadísticas de la temporada (v0.25.77). */
+  assistName?: string;
 }
 
 export interface EuropeanTournamentMatch {
@@ -113,6 +115,8 @@ export interface EuropeanTournamentMatch {
   approachEffect?: MatchApproachEffect;
   /** Goles esperados del partido (v0.25.76). */
   expectedGoals?: MatchExpectedGoals;
+  /** Tus líneas contra el nivel del rival (v0.25.77). */
+  lineDuel?: MatchLineDuel;
 }
 
 export interface EuropeanTournamentState {

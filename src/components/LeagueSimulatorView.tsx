@@ -47,7 +47,7 @@ import {
 } from "../career/seasonLuckWheel";
 import SeasonLuckWheelModal from "./SeasonLuckWheelModal";
 import { EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS, shouldPlayEuropeanMatchAtLeagueMatchday } from "../europe/europeanCalendar";
-import { estimateEuropeanMatchOdds, simulateEuropeanMatch } from "../europe/europeanMatchEngine";
+import { estimateEuropeanMatchOdds, getEuropeanLineDuel, simulateEuropeanMatch } from "../europe/europeanMatchEngine";
 import {
   applyEuropeanMatchResult,
   getEuropeanTournamentPhaseLabel,
@@ -268,8 +268,10 @@ export function LeagueSimulatorView({
       competition: pendingEuropeanMatch.competition,
       approach,
       coachSkills,
+      userProfile: effectiveTeamRating,
+      selectedPlayers,
     }),
-    [approach, coachSkills, europeanUserRating, pendingEuropeanMatch]
+    [approach, coachSkills, effectiveTeamRating, europeanUserRating, pendingEuropeanMatch, selectedPlayers]
   );
   const nextEuropeanMatch = getNextEuropeanMatch(europeanTournament);
   const currentCupFixture = context.cupState.status === "active" ? context.cupState.fixtures[context.cupState.currentRoundIndex] : undefined;
@@ -417,6 +419,8 @@ export function LeagueSimulatorView({
       isKnockout: isEuropeanKnockoutMatch(pendingEuropeanMatch),
       approach,
       coachSkills,
+      userProfile: effectiveTeamRating,
+      selectedPlayers,
     });
 
     const nextTournament = applyEuropeanMatchResult(
@@ -689,6 +693,7 @@ export function LeagueSimulatorView({
         tournament={europeanTournament}
         match={europeanEventMatch}
         userTeamRating={europeanUserRating}
+        pitch={{ formation, selectedPlayers }}
         onContinue={handleContinueAfterEuropeanMatch}
       />
     ) : nextEuropeanMatch && (
@@ -780,6 +785,14 @@ export function LeagueSimulatorView({
                       ? `${USER_TEAM_NAME} (${Math.round(europeanUserRating)}) vs ${pendingEuropeanMatch.opponent.name} (${pendingEuropeanMatch.opponent.rating})`
                       : `${pendingEuropeanMatch.opponent.name} (${pendingEuropeanMatch.opponent.rating}) vs ${USER_TEAM_NAME} (${Math.round(europeanUserRating)})`}
                   </strong>
+                  <small className="next-match-lines">
+                    {getLineDuelSummary(getEuropeanLineDuel({
+                      userTeamRating: europeanUserRating,
+                      opponentRating: pendingEuropeanMatch.opponent.rating,
+                      competition: pendingEuropeanMatch.competition,
+                      userProfile: effectiveTeamRating,
+                    }))}
+                  </small>
                   <MatchApproachControl value={approach} onChange={setApproach} competition="europe" coachSkills={coachSkills} />
                   <MatchOddsBar
                     odds={europeanOdds}

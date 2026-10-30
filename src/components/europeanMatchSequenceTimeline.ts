@@ -112,6 +112,13 @@ export function getEuropeanSequenceScore(
   return { userGoals: match.userGoals ?? 0, opponentGoals: match.opponentGoals ?? 0 };
 }
 
+/** Goles ya mostrados: los de hasta ese minuto en los 90' y todos desde que acaban (v0.25.77). */
+export function getEuropeanVisibleGoals(goals: EuropeanGoalEvent[] | undefined, frame: EuropeanSequenceFrame): EuropeanGoalEvent[] {
+  if (frame.stage === "preview") return [];
+
+  return (goals ?? []).filter((goal) => frame.minute === undefined || goal.minute <= frame.minute);
+}
+
 /** Marcador en directo (del punto de vista del Athletic) con los goles hasta ese minuto. */
 export function getEuropeanLiveScore(
   goals: EuropeanGoalEvent[] | undefined,
