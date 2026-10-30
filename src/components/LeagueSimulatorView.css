@@ -251,11 +251,17 @@
   overflow-wrap: anywhere;
 }
 
-/* Factor que decidió el partido (v0.25.74). */
-.match-key-factor {
+/* Factor que decidió el partido (v0.25.74) y efecto del planteamiento (v0.25.75). */
+.match-key-factor,
+.match-approach-effect {
   margin: 10px 0 0;
   color: #ffe08a;
   font-weight: 700;
+}
+
+.match-approach-effect {
+  margin-top: 4px;
+  font-weight: 500;
 }
 
 /* Tarjetas */

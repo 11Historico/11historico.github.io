@@ -9,6 +9,7 @@ import type {
   FormationSlot,
   GameDifficulty,
   GamePhase,
+  MatchApproach,
   SelectedCoach,
   SelectedPlayer,
   SeasonId,
@@ -100,6 +101,7 @@ import {
 
 import {
   createCareerSupercopaQualification,
+  getSupercopaSemifinalPreview,
   simulateCareerSupercopa,
 } from "./career/supercopaRules";
 
@@ -740,7 +742,7 @@ export default function App() {
     setScreen("league_simulation");
   }
 
-  function handleSimulateCareerSupercopa() {
+  function handleSimulateCareerSupercopa(approach: MatchApproach) {
     if (!careerPendingSupercopa || !teamRating) return;
 
     const result = simulateCareerSupercopa({
@@ -748,6 +750,8 @@ export default function App() {
       teamRating,
       selectedPlayers,
       rivals: careerLeagueRivals,
+      approach,
+      coachSkills: selectedCoach?.coachSeason.skills,
     });
 
     setCareerCurrentSupercopaResult(result);
@@ -1549,6 +1553,18 @@ export default function App() {
           <CareerSupercopa
             qualification={careerPendingSupercopa}
             result={careerCurrentSupercopaResult}
+            coachSkills={selectedCoach?.coachSeason.skills}
+            getSemifinalPreview={(approach) =>
+              teamRating &&
+              getSupercopaSemifinalPreview({
+                qualification: careerPendingSupercopa,
+                teamRating,
+                selectedPlayers,
+                rivals: careerLeagueRivals,
+                approach,
+                coachSkills: selectedCoach?.coachSeason.skills,
+              })
+            }
             onSimulate={handleSimulateCareerSupercopa}
             onContinue={handleContinueAfterSupercopa}
             onRestart={handleRestart}

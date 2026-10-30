@@ -1,7 +1,9 @@
 // src/simulation/matchEngine.ts
 
 import type {
+  CoachSkills,
   GoalEvent,
+  MatchApproach,
   MatchKeyFactor,
   MatchResult,
   RivalTeam,
@@ -28,6 +30,11 @@ export interface SimulateMatchParams {
    * Si no se pasa, usa Math.random().
    */
   seed?: number;
+
+  /** Planteamiento (v0.25.75). Sin él o con "balanced", el partido es el de siempre. */
+  approach?: MatchApproach;
+  /** Las habilidades de ataque y defensa del entrenador refuerzan el planteamiento. */
+  coachSkills?: CoachSkills;
 }
 
 interface RandomGenerator {
@@ -58,6 +65,56 @@ class NativeRandom implements RandomGenerator {
 
 function createRandom(seed?: number): RandomGenerator {
   return typeof seed === "number" ? new SeededRandom(seed) : new NativeRandom();
+}
+
+/** Lee las tiradas de `draws` y pide a `source` solo las que faltan: dos lecturas ven las mismas. */
+function createReplayRandom(source: RandomGenerator, draws: number[]): RandomGenerator {
+  let index = 0;
+
+  return {
+    next() {
+      if (index === draws.length) draws.push(source.next());
+      return draws[index++];
+    },
+  };
+}
+
+/** Habilidad a partir de la cual un entrenador cuenta como especialista (v0.18.3). */
+export const COACH_SPECIALIST_SKILL = 86;
+
+export function coachReinforcesApproach(approach: MatchApproach, coachSkills?: CoachSkills): boolean {
+  if (approach === "attacking") return (coachSkills?.attack ?? 0) >= COACH_SPECIALIST_SKILL;
+  if (approach === "defensive") return (coachSkills?.defense ?? 0) >= COACH_SPECIALIST_SKILL;
+  return false;
+}
+
+const APPROACH_GOALS_CHANGE = 0.1;
+const APPROACH_EDGE_EFFECT = 0.1;
+const APPROACH_EDGE_RATING_GAP = 10;
+const COACH_APPROACH_EXTRA = 0.05;
+
+/**
+ * Planteamiento (v0.25.75). Ofensivo: más goles en los dos lados. Defensivo: menos.
+ * En un partido igualado es ±10 % para los dos, sin ventaja. Según la diferencia de
+ * nivel (`edge`, de -1 a 1), atacar rinde más al favorito y cerrarse al inferior; el
+ * planteamiento contrario se paga. Un entrenador especialista suma un extra.
+ */
+function getApproachGoalMultipliers(params: {
+  approach?: MatchApproach;
+  coachSkills?: CoachSkills;
+  userAverage: number;
+  rivalAverage: number;
+}): { user: number; rival: number } {
+  const { approach, coachSkills, userAverage, rivalAverage } = params;
+
+  if (!approach || approach === "balanced") return { user: 1, rival: 1 };
+
+  const edge = clamp((userAverage - rivalAverage) / APPROACH_EDGE_RATING_GAP, -1, 1) * APPROACH_EDGE_EFFECT;
+  const coachExtra = coachReinforcesApproach(approach, coachSkills) ? COACH_APPROACH_EXTRA : 0;
+
+  return approach === "attacking"
+    ? { user: 1 + APPROACH_GOALS_CHANGE + edge + coachExtra, rival: 1 + APPROACH_GOALS_CHANGE - edge }
+    : { user: 1 - APPROACH_GOALS_CHANGE - edge, rival: 1 - APPROACH_GOALS_CHANGE + edge - coachExtra };
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -521,10 +578,7 @@ function generateRivalGoalEvents(params: {
   return events.sort((a, b) => a.minute - b.minute);
 }
 
-/**
- * Simula un partido individual del Athletic histórico contra un rival 25/26.
- */
-export function simulateMatch(params: SimulateMatchParams): MatchResult {
+function playMatch(params: SimulateMatchParams, random: RandomGenerator): MatchResult {
   const {
     fixtureId,
     matchday,
@@ -533,10 +587,9 @@ export function simulateMatch(params: SimulateMatchParams): MatchResult {
     venue,
     teamRating,
     selectedPlayers,
-    seed,
+    approach,
+    coachSkills,
   } = params;
-
-  const random = createRandom(seed);
 
   const userIsHome = venue === "home";
   const difficulty = getFixtureDifficultyModifier({
@@ -567,8 +620,14 @@ export function simulateMatch(params: SimulateMatchParams): MatchResult {
     riskModifier: (rival.ratings.attack - rival.ratings.defense) * 0.65,
   });
 
-  let userGoals = sampleGoalsFromExpectedGoals(userExpectedGoals, random);
-  let rivalGoals = sampleGoalsFromExpectedGoals(rivalExpectedGoals, random);
+  const approachMultipliers = getApproachGoalMultipliers({
+    approach,
+    coachSkills,
+    userAverage: getAverageUserRating(teamRating),
+    rivalAverage: getAverageRivalRating(rival),
+  });
+  let userGoals = sampleGoalsFromExpectedGoals(userExpectedGoals * approachMultipliers.user, random);
+  let rivalGoals = sampleGoalsFromExpectedGoals(rivalExpectedGoals * approachMultipliers.rival, random);
 
   const varianceAdjusted = applyUnderdogAndDrawVariance({
     userGoals,
@@ -659,6 +718,35 @@ export function simulateMatch(params: SimulateMatchParams): MatchResult {
     userTeamLost,
     cleanSheetForUserTeam: rivalGoals === 0,
     keyFactor,
+  };
+}
+
+/**
+ * Simula un partido individual del Athletic histórico contra un rival 25/26.
+ */
+export function simulateMatch(params: SimulateMatchParams): MatchResult {
+  const random = createRandom(params.seed);
+
+  if (!params.approach || params.approach === "balanced") {
+    return playMatch(params, random);
+  }
+
+  // El mismo partido con planteamiento equilibrado y las mismas tiradas: lo que
+  // cambie entre los dos es efecto real del planteamiento (v0.25.75).
+  const draws: number[] = [];
+  const result = playMatch(params, createReplayRandom(random, draws));
+  const balanced = playMatch({ ...params, approach: undefined }, createReplayRandom(random, draws));
+  const userIsHome = params.venue === "home";
+
+  return {
+    ...result,
+    approachEffect: {
+      approach: params.approach,
+      userGoals: userIsHome ? result.homeGoals : result.awayGoals,
+      rivalGoals: userIsHome ? result.awayGoals : result.homeGoals,
+      balancedUserGoals: userIsHome ? balanced.homeGoals : balanced.awayGoals,
+      balancedRivalGoals: userIsHome ? balanced.awayGoals : balanced.homeGoals,
+    },
   };
 }
 

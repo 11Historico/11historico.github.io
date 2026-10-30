@@ -4,9 +4,11 @@ import type {
   CareerSupercopaResult,
 } from "../types/career";
 import type {
+  CoachSkills,
   FinalGameSummary,
   GoalEvent,
   LeagueTableRow,
+  MatchApproach,
   MatchResult,
   RivalTeam,
   SelectedPlayer,
@@ -14,7 +16,7 @@ import type {
 } from "../types/game";
 import { USER_TEAM_ID } from "../data/laliga2526Teams";
 import { USER_TEAM_NAME } from "../simulation/leagueTable";
-import { simulateMatch } from "../simulation/matchEngine";
+import { estimateMatchOdds, simulateMatch, type MatchOdds, type MatchVenue } from "../simulation/matchEngine";
 
 function sortTable(table: LeagueTableRow[] = []): LeagueTableRow[] {
   return [...table].sort((a, b) => {
@@ -232,8 +234,10 @@ function simulateUserSupercopaMatch(params: {
   selectedPlayers: SelectedPlayer[];
   rivals: RivalTeam[];
   seed: number;
+  approach?: MatchApproach;
+  coachSkills?: CoachSkills;
 }): { result: MatchResult; winner: CareerSupercopaParticipant } {
-  const { roundName, home, away, teamRating, selectedPlayers, rivals, seed } = params;
+  const { roundName, home, away, teamRating, selectedPlayers, rivals, seed, approach, coachSkills } = params;
   const userIsHome = home.teamId === USER_TEAM_ID;
   const userParticipant = userIsHome ? home : away;
   const rivalParticipant = userIsHome ? away : home;
@@ -248,6 +252,8 @@ function simulateUserSupercopaMatch(params: {
     teamRating,
     selectedPlayers,
     seed,
+    approach,
+    coachSkills,
   });
 
   return forceKnockoutWinner({
@@ -311,6 +317,8 @@ function simulateSupercopaMatch(params: {
   selectedPlayers: SelectedPlayer[];
   rivals: RivalTeam[];
   seed: number;
+  approach?: MatchApproach;
+  coachSkills?: CoachSkills;
 }): { result: MatchResult; winner: CareerSupercopaParticipant } {
   const { home, away } = params;
   if (home.teamId === USER_TEAM_ID || away.teamId === USER_TEAM_ID) {
@@ -320,14 +328,46 @@ function simulateSupercopaMatch(params: {
   return simulateRivalSupercopaMatch(params);
 }
 
+export interface SupercopaSemifinalPreview {
+  rivalName: string;
+  venue: MatchVenue;
+  odds: MatchOdds;
+}
+
+/** Previa de la semifinal del usuario (v0.25.75): la final depende de quién la alcance. */
+export function getSupercopaSemifinalPreview(params: {
+  qualification: CareerSupercopaQualification;
+  teamRating: TeamRating;
+  selectedPlayers: SelectedPlayer[];
+  rivals: RivalTeam[];
+  approach?: MatchApproach;
+  coachSkills?: CoachSkills;
+}): SupercopaSemifinalPreview | undefined {
+  const { qualification, teamRating, selectedPlayers, rivals, approach, coachSkills } = params;
+  const pairing = createPairings(qualification.participants).find((pair) => pair.some((team) => team.teamId === USER_TEAM_ID));
+
+  if (!pairing) return undefined;
+
+  const venue: MatchVenue = pairing[0].teamId === USER_TEAM_ID ? "home" : "away";
+  const rival = findRival(venue === "home" ? pairing[1] : pairing[0], rivals);
+
+  return {
+    rivalName: rival.name,
+    venue,
+    odds: estimateMatchOdds({ userTeamName: USER_TEAM_NAME, rival, venue, teamRating, selectedPlayers, approach, coachSkills }),
+  };
+}
+
 export function simulateCareerSupercopa(params: {
   qualification: CareerSupercopaQualification;
   teamRating: TeamRating;
   selectedPlayers: SelectedPlayer[];
   rivals: RivalTeam[];
   seed?: number;
+  approach?: MatchApproach;
+  coachSkills?: CoachSkills;
 }): CareerSupercopaResult {
-  const { qualification, teamRating, selectedPlayers, rivals, seed = Date.now() } = params;
+  const { qualification, teamRating, selectedPlayers, rivals, seed = Date.now(), approach, coachSkills } = params;
   const pairings = createPairings(qualification.participants);
   const results: MatchResult[] = [];
 
@@ -351,6 +391,8 @@ export function simulateCareerSupercopa(params: {
     selectedPlayers,
     rivals,
     seed: seed + 101,
+    approach,
+    coachSkills,
   });
   results.push(semi1.result);
 
@@ -362,6 +404,8 @@ export function simulateCareerSupercopa(params: {
     selectedPlayers,
     rivals,
     seed: seed + 202,
+    approach,
+    coachSkills,
   });
   results.push(semi2.result);
 
@@ -373,6 +417,8 @@ export function simulateCareerSupercopa(params: {
     selectedPlayers,
     rivals,
     seed: seed + 303,
+    approach,
+    coachSkills,
   });
   results.push(final.result);
 

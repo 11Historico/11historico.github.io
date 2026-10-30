@@ -4,7 +4,7 @@
 // Convierte el tiempo transcurrido en fotograma (fase, minuto y goles visibles)
 // usando solo los `goalEvents` que ya genera el motor. No cambia la simulación.
 
-import type { GoalEvent, MatchKeyFactor, MatchResult } from "../types/game";
+import type { GoalEvent, MatchApproachEffect, MatchKeyFactor, MatchResult } from "../types/game";
 
 export const MATCH_SEQUENCE_PREVIEW_MS = 1000;
 export const MATCH_SEQUENCE_PLAY_MS = 2800;
@@ -92,6 +92,36 @@ const KEY_FACTOR_TEXT: Record<MatchKeyFactor, string> = {
 
 export function getMatchKeyFactorText(factor: MatchKeyFactor | undefined): string | undefined {
   return factor ? KEY_FACTOR_TEXT[factor] : undefined;
+}
+
+/**
+ * Qué cambió el planteamiento (v0.25.75), comparando con el mismo partido en
+ * equilibrado. Habla de los 90 minutos: la prórroga no depende del planteamiento.
+ */
+export function getMatchApproachEffectText(effect: MatchApproachEffect | undefined): string | undefined {
+  if (!effect) return undefined;
+
+  const { approach, userGoals, rivalGoals, balancedUserGoals, balancedRivalGoals } = effect;
+  const name = approach === "attacking" ? "ofensivo" : "defensivo";
+
+  if (userGoals === balancedUserGoals && rivalGoals === balancedRivalGoals) {
+    return `Planteamiento ${name}: con uno equilibrado, el marcador habría sido el mismo.`;
+  }
+
+  const outcome = Math.sign(userGoals - rivalGoals);
+  const balancedOutcome = Math.sign(balancedUserGoals - balancedRivalGoals);
+  const verb = balancedOutcome > 0 ? "ganado" : balancedOutcome < 0 ? "perdido" : "empatado";
+  const score = `${Math.max(balancedUserGoals, balancedRivalGoals)}-${Math.min(balancedUserGoals, balancedRivalGoals)}`;
+
+  if (outcome > balancedOutcome) {
+    return `Tu planteamiento ${name} cambió el partido: con uno equilibrado habrías ${verb} ${score} a los 90 minutos.`;
+  }
+
+  if (outcome < balancedOutcome) {
+    return `Tu planteamiento ${name} te salió caro: con uno equilibrado habrías ${verb} ${score} a los 90 minutos.`;
+  }
+
+  return `Planteamiento ${name}: con uno equilibrado también habrías ${verb}, ${score} a los 90 minutos.`;
 }
 
 export function isExtraTimeFactor(factor: MatchKeyFactor | undefined): boolean {
