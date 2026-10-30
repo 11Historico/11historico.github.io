@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import type {
   Formation,
   GameDifficulty,
+  HalfTimeChoice,
   MatchApproach,
   MatchResult,
   SelectedCoach,
@@ -35,6 +36,7 @@ import {
   getUserLeagueSummary,
   USER_TEAM_NAME,
 } from "../simulation/leagueTable";
+import { applyHalfTimeChoice } from "../simulation/matchEngine";
 import { applyDifficultyToTeamRating } from "../career/teamPower";
 import { applyCareerRivalProgression } from "../career/careerRules";
 import {
@@ -47,7 +49,12 @@ import {
 } from "../career/seasonLuckWheel";
 import SeasonLuckWheelModal from "./SeasonLuckWheelModal";
 import { EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS, shouldPlayEuropeanMatchAtLeagueMatchday } from "../europe/europeanCalendar";
-import { estimateEuropeanMatchOdds, getEuropeanLineDuel, simulateEuropeanMatch } from "../europe/europeanMatchEngine";
+import {
+  estimateEuropeanMatchOdds,
+  getEuropeanLineDuel,
+  simulateEuropeanMatch,
+  type SimulateEuropeanMatchInput,
+} from "../europe/europeanMatchEngine";
 import {
   applyEuropeanMatchResult,
   getEuropeanTournamentPhaseLabel,
@@ -104,6 +111,14 @@ interface LeagueSimulatorViewProps {
 }
 
 const AUTO_SIMULATION_DELAY_MS = 1300;
+
+/**
+ * Partido parado en el descanso (v0.25.78). El resultado ya está guardado como si se
+ * siguiera igual, así que recargar aquí no permite repetir una primera parte mala.
+ */
+type PendingHalfTime =
+  | { kind: "cup"; contextBefore: UserLeagueSimulationContext; regularTimeResult: MatchResult }
+  | { kind: "europe"; tournamentBefore: EuropeanTournamentState; matchId: string; input: SimulateEuropeanMatchInput };
 
 function getDifficultyLabel(difficulty: GameDifficulty): string {
   if (difficulty === "normal") return "Fácil";
@@ -190,6 +205,11 @@ export function LeagueSimulatorView({
   // Planteamiento para Copa y Europa (v0.25.75). Se mantiene hasta que el usuario lo cambie.
   const [approach, setApproach] = useState<MatchApproach>("balanced");
   const coachSkills = selectedCoach.coachSeason.skills;
+  const [pendingHalfTime, setPendingHalfTime] = useState<PendingHalfTime | undefined>();
+  // Torneo antes del partido europeo: se enseña mientras se juega, como shownContext en Liga (v0.25.78).
+  const [tournamentBeforeMatch, setTournamentBeforeMatch] = useState<EuropeanTournamentState | undefined>();
+  const [isEuropeanSequencePlaying, setIsEuropeanSequencePlaying] = useState(false);
+  const shownEuropeanTournament = isEuropeanSequencePlaying && tournamentBeforeMatch ? tournamentBeforeMatch : europeanTournament;
 
   // Envuelve el setter de estado para que la oferta pendiente también se
   // persista fuera de este componente (ver `initialPendingSeasonLuckWheelOffer`).
@@ -274,7 +294,8 @@ export function LeagueSimulatorView({
     [approach, coachSkills, effectiveTeamRating, europeanUserRating, pendingEuropeanMatch, selectedPlayers]
   );
   const nextEuropeanMatch = getNextEuropeanMatch(europeanTournament);
-  const currentCupFixture = context.cupState.status === "active" ? context.cupState.fixtures[context.cupState.currentRoundIndex] : undefined;
+  // Con shownContext: la ronda siguiente no debe delatar el resultado mientras se juega.
+  const currentCupFixture = shownContext.cupState.status === "active" ? shownContext.cupState.fixtures[shownContext.cupState.currentRoundIndex] : undefined;
   const upcomingCupFixture = currentCupFixture && !currentCupFixture.played ? currentCupFixture : undefined;
   const eventSlots = getLeagueEventSlots({
     leagueMatchesPlayed,
@@ -410,7 +431,7 @@ export function LeagueSimulatorView({
   function handleSimulateEuropeanMatch() {
     if (!europeanTournament || !pendingEuropeanMatch) return;
 
-    const outcome = simulateEuropeanMatch({
+    const input: SimulateEuropeanMatchInput = {
       userTeamRating: europeanUserRating,
       opponentRating: pendingEuropeanMatch.opponent.rating,
       isHome: pendingEuropeanMatch.isHome,
@@ -421,18 +442,62 @@ export function LeagueSimulatorView({
       coachSkills,
       userProfile: effectiveTeamRating,
       selectedPlayers,
+    };
+
+    setTournamentBeforeMatch(europeanTournament);
+    commitEuropeanOutcome(europeanTournament, pendingEuropeanMatch.id, simulateEuropeanMatch(input));
+    setPendingHalfTime({ kind: "europe", tournamentBefore: europeanTournament, matchId: pendingEuropeanMatch.id, input });
+  }
+
+  function commitEuropeanOutcome(
+    tournamentBefore: EuropeanTournamentState,
+    matchId: string,
+    outcome: ReturnType<typeof simulateEuropeanMatch>,
+  ) {
+    const nextTournament = applyEuropeanMatchResult(tournamentBefore, matchId, outcome, EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS);
+    onEuropeanTournamentChange?.(nextTournament);
+    setJustPlayedEuropeanMatch(nextTournament.matches.find((match) => match.id === matchId));
+  }
+
+  // Seguir igual no recalcula nada. Arriesgar y cerrar sustituyen el resultado ya guardado.
+  function handleHalfTimeChoice(choice: HalfTimeChoice) {
+    if (!pendingHalfTime) return;
+
+    setPendingHalfTime(undefined);
+
+    if (pendingHalfTime.kind === "europe") {
+      if (choice !== "keep") {
+        const outcome = simulateEuropeanMatch({ ...pendingHalfTime.input, halfTimeChoice: choice });
+        commitEuropeanOutcome(pendingHalfTime.tournamentBefore, pendingHalfTime.matchId, outcome);
+      }
+      return;
+    }
+
+    const { contextBefore, regularTimeResult } = pendingHalfTime;
+    const simulation = choice === "keep"
+      ? { context, result: lastResult }
+      : simulateNextCupMatch({
+          context: contextBefore,
+          teamRating: effectiveTeamRating,
+          selectedPlayers,
+          regularTimeResult: applyHalfTimeChoice({ result: regularTimeResult, choice, selectedPlayers }),
+        });
+
+    if (choice !== "keep") {
+      commitContext(simulation.context);
+      setLastResult(simulation.result);
+    }
+
+    // La ruleta y el fin de temporada esperan a la decisión: dependen del resultado final.
+    const wheelOffered = maybeOfferSeasonLuckWheel({
+      previousContext: contextBefore,
+      nextContext: simulation.context,
+      result: simulation.result,
     });
 
-    const nextTournament = applyEuropeanMatchResult(
-      europeanTournament,
-      pendingEuropeanMatch.id,
-      outcome,
-      EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS,
-    );
-    onEuropeanTournamentChange?.(nextTournament);
-
-    const playedMatch = nextTournament.matches.find((match) => match.id === pendingEuropeanMatch.id);
-    setJustPlayedEuropeanMatch(playedMatch);
+    if (!wheelOffered) {
+      finishIfReady(simulation.context);
+    }
   }
 
   function handleContinueAfterEuropeanMatch() {
@@ -573,14 +638,8 @@ export function LeagueSimulatorView({
     setContextBeforeResult(context);
     setJustPlayedEuropeanMatch(undefined);
 
-    const wheelOffered = maybeOfferSeasonLuckWheel({
-      previousContext: context,
-      nextContext: simulation.context,
-      result: simulation.result,
-    });
-
-    if (!wheelOffered) {
-      finishIfReady(simulation.context);
+    if (simulation.regularTimeResult) {
+      setPendingHalfTime({ kind: "cup", contextBefore: context, regularTimeResult: simulation.regularTimeResult });
     }
   }
 
@@ -687,13 +746,15 @@ export function LeagueSimulatorView({
         </p>
       </section>
     )),
-    europa: europeanTournament && (europeanEventMatch ? (
+    europa: shownEuropeanTournament && (europeanEventMatch ? (
       <EuropeanMatchEvent
         key="europa"
-        tournament={europeanTournament}
+        tournament={shownEuropeanTournament}
         match={europeanEventMatch}
         userTeamRating={europeanUserRating}
         pitch={{ formation, selectedPlayers }}
+        onHalfTimeChoice={pendingHalfTime?.kind === "europe" ? handleHalfTimeChoice : undefined}
+        onPlayingChange={setIsEuropeanSequencePlaying}
         onContinue={handleContinueAfterEuropeanMatch}
       />
     ) : nextEuropeanMatch && (
@@ -711,10 +772,11 @@ export function LeagueSimulatorView({
     )),
     liga: lastResult && (
       <MatchSequence
-        key={`${lastResult.competition}-${lastResult.matchday}-${lastResult.roundName ?? ""}-${lastResult.homeTeamName}-${lastResult.homeGoals}-${lastResult.awayGoals}`}
+        key={lastResult.fixtureId}
         result={lastResult}
         onPlayingChange={setIsSequencePlaying}
         pitch={{ formation, selectedPlayers }}
+        onHalfTimeChoice={pendingHalfTime?.kind === "cup" ? handleHalfTimeChoice : undefined}
       />
     ),
   };
@@ -805,7 +867,7 @@ export function LeagueSimulatorView({
 
             {pendingCupFixture ? (
               <div className="league-buttons">
-                <button type="button" onClick={handleSimulateNextCupMatch}>
+                <button type="button" onClick={handleSimulateNextCupMatch} disabled={Boolean(pendingHalfTime)}>
                   Simular partido de Copa
                 </button>
 
@@ -813,6 +875,7 @@ export function LeagueSimulatorView({
                   type="button"
                   className="secondary-league-button"
                   onClick={handleSimulateFullCupAndFinishSeason}
+                  disabled={Boolean(pendingHalfTime)}
                 >
                   Simular Copa y terminar temporada
                 </button>
@@ -820,7 +883,7 @@ export function LeagueSimulatorView({
             ) : (
               <div className="league-buttons">
                 {pendingEuropeanMatch && (
-                  <button type="button" onClick={handleSimulateEuropeanMatch}>
+                  <button type="button" onClick={handleSimulateEuropeanMatch} disabled={Boolean(pendingHalfTime)}>
                     Simular partido europeo
                   </button>
                 )}
@@ -829,7 +892,7 @@ export function LeagueSimulatorView({
                   type="button"
                   className={isAutoSimulating ? "stop-league-button" : "secondary-league-button"}
                   onClick={handleToggleAutoSimulation}
-                  disabled={context.state.completed || Boolean(pendingWheelOffer) || Boolean(pendingEuropeanMatch)}
+                  disabled={context.state.completed || Boolean(pendingWheelOffer) || Boolean(pendingEuropeanMatch) || Boolean(pendingHalfTime)}
                 >
                   {isAutoSimulating ? "Parar simulación" : "Simular"}
                 </button>
@@ -838,7 +901,7 @@ export function LeagueSimulatorView({
                   type="button"
                   className="tertiary-league-button"
                   onClick={handleSimulateFullSeason}
-                  disabled={context.state.completed || isAutoSimulating || Boolean(pendingWheelOffer) || Boolean(pendingEuropeanMatch)}
+                  disabled={context.state.completed || isAutoSimulating || Boolean(pendingWheelOffer) || Boolean(pendingEuropeanMatch) || Boolean(pendingHalfTime)}
                 >
                   Saltar hasta próximo evento
                 </button>
@@ -882,9 +945,9 @@ export function LeagueSimulatorView({
             </div>
           )}
 
-          {consultTab === "europa" && europeanTournament && (
+          {consultTab === "europa" && shownEuropeanTournament && (
             <div role="tabpanel" aria-label="Clasificación europea">
-              <EuropeanLeagueTable tournament={europeanTournament} />
+              <EuropeanLeagueTable tournament={shownEuropeanTournament} />
             </div>
           )}
 

@@ -13,6 +13,7 @@ import {
   simulateNextCupMatch,
   type UserLeagueSimulationContext,
 } from "../src/simulation/leagueSimulator";
+import { applyHalfTimeChoice } from "../src/simulation/matchEngine";
 import type { CoachSkills, MatchApproach, TeamRating } from "../src/types/game";
 
 const SAMPLES = 4000;
@@ -211,6 +212,114 @@ function auditEuropeProfile(): void {
   );
 }
 
+// Decisión del descanso (v0.25.78), según cómo se llega al minuto 45.
+function auditHalfTime(): void {
+  const stateName = (goals: { minute: number; isUserGoal: boolean }[]) => {
+    const firstHalf = goals.filter((goal) => goal.minute <= 45);
+    const margin = firstHalf.filter((goal) => goal.isUserGoal).length - firstHalf.filter((goal) => !goal.isUserGoal).length;
+    return margin < 0 ? "Perdiendo" : margin > 0 ? "Ganando" : "Empatando";
+  };
+  const choices = [
+    { label: "Seguir igual", choice: undefined },
+    { label: "Arriesgar", choice: "push" as const },
+    { label: "Cerrar", choice: "close" as const },
+  ];
+  const rows: string[][] = [];
+  const policyRows: string[][] = [];
+
+  for (const [userRating, opponentRating] of [[76, 84], [82, 82], [88, 80]]) {
+    const stats = new Map<string, { count: number; points: number; knockout: number }>();
+    const policy = { keep: { points: 0, knockout: 0 }, best: { points: 0, knockout: 0 } };
+
+    for (let sample = 0; sample < SAMPLES; sample += 1) {
+      const shared = { userTeamRating: userRating, opponentRating, isHome: sample % 2 === 0, competition: "europa_league" as const, seed: `audit_ht_${sample}` };
+      const state = stateName(simulateEuropeanMatch(shared).goalEvents);
+
+      for (const { label, choice } of choices) {
+        const league = simulateEuropeanMatch({ ...shared, halfTimeChoice: choice });
+        const points = league.result === "win" ? 3 : league.result === "draw" ? 1 : 0;
+        const won = simulateEuropeanMatch({ ...shared, isKnockout: true, halfTimeChoice: choice }).result === "win" ? 1 : 0;
+        const key = `${state}|${label}`;
+        const entry = stats.get(key) ?? { count: 0, points: 0, knockout: 0 };
+        stats.set(key, { count: entry.count + 1, points: entry.points + points, knockout: entry.knockout + won });
+
+        if (!choice) {
+          policy.keep.points += points;
+          policy.keep.knockout += won;
+        }
+
+        const bestChoice = state === "Perdiendo" ? "push" : state === "Ganando" ? "close" : undefined;
+        if (choice === bestChoice) {
+          policy.best.points += points;
+          policy.best.knockout += won;
+        }
+      }
+    }
+
+    for (const state of ["Perdiendo", "Empatando", "Ganando"]) {
+      for (const { label } of choices) {
+        const entry = stats.get(`${state}|${label}`);
+        if (!entry) continue;
+        rows.push([`${userRating} vs ${opponentRating}`, state, label, String(entry.count), (entry.points / entry.count).toFixed(2), percent(entry.knockout / entry.count)]);
+      }
+    }
+
+    policyRows.push([
+      `${userRating} vs ${opponentRating}`,
+      (policy.keep.points / SAMPLES).toFixed(2),
+      (policy.best.points / SAMPLES).toFixed(2),
+      percent(policy.keep.knockout / SAMPLES),
+      percent(policy.best.knockout / SAMPLES),
+    ]);
+  }
+
+  printTable("Descanso · según el marcador al descanso (Europa)", ["Cruce", "Al descanso", "Decisión", "Partidos", "Puntos por partido", "Pasa en semifinal o final"], rows);
+  printTable(
+    "Descanso · siempre seguir igual o arriesgar si pierdes y cerrar si ganas (Europa)",
+    ["Cruce", "Puntos, seguir igual", "Puntos, según marcador", "Pasa, seguir igual", "Pasa, según marcador"],
+    policyRows,
+  );
+
+  // Copa: lo mismo ronda a ronda, para medir el efecto en el título.
+  const contexts = Array.from({ length: CONTEXTS }, () => createUserLeagueSimulation({ rivals }));
+  const cupRows = LEVELS.map((level) => {
+    const teamRating = uniformTeam(level);
+    let keepTitle = 1;
+    let bestTitle = 1;
+
+    CUP_ROUND_NAMES.forEach((_, roundIndex) => {
+      let keepWins = 0;
+      let bestWins = 0;
+
+      for (let sample = 0; sample < SAMPLES; sample += 1) {
+        const context = contextAtCupRound(contexts[sample % CONTEXTS], roundIndex, PLAIN_COACH);
+        const base = { context, teamRating, selectedPlayers: [], seed: 30_000 + sample * 37 + roundIndex * 1009 };
+        const played = simulateNextCupMatch(base);
+        const regularTime = played.regularTimeResult;
+        if (played.result?.userTeamWon) keepWins += 1;
+        if (!regularTime) continue;
+
+        const userName = regularTime.expectedGoals?.userIsHome ? regularTime.homeTeamName : regularTime.awayTeamName;
+        const firstHalf = regularTime.goalEvents.filter((goal) => goal.minute <= 45);
+        const userFirstHalf = firstHalf.filter((goal) => goal.teamName === userName).length;
+        const margin = userFirstHalf - (firstHalf.length - userFirstHalf);
+        const choice = margin < 0 ? "push" : margin > 0 ? "close" : undefined;
+        const decided = choice
+          ? simulateNextCupMatch({ ...base, regularTimeResult: applyHalfTimeChoice({ result: regularTime, choice, selectedPlayers: [], seed: base.seed + 7919 }) })
+          : played;
+        if (decided.result?.userTeamWon) bestWins += 1;
+      }
+
+      keepTitle *= keepWins / SAMPLES;
+      bestTitle *= bestWins / SAMPLES;
+    });
+
+    return [`Media ${level}`, percent(keepTitle), percent(bestTitle)];
+  });
+
+  printTable("Descanso · título de Copa", ["Equipo", "Seguir igual", "Según marcador"], cupRows);
+}
+
 function auditSupercopa(): void {
   const participants = [
     { teamId: USER_TEAM_ID, teamName: "Athletic Club Histórico", source: "league_champion" as const, sourceLabel: "" },
@@ -247,4 +356,5 @@ function auditSupercopa(): void {
 auditCup();
 auditEurope();
 auditEuropeProfile();
+auditHalfTime();
 auditSupercopa();

@@ -21,7 +21,7 @@ import { getEuropeanMatchdaySlots } from "./europeanCalendar";
 import { buildEuropeanLeaguePhaseTable } from "./europeanLeagueTable";
 import { pickEuropeanOpponents, pickSingleEuropeanOpponent } from "./europeanOpponents";
 import { getEuropeanCompetitionLabel } from "./europeanQualification";
-import type { MatchApproachEffect, MatchExpectedGoals, MatchKeyFactor, MatchLineDuel } from "../types/game";
+import type { MatchApproachEffect, MatchExpectedGoals, MatchHalfTimeEffect, MatchKeyFactor, MatchLineDuel } from "../types/game";
 import type {
   EuropeanCompetition,
   EuropeanGoalEvent,
@@ -129,6 +129,7 @@ export interface EuropeanMatchResultInput {
   goalEvents?: EuropeanGoalEvent[];
   keyFactor?: MatchKeyFactor;
   approachEffect?: MatchApproachEffect;
+  halfTimeEffect?: MatchHalfTimeEffect;
   expectedGoals?: MatchExpectedGoals;
   lineDuel?: MatchLineDuel;
 }
@@ -232,6 +233,7 @@ export function applyEuropeanMatchResult(
     ...(outcome.goalEvents ? { goalEvents: outcome.goalEvents } : {}),
     ...(outcome.keyFactor ? { keyFactor: outcome.keyFactor } : {}),
     ...(outcome.approachEffect ? { approachEffect: outcome.approachEffect } : {}),
+    ...(outcome.halfTimeEffect ? { halfTimeEffect: outcome.halfTimeEffect } : {}),
     ...(outcome.expectedGoals ? { expectedGoals: outcome.expectedGoals } : {}),
     ...(outcome.lineDuel ? { lineDuel: outcome.lineDuel } : {}),
   };

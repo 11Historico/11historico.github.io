@@ -9,6 +9,7 @@ const fixture = readFileSync(new URL("./fixtures/career-weak.json", import.meta.
 // Botones que hacen avanzar la carrera, por orden de prioridad. Se descarta la ruleta
 // (No jugar) para que la prueba sea determinista.
 const ADVANCE_BUTTONS = [
+  /^Seguir igual$/,
   /^Saltar$/,
   /^Continuar$/,
   /^Continuar temporada$/,

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.78 — Decisión en el descanso
+
+- **Pausa en el minuto 45:** en los partidos sueltos de Copa y Europa decides viendo el marcador: seguir igual, arriesgar o cerrar el partido.
+- **Decidir bien cuenta:** arriesgar trae más goles en los dos lados y cerrar, menos. Si vas empatando, al inferior le conviene cerrar y al favorito no. Los goles de la primera parte nunca cambian.
+- **Qué cambió tu decisión:** una frase compara con lo que habría pasado sin tocar nada.
+- **Nada delata el resultado:** mientras se juega, el progreso europeo y la tarjeta de Copa siguen como antes del partido. Antes enseñaban el resultado desde el primer segundo.
+- **Sin cambios si sigues igual:** el partido acaba como iba a acabar, y Liga y Supercopa no se paran. Si recargas en el descanso, cuenta como seguir igual. La medición se puede repetir con `npm run audit:approach`.
+
 ## v0.25.77 — Europa con tu equipo real
 
 - **Tu perfil cuenta en Europa:** el equipo juega con sus líneas reales, no solo con la media. Con la misma media, un once ofensivo marca y encaja más que uno defensivo.

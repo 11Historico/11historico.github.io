@@ -89,6 +89,8 @@ export interface SimulateCupParams {
   seed?: number;
   /** Planteamiento del partido de Copa (v0.25.75). La Liga no lo usa. */
   approach?: MatchApproach;
+  /** Los 90 minutos ya jugados, tras la decisión del descanso (v0.25.78). Si se pasa, no se simulan. */
+  regularTimeResult?: MatchResult;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -1595,6 +1597,8 @@ export function simulateNextCupMatch(
 ): {
   context: UserLeagueSimulationContext;
   result?: MatchResult;
+  /** Los 90 minutos antes de la prórroga, para la decisión del descanso. */
+  regularTimeResult?: MatchResult;
 } {
   const {
     context,
@@ -1603,6 +1607,7 @@ export function simulateNextCupMatch(
     userTeamName = USER_TEAM_NAME,
     seed,
     approach,
+    regularTimeResult,
   } = params;
 
   const pendingCupFixture = getPendingCupFixture(context);
@@ -1623,7 +1628,7 @@ export function simulateNextCupMatch(
     roundId: pendingCupFixture.roundId,
   });
 
-  const result = simulateMatch({
+  const result = regularTimeResult ?? simulateMatch({
     fixtureId: pendingCupFixture.id,
     matchday: pendingCupFixture.gateMatchday,
     userTeamName,
@@ -1756,6 +1761,7 @@ export function simulateNextCupMatch(
       userTeamStats: nextUserTeamStats,
     },
     result: cupResult,
+    regularTimeResult: result,
   };
 }
 

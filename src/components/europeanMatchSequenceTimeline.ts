@@ -112,6 +112,11 @@ export function getEuropeanSequenceScore(
   return { userGoals: match.userGoals ?? 0, opponentGoals: match.opponentGoals ?? 0 };
 }
 
+/** Momento de la secuencia en el que el reloj marca 45' y el partido se para (v0.25.78). */
+export function getEuropeanHalfTimeElapsedMs(multiplier = 1): number {
+  return (EUROPEAN_SEQUENCE_PREVIEW_MS + EUROPEAN_SEQUENCE_REGULAR_MS * (45.5 / 91)) * multiplier;
+}
+
 /** Goles ya mostrados: los de hasta ese minuto en los 90' y todos desde que acaban (v0.25.77). */
 export function getEuropeanVisibleGoals(goals: EuropeanGoalEvent[] | undefined, frame: EuropeanSequenceFrame): EuropeanGoalEvent[] {
   if (frame.stage === "preview") return [];

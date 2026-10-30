@@ -3,9 +3,10 @@
 
 import { useEffect, useLayoutEffect, useState } from "react";
 
-import type { Formation, MatchResult, SelectedPlayer } from "../types/game";
+import type { Formation, HalfTimeChoice, MatchResult, SelectedPlayer } from "../types/game";
 import { CompetitionIcon } from "./CompetitionIcon";
 import { MatchDominanceBar } from "./MatchDominanceBar";
+import { MatchHalfTimeControl } from "./MatchHalfTimeControl";
 import { MatchIcon } from "./MatchIcon";
 import TacticalPitch from "./TacticalPitch";
 import { TeamKitIcon, TeamWithKit } from "./TeamKitIcon";
@@ -13,6 +14,8 @@ import {
   MATCH_SEQUENCE_TICK_MS,
   countGoalsForTeam,
   getGoalContributions,
+  getHalfTimeEffectText,
+  getHalfTimeElapsedMs,
   getLineDuelText,
   getMatchSequenceDurationMs,
   getMatchApproachEffectText,
@@ -38,17 +41,21 @@ export function MatchSequence({
   result,
   onPlayingChange,
   pitch,
+  onHalfTimeChoice,
 }: {
   result: MatchResult;
   onPlayingChange: (playing: boolean) => void;
   /** Tu once, para el mini campo (v0.25.76). No se muestra en partidos entre rivales. */
   pitch?: { formation: Formation; selectedPlayers: SelectedPlayer[] };
+  /** Mientras hay decisión pendiente, el partido se para a los 45' (v0.25.78). */
+  onHalfTimeChoice?: (choice: HalfTimeChoice) => void;
 }) {
   const playbackMultiplier = getMatchPlaybackMultiplier(useMatchPlaybackSpeed());
   const durationMs = getMatchSequenceDurationMs(playbackMultiplier);
-  const [elapsedMs, setElapsedMs] = useState(() =>
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? durationMs : 0,
-  );
+  const stopMs = onHalfTimeChoice ? getHalfTimeElapsedMs(result.goalEvents, playbackMultiplier) : durationMs;
+  const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const [elapsedMs, setElapsedMs] = useState(() => (reducedMotion ? stopMs : 0));
+  const isAtHalfTime = Boolean(onHalfTimeChoice) && elapsedMs >= stopMs;
   const frame = getMatchSequenceFrame(result.goalEvents, elapsedMs, playbackMultiplier);
   const isFinal = frame.stage === "final";
   const homeGoals = isFinal ? result.homeGoals : countGoalsForTeam(frame.visibleGoals, result.homeTeamName);
@@ -66,14 +73,14 @@ export function MatchSequence({
   }, [onPlayingChange]);
 
   useEffect(() => {
-    if (isFinal) return undefined;
+    if (isFinal || isAtHalfTime) return undefined;
 
     const intervalId = window.setInterval(() => {
-      setElapsedMs((current) => Math.min(durationMs, current + MATCH_SEQUENCE_TICK_MS));
+      setElapsedMs((current) => Math.min(stopMs, current + MATCH_SEQUENCE_TICK_MS));
     }, MATCH_SEQUENCE_TICK_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [durationMs, isFinal]);
+  }, [isAtHalfTime, isFinal, stopMs]);
 
   return (
     <article className={`last-result-card match-sequence ${result.competition === "cup" ? "match-sequence-cup" : "match-sequence-league"}`}>
@@ -108,6 +115,15 @@ export function MatchSequence({
 
       {result.expectedGoals && <MatchDominanceBar expectedGoals={result.expectedGoals} started={frame.stage !== "preview"} />}
 
+      {isAtHalfTime && onHalfTimeChoice && (
+        <MatchHalfTimeControl
+          onChoice={(choice) => {
+            if (reducedMotion) setElapsedMs(durationMs);
+            onHalfTimeChoice(choice);
+          }}
+        />
+      )}
+
       {isFinal && result.userTeamPlayed !== false && result.keyFactor && (
         <p className="match-key-factor">
           <MatchIcon kind={getMatchKeyFactorIcon(result.keyFactor)} />
@@ -119,6 +135,10 @@ export function MatchSequence({
 
       {isFinal && getMatchApproachEffectText(result.approachEffect) && (
         <p className="match-approach-effect">{getMatchApproachEffectText(result.approachEffect)}</p>
+      )}
+
+      {isFinal && getHalfTimeEffectText(result.halfTimeEffect) && (
+        <p className="match-approach-effect">{getHalfTimeEffectText(result.halfTimeEffect)}</p>
       )}
 
       <div className={showPitch ? "match-sequence-body match-sequence-body-pitch" : "match-sequence-body"}>
@@ -150,11 +170,11 @@ export function MatchSequence({
         )}
       </div>
 
-      {!isFinal && (
+      {!isFinal && !isAtHalfTime && (
         <button
           type="button"
           className="secondary-league-button match-sequence-skip"
-          onClick={() => setElapsedMs(durationMs)}
+          onClick={() => setElapsedMs(stopMs)}
         >
           Saltar
         </button>

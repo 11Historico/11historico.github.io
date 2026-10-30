@@ -65,6 +65,18 @@ async function loadSave(page: Page, save: object) {
   await page.getByRole("button", { name: "Continuar" }).click();
 }
 
+async function advanceToEuropeanMatch(page: Page) {
+  const simulateEuropean = page.getByRole("button", { name: "Simular partido europeo" });
+
+  for (let step = 0; step < 20 && !(await simulateEuropean.isVisible()); step += 1) {
+    const skip = page.getByRole("button", { name: "Saltar hasta próximo evento" });
+    if (await skip.isVisible() && (await skip.isEnabled())) await skip.click();
+    await page.waitForTimeout(300);
+  }
+
+  await expect(page.locator(".match-sequence-skip")).toHaveCount(0, { timeout: 15_000 });
+}
+
 test("la liga permite consultar la clasificación europea y el palmarés", async ({ page }) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -98,9 +110,12 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
     const declineWheel = page.getByRole("button", { name: "No jugar" });
     const skip = page.getByRole("button", { name: "Saltar hasta próximo evento" });
 
+    const keepPlaying = page.getByRole("button", { name: "Seguir igual" });
+
     if (await declineWheel.isVisible()) await declineWheel.click();
-    else if (await cup.isVisible()) await cup.click();
-    else if (await skip.isEnabled()) await skip.click();
+    else if (await keepPlaying.isVisible()) await keepPlaying.click();
+    else if (await cup.isVisible() && (await cup.isEnabled())) await cup.click();
+    else if (await skip.isVisible() && (await skip.isEnabled())) await skip.click();
     await page.waitForTimeout(300);
   }
 
@@ -127,7 +142,20 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   // Durante el partido el marcador va en directo (antes de v0.25.51 mostraba "–" hasta el final).
   await expect(page.getByText("Partido en juego")).toBeVisible();
   await expect(page.locator(".european-match-sequence-live-score strong").first()).toHaveText(/^\d+$/);
+
+  // v0.25.78: el partido se para a los 45'. Mientras no decidas, no se puede avanzar.
+  const keepPlaying = page.getByRole("button", { name: "Seguir igual" });
+  await expect(keepPlaying).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".european-match-sequence-clock")).toHaveText("45'");
+  await expect(page.getByRole("button", { name: /^Simular$/ })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Continuar temporada" })).toHaveCount(0);
+  // Nada delata el resultado antes de decidir: el progreso sigue sin este partido.
+  await expect(page.locator(".european-match-event-summary")).toContainText("0/");
+  await expect(page.locator(".european-match-event-summary")).toContainText("0V 0E 0D");
+  await keepPlaying.click();
+
   await expect(page.getByText("Resultado europeo")).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".european-match-event-summary")).toContainText("1/");
   await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-key-factor")).not.toBeEmpty();
   await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-approach-effect")).toContainText("ofensivo");
   // v0.25.76 y v0.25.77: barra de dominio y mini campo. Los goles europeos no suman a las estadísticas.
@@ -141,6 +169,75 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   await expect(page.getByRole("region", { name: "Evento europeo" })).toHaveCount(0);
   await expect(page.getByRole("region", { name: "Próximo partido europeo" })).toBeVisible();
   await page.getByRole("button", { name: "Parar simulación" }).click();
+  expect(pageErrors).toEqual([]);
+});
+
+test("en Europa, arriesgar en el descanso se cuenta en el resultado", async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await loadSave(page, europeanSave());
+
+  await advanceToEuropeanMatch(page);
+  await page.getByRole("button", { name: "Simular partido europeo" }).click();
+  await page.getByRole("button", { name: "Arriesgar" }).click({ timeout: 15_000 });
+
+  await expect(page.getByText("Resultado europeo")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-approach-effect")).toContainText("Arriesgar");
+  await expect(page.getByRole("button", { name: "Continuar temporada" })).toBeVisible();
+  expect(pageErrors).toEqual([]);
+});
+
+test("recargar en el descanso cuenta como seguir igual: el partido ya está jugado", async ({ page }) => {
+  await loadSave(page, europeanSave());
+
+  await advanceToEuropeanMatch(page);
+  await page.getByRole("button", { name: "Simular partido europeo" }).click();
+  await expect(page.getByRole("button", { name: "Seguir igual" })).toBeVisible({ timeout: 15_000 });
+
+  const playedMatches = () =>
+    page.evaluate((key) => {
+      const save = JSON.parse(window.localStorage.getItem(key) ?? "{}");
+      return save.europeanCareer.currentTournament.matches.filter((match: { status: string }) => match.status === "played").length;
+    }, SAVE_KEY);
+
+  await expect.poll(playedMatches).toBe(1);
+  await page.reload();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await expect(page.getByRole("button", { name: "Seguir igual" })).toHaveCount(0);
+  await expect.poll(playedMatches).toBe(1);
+});
+
+test("en Copa, el partido se para en el descanso y la decisión se cuenta en el resultado", async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await loadSave(page, {
+    ...base,
+    phase: "league_simulation",
+    careerLeagueRivals: rivals,
+    europeanCareer: { ...base.europeanCareer, currentTournament: null },
+    savedAt: "2026-10-27T00:00:00.000Z",
+  });
+
+  const cup = page.getByRole("button", { name: "Simular partido de Copa" });
+  for (let step = 0; step < 10 && !(await cup.isVisible()); step += 1) {
+    await page.getByRole("button", { name: "Saltar hasta próximo evento" }).click();
+    await page.waitForTimeout(300);
+  }
+
+  const cupPreview = page.getByRole("region", { name: "Previa del próximo partido" });
+  await expect(cupPreview.getByRole("button", { name: "Ofensivo" })).toBeVisible();
+  const round = (await cupPreview.locator("span").first().innerText()).split("·")[2].trim();
+  await cup.click();
+
+  const close = page.getByRole("button", { name: "Cerrar el partido" });
+  await expect(close).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".match-sequence .match-sequence-clock")).toHaveText("45'");
+  // Nada delata el resultado antes de decidir: la tarjeta de Copa sigue en esta ronda.
+  await expect(page.getByRole("region", { name: "Próximo partido de Copa" })).toContainText(new RegExp(round, "i"));
+  await expect(page.locator(".recent-results-card").first().locator("article")).toHaveCount(0);
+  await close.click();
+
+  await expect(page.locator(".match-sequence .match-approach-effect")).toContainText("Cerrar el partido", { timeout: 15_000 });
   expect(pageErrors).toEqual([]);
 });
 
