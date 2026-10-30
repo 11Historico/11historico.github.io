@@ -3,6 +3,7 @@
 import type {
   CoachSkills,
   GoalEvent,
+  HalfTimeChoice,
   MatchApproach,
   MatchKeyFactor,
   MatchLineDuel,
@@ -766,6 +767,88 @@ export function simulateMatch(params: SimulateMatchParams): MatchResult {
       balancedUserGoals: userIsHome ? balanced.homeGoals : balanced.awayGoals,
       balancedRivalGoals: userIsHome ? balanced.awayGoals : balanced.homeGoals,
     },
+  };
+}
+
+const HALF_TIME_MINUTE = 45;
+// Goles de más al arriesgar, sobre los goles esperados de la segunda parte. Arriesgar cuesta más de lo que da.
+const HALF_TIME_PUSH_USER_GOAL = 0.8;
+const HALF_TIME_PUSH_RIVAL_GOAL = 0.9;
+// Probabilidad de que un gol de la segunda parte no llegue a ocurrir al cerrar el partido.
+const HALF_TIME_CLOSE_CANCEL = 0.3;
+const MAX_MATCH_GOALS = 6;
+
+/**
+ * Decisión en el descanso (v0.25.78). Parte del partido ya jugado y solo toca la
+ * segunda parte: los goles de la primera no cambian y seguir igual no llama a esta
+ * función. No se vuelve a simular porque, al cambiar un gol, se desplazarían las
+ * tiradas de los siguientes y arriesgar podría acabar con menos goles.
+ */
+export function applyHalfTimeChoice(params: {
+  result: MatchResult;
+  choice: Exclude<HalfTimeChoice, "keep">;
+  selectedPlayers: SelectedPlayer[];
+  seed?: number;
+}): MatchResult {
+  const { result, choice, selectedPlayers, seed } = params;
+
+  if (!result.expectedGoals) return result;
+
+  const random = createRandom(seed);
+  const { user: userExpected, rival: rivalExpected, userIsHome } = result.expectedGoals;
+  const userTeamName = userIsHome ? result.homeTeamName : result.awayTeamName;
+  const rivalTeamName = userIsHome ? result.awayTeamName : result.homeTeamName;
+  const keptUserGoals = userIsHome ? result.homeGoals : result.awayGoals;
+  const keptRivalGoals = userIsHome ? result.awayGoals : result.homeGoals;
+  const firstHalf = result.goalEvents.filter((goal) => goal.minute <= HALF_TIME_MINUTE);
+  let secondHalf = result.goalEvents.filter((goal) => goal.minute > HALF_TIME_MINUTE);
+
+  if (choice === "close") {
+    secondHalf = secondHalf.filter(() => random.next() >= HALF_TIME_CLOSE_CANCEL);
+  } else {
+    const secondHalfMinute = () => HALF_TIME_MINUTE + 1 + Math.floor(random.next() * HALF_TIME_MINUTE);
+
+    if (keptUserGoals < MAX_MATCH_GOALS && random.next() < (userExpected / 2) * HALF_TIME_PUSH_USER_GOAL) {
+      const [goal] = generateUserGoalEvents({ goals: 1, teamName: userTeamName, selectedPlayers, random });
+      secondHalf.push({ ...goal, minute: secondHalfMinute() });
+    }
+
+    if (keptRivalGoals < MAX_MATCH_GOALS && random.next() < (rivalExpected / 2) * HALF_TIME_PUSH_RIVAL_GOAL) {
+      secondHalf.push({ teamName: rivalTeamName, minute: secondHalfMinute() });
+    }
+  }
+
+  const goalEvents = [...firstHalf, ...secondHalf].sort((a, b) => a.minute - b.minute);
+  const userGoals = goalEvents.filter((goal) => goal.teamName === userTeamName).length;
+  const rivalGoals = goalEvents.length - userGoals;
+  const halfTimeEffect = { choice, userGoals, rivalGoals, keptUserGoals, keptRivalGoals };
+
+  if (userGoals === keptUserGoals && rivalGoals === keptRivalGoals) {
+    return { ...result, halfTimeEffect };
+  }
+
+  return {
+    ...result,
+    homeGoals: userIsHome ? userGoals : rivalGoals,
+    awayGoals: userIsHome ? rivalGoals : userGoals,
+    goalEvents,
+    userTeamWon: userGoals > rivalGoals,
+    userTeamDrew: userGoals === rivalGoals,
+    userTeamLost: userGoals < rivalGoals,
+    cleanSheetForUserTeam: rivalGoals === 0,
+    // Con otro marcador, el factor y la comparación del planteamiento ya no valen.
+    keyFactor: getMatchKeyFactor({
+      userGoals,
+      rivalGoals,
+      userIsHome,
+      userAverage: 0,
+      rivalAverage: 0,
+      userIsHugeFavorite: false,
+      rivalClosedGap: false,
+      upset: false,
+    }),
+    approachEffect: undefined,
+    halfTimeEffect,
   };
 }
 

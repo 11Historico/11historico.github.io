@@ -7,7 +7,7 @@
 // los títulos europeos sí se suman al palmarés, al cerrar la temporada
 // (ver src/career/europeanTrophies.ts).
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 
 import { getEuropeanCompetitionIconKind, getEuropeanCompetitionLabel } from "../europe/europeanQualification";
 import { USER_TEAM_NAME } from "../simulation/leagueTable";
@@ -23,6 +23,7 @@ import EuropeanProgressPanel from "./EuropeanProgressPanel";
 import { CompetitionIcon } from "./CompetitionIcon";
 import {
   EUROPEAN_SEQUENCE_TICK_MS,
+  getEuropeanHalfTimeElapsedMs,
   getEuropeanLiveScore,
   getEuropeanSequenceDurationMs,
   getEuropeanSequenceFrame,
@@ -32,15 +33,17 @@ import {
 import { getMatchPlaybackMultiplier, useMatchPlaybackSpeed } from "./matchPlaybackSpeed";
 import { MatchDominanceBar } from "./MatchDominanceBar";
 import { MatchIcon } from "./MatchIcon";
+import { MatchHalfTimeControl } from "./MatchHalfTimeControl";
 import TacticalPitch from "./TacticalPitch";
 import {
   getGoalContributions,
+  getHalfTimeEffectText,
   getLineDuelText,
   getMatchApproachEffectText,
   getMatchKeyFactorIcon,
   getMatchKeyFactorText,
 } from "./matchSequenceTimeline";
-import type { Formation, SelectedPlayer } from "../types/game";
+import type { Formation, HalfTimeChoice, SelectedPlayer } from "../types/game";
 
 import "./EuropeanMatchEvent.css";
 
@@ -50,6 +53,10 @@ interface EuropeanMatchEventProps {
   userTeamRating: number;
   /** Tu once, para el mini campo (v0.25.77). */
   pitch?: EuropeanMatchPitch;
+  /** Mientras hay decisión pendiente, el partido se para a los 45' (v0.25.78). */
+  onHalfTimeChoice?: (choice: HalfTimeChoice) => void;
+  /** Mientras se juega, la vista enseña el torneo sin este partido, para no adelantar el resultado. */
+  onPlayingChange?: (playing: boolean) => void;
   onContinue: () => void;
 }
 
@@ -127,12 +134,23 @@ function getKnockoutLossText(match: EuropeanTournamentMatch): string {
   return "Derrota: sin puntos en fase inicial";
 }
 
-function EuropeanMatchSequence({ match, pitch }: { match: EuropeanTournamentMatch; pitch?: EuropeanMatchPitch }) {
+function EuropeanMatchSequence({
+  match,
+  pitch,
+  onHalfTimeChoice,
+  onPlayingChange,
+}: {
+  match: EuropeanTournamentMatch;
+  pitch?: EuropeanMatchPitch;
+  onHalfTimeChoice?: (choice: HalfTimeChoice) => void;
+  onPlayingChange?: (playing: boolean) => void;
+}) {
   const playbackMultiplier = getMatchPlaybackMultiplier(useMatchPlaybackSpeed());
   const durationMs = getEuropeanSequenceDurationMs(match, playbackMultiplier);
-  const [elapsedMs, setElapsedMs] = useState(() =>
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? durationMs : 0,
-  );
+  const stopMs = onHalfTimeChoice ? getEuropeanHalfTimeElapsedMs(playbackMultiplier) : durationMs;
+  const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const [elapsedMs, setElapsedMs] = useState(() => (reducedMotion ? stopMs : 0));
+  const isAtHalfTime = Boolean(onHalfTimeChoice) && elapsedMs >= stopMs;
   const frame = getEuropeanSequenceFrame(match, elapsedMs, playbackMultiplier);
   const isFinal = frame.stage === "final";
   const score = frame.stage === "regular" && frame.minute !== undefined
@@ -153,18 +171,29 @@ function EuropeanMatchSequence({ match, pitch }: { match: EuropeanTournamentMatc
       })
     : undefined;
 
+  // En layout, como en MatchSequence: antes del primer pintado del partido.
+  useLayoutEffect(() => {
+    onPlayingChange?.(!isFinal);
+  }, [isFinal, onPlayingChange]);
+
+  useLayoutEffect(() => {
+    return () => onPlayingChange?.(false);
+  }, [onPlayingChange]);
+
   useEffect(() => {
-    if (isFinal) return undefined;
+    if (isFinal || isAtHalfTime) return undefined;
 
     const intervalId = window.setInterval(() => {
-      setElapsedMs((current) => Math.min(durationMs, current + EUROPEAN_SEQUENCE_TICK_MS));
+      setElapsedMs((current) => Math.min(stopMs, current + EUROPEAN_SEQUENCE_TICK_MS));
     }, EUROPEAN_SEQUENCE_TICK_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [durationMs, isFinal]);
+  }, [isAtHalfTime, isFinal, stopMs]);
 
   const progressPercent = Math.min(100, (elapsedMs / durationMs) * 100);
-  const liveText = frame.stage === "preview"
+  const liveText = isAtHalfTime
+    ? "Descanso"
+    : frame.stage === "preview"
     ? "Previa europea"
     : frame.stage === "extra_time"
       ? "Prórroga: 2×15 min"
@@ -194,6 +223,7 @@ function EuropeanMatchSequence({ match, pitch }: { match: EuropeanTournamentMatc
           )}
           {lineDuelText && <p className="match-line-duel">{lineDuelText}</p>}
           {getMatchApproachEffectText(match.approachEffect) && <p className="match-approach-effect">{getMatchApproachEffectText(match.approachEffect)}</p>}
+          {getHalfTimeEffectText(match.halfTimeEffect) && <p className="match-approach-effect">{getHalfTimeEffectText(match.halfTimeEffect)}</p>}
         </>
       ) : (
         <>
@@ -206,13 +236,22 @@ function EuropeanMatchSequence({ match, pitch }: { match: EuropeanTournamentMatc
             <span>-</span>
             <strong>{rightGoals ?? "–"}</strong>
           </div>
-          <button
-            type="button"
-            className="secondary-league-button european-match-sequence-skip"
-            onClick={() => setElapsedMs(durationMs)}
-          >
-            Saltar
-          </button>
+          {isAtHalfTime && onHalfTimeChoice ? (
+            <MatchHalfTimeControl
+              onChoice={(choice) => {
+                if (reducedMotion) setElapsedMs(durationMs);
+                onHalfTimeChoice(choice);
+              }}
+            />
+          ) : (
+            <button
+              type="button"
+              className="secondary-league-button european-match-sequence-skip"
+              onClick={() => setElapsedMs(stopMs)}
+            >
+              Saltar
+            </button>
+          )}
         </>
       )}
 
@@ -259,6 +298,8 @@ export function EuropeanMatchEvent({
   match,
   userTeamRating,
   pitch,
+  onHalfTimeChoice,
+  onPlayingChange,
   onContinue,
 }: EuropeanMatchEventProps) {
   const summary = getEuropeanTournamentSummary(tournament);
@@ -326,7 +367,7 @@ export function EuropeanMatchEvent({
 
       {isPlayed && (
         <div className="european-match-event-result">
-          <EuropeanMatchSequence key={match.id} match={match} pitch={pitch} />
+          <EuropeanMatchSequence key={match.id} match={match} pitch={pitch} onHalfTimeChoice={onHalfTimeChoice} onPlayingChange={onPlayingChange} />
         </div>
       )}
 
@@ -366,7 +407,7 @@ export function EuropeanMatchEvent({
       </div>
 
       <div className="european-match-event-actions">
-        {isPlayed && (
+        {isPlayed && !onHalfTimeChoice && (
           <button type="button" className="secondary-league-button european-match-event-button" onClick={onContinue}>
             Continuar temporada
           </button>

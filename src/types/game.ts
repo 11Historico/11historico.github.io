@@ -407,6 +407,18 @@ export interface MatchApproachEffect {
   balancedRivalGoals: number;
 }
 
+/** Decisión en el descanso en Copa y Europa (v0.25.78). Seguir igual no cambia el partido. */
+export type HalfTimeChoice = "keep" | "push" | "close";
+
+/** Qué cambió la decisión del descanso: marcador a los 90 minutos con ella y sin ella. */
+export interface MatchHalfTimeEffect {
+  choice: Exclude<HalfTimeChoice, "keep">;
+  userGoals: number;
+  rivalGoals: number;
+  keptUserGoals: number;
+  keptRivalGoals: number;
+}
+
 /** Goles esperados con los que se jugó el partido (v0.25.76). Solo informa. */
 export interface MatchExpectedGoals {
   user: number;
@@ -446,6 +458,7 @@ export interface MatchResult {
   cleanSheetForUserTeam?: boolean;
   keyFactor?: MatchKeyFactor;
   approachEffect?: MatchApproachEffect;
+  halfTimeEffect?: MatchHalfTimeEffect;
   expectedGoals?: MatchExpectedGoals;
   lineDuel?: MatchLineDuel;
 }

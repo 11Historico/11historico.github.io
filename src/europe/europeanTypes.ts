@@ -13,7 +13,7 @@
 // mecanismo interno no se toca en esta fase. Ver docs/v0_24_0c_EUROPA_QUALIFICATION_FOUNDATION.md
 // para la justificación de mantener ambos sistemas por separado.
 
-import type { MatchApproachEffect, MatchExpectedGoals, MatchKeyFactor, MatchLineDuel } from "../types/game";
+import type { MatchApproachEffect, MatchExpectedGoals, MatchHalfTimeEffect, MatchKeyFactor, MatchLineDuel } from "../types/game";
 
 export type EuropeanCompetition =
   | "champions_league"
@@ -113,6 +113,8 @@ export interface EuropeanTournamentMatch {
   keyFactor?: MatchKeyFactor;
   /** Qué cambió el planteamiento (v0.25.75). */
   approachEffect?: MatchApproachEffect;
+  /** Qué cambió la decisión del descanso (v0.25.78). */
+  halfTimeEffect?: MatchHalfTimeEffect;
   /** Goles esperados del partido (v0.25.76). */
   expectedGoals?: MatchExpectedGoals;
   /** Tus líneas contra el nivel del rival (v0.25.77). */

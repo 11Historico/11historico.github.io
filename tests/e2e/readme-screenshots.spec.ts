@@ -46,7 +46,7 @@ test("captura liga y temporada superada", async ({ page }) => {
     if (await wheel.isVisible()) await wheel.getByRole("button", { name: "No jugar" }).click();
     const text = await page.locator(".league-actions-card").innerText().catch(() => "");
     if (/Jornada (1[4-9]|2\d)/.test(text) && (await stop.isVisible())) break;
-    for (const name of [/^Simular$/, /^Simular partido de Copa$/, /^Continuar temporada$/]) {
+    for (const name of [/^Seguir igual$/, /^Simular$/, /^Simular partido de Copa$/, /^Continuar temporada$/]) {
       const button = page.getByRole("button", { name }).first();
       if (await button.isVisible()) await button.click();
     }
@@ -67,7 +67,7 @@ test("captura liga y temporada superada", async ({ page }) => {
       await wheel.getByRole("button", { name: "No jugar" }).click();
       continue;
     }
-    for (const name of [/^Saltar$/, /^Continuar$/, /^Continuar temporada$/, /^Simular partido de Copa$/, /^Simular Copa y terminar temporada$/, /^Saltar hasta próximo evento$/]) {
+    for (const name of [/^Seguir igual$/, /^Saltar$/, /^Continuar$/, /^Continuar temporada$/, /^Simular partido de Copa$/, /^Simular Copa y terminar temporada$/, /^Saltar hasta próximo evento$/]) {
       const button = page.getByRole("button", { name }).first();
       if ((await button.count()) > 0 && (await button.isVisible()) && (await button.isEnabled())) {
         await button.click();

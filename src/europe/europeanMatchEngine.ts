@@ -13,13 +13,15 @@
 // tocar `matchEngine.ts` ni sus probabilidades.
 
 import { simulateMatch } from "../simulation/matchEngine";
-import { getAverageUserRating, getMatchLineDuel } from "../simulation/matchEngine";
+import { applyHalfTimeChoice, getAverageUserRating, getMatchLineDuel } from "../simulation/matchEngine";
 import type { MatchOdds } from "../simulation/matchEngine";
 import type {
   CoachSkills,
+  HalfTimeChoice,
   MatchApproach,
   MatchApproachEffect,
   MatchExpectedGoals,
+  MatchHalfTimeEffect,
   MatchKeyFactor,
   MatchLineDuel,
   MatchResult,
@@ -57,6 +59,8 @@ export interface SimulateEuropeanMatchInput {
   userProfile?: TeamRating;
   /** Once del usuario, para los goleadores y asistentes del partido. */
   selectedPlayers?: SelectedPlayer[];
+  /** Decisión del descanso (v0.25.78). Con la misma semilla, la primera parte es la misma. */
+  halfTimeChoice?: Exclude<HalfTimeChoice, "keep">;
 }
 
 export interface SimulateEuropeanMatchOutput {
@@ -75,6 +79,7 @@ export interface SimulateEuropeanMatchOutput {
   /** Factor que decidió el partido en 90 minutos (v0.25.74). Ausente si hubo prórroga o penaltis. */
   keyFactor?: MatchKeyFactor;
   approachEffect?: MatchApproachEffect;
+  halfTimeEffect?: MatchHalfTimeEffect;
   expectedGoals?: MatchExpectedGoals;
   /** Solo con `userProfile` y si se decidió en 90 minutos. */
   lineDuel?: MatchLineDuel;
@@ -295,12 +300,12 @@ export function getEuropeanLineDuel(
  * goleador y asistente, que solo se muestran en el partido (v0.25.77).
  */
 export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): SimulateEuropeanMatchOutput {
-  const { userTeamRating, opponentRating, isHome, competition, seed, isKnockout = false, approach, coachSkills, userProfile, selectedPlayers = [] } = input;
+  const { userTeamRating, opponentRating, isHome, competition, seed, isKnockout = false, approach, coachSkills, userProfile, selectedPlayers = [], halfTimeChoice } = input;
 
   const teamRating = buildUserTeamRating(userTeamRating, userProfile);
   const rival = buildUniformRivalTeam(opponentRating, competition);
 
-  const matchResult = simulateMatch({
+  const fullMatch = simulateMatch({
     fixtureId: `european_${competition}`,
     matchday: 0,
     rival,
@@ -311,6 +316,15 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
     approach,
     coachSkills,
   });
+  const numericSeed = seedToNumber(seed);
+  const matchResult = halfTimeChoice
+    ? applyHalfTimeChoice({
+        result: fullMatch,
+        choice: halfTimeChoice,
+        selectedPlayers,
+        seed: numericSeed === undefined ? undefined : numericSeed + 7919,
+      })
+    : fullMatch;
 
   const userGoals = isHome ? matchResult.homeGoals : matchResult.awayGoals;
   const opponentGoals = isHome ? matchResult.awayGoals : matchResult.homeGoals;
@@ -321,15 +335,15 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
       ? "draw"
       : "loss";
   const goalEvents = toEuropeanGoalEvents(matchResult, isHome);
-  const { keyFactor, approachEffect, expectedGoals } = matchResult;
+  const { keyFactor, approachEffect, halfTimeEffect, expectedGoals } = matchResult;
   const lineDuel = userProfile && matchResult.lineDuel ? { ...matchResult.lineDuel, rivalHasOnlyOverall: true } : undefined;
 
   if (!isKnockout) {
-    return { userGoals, opponentGoals, result, goalEvents, keyFactor, approachEffect, expectedGoals, lineDuel };
+    return { userGoals, opponentGoals, result, goalEvents, keyFactor, approachEffect, halfTimeEffect, expectedGoals, lineDuel };
   }
 
   if (result !== "draw") {
-    return { userGoals, opponentGoals, result, decidedBy: "regular_time", goalEvents, keyFactor, approachEffect, expectedGoals, lineDuel };
+    return { userGoals, opponentGoals, result, decidedBy: "regular_time", goalEvents, keyFactor, approachEffect, halfTimeEffect, expectedGoals, lineDuel };
   }
 
   // Empate a los 90' en semifinal/final: prórroga y, si sigue igual, penaltis.
@@ -352,6 +366,7 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
       regularTimeOpponentGoals: opponentGoals,
       goalEvents,
       approachEffect,
+      halfTimeEffect,
       expectedGoals,
     };
   }
@@ -368,6 +383,7 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
     penaltyShootout,
     goalEvents,
     approachEffect,
+    halfTimeEffect,
     expectedGoals,
   };
 }

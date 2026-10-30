@@ -8,6 +8,7 @@ import type {
   GoalEvent,
   MatchApproachEffect,
   MatchExpectedGoals,
+  MatchHalfTimeEffect,
   MatchKeyFactor,
   MatchLineDuel,
   MatchResult,
@@ -57,6 +58,13 @@ export function getMatchSequenceFrame(goalEvents: GoalEvent[], elapsedMs: number
     minute,
     visibleGoals: sortedGoals.filter((goal) => goal.minute <= minute),
   };
+}
+
+/** Momento de la secuencia en el que el reloj marca 45' y el partido se para (v0.25.78). */
+export function getHalfTimeElapsedMs(goalEvents: GoalEvent[], multiplier = 1): number {
+  const lastMinute = Math.max(MATCH_MINUTES, ...goalEvents.map((goal) => goal.minute));
+
+  return (MATCH_SEQUENCE_PREVIEW_MS + MATCH_SEQUENCE_PLAY_MS * (45.5 / (lastMinute + 1))) * multiplier;
 }
 
 export function countGoalsForTeam(goals: GoalEvent[], teamName: string): number {
@@ -228,6 +236,27 @@ export function getMatchApproachEffectText(effect: MatchApproachEffect | undefin
   }
 
   return `Planteamiento ${name}: con uno equilibrado también habrías ${verb}, ${score} a los 90 minutos.`;
+}
+
+/** Qué cambió la decisión del descanso (v0.25.78), comparando con seguir igual. */
+export function getHalfTimeEffectText(effect: MatchHalfTimeEffect | undefined): string | undefined {
+  if (!effect) return undefined;
+
+  const { choice, userGoals, rivalGoals, keptUserGoals, keptRivalGoals } = effect;
+  const name = choice === "push" ? "Arriesgar" : "Cerrar el partido";
+
+  if (userGoals === keptUserGoals && rivalGoals === keptRivalGoals) {
+    return `${name}: sin tocar nada, el marcador habría sido el mismo.`;
+  }
+
+  const outcome = Math.sign(userGoals - rivalGoals);
+  const keptOutcome = Math.sign(keptUserGoals - keptRivalGoals);
+  const verb = keptOutcome > 0 ? "ganado" : keptOutcome < 0 ? "perdido" : "empatado";
+  const score = `${Math.max(keptUserGoals, keptRivalGoals)}-${Math.min(keptUserGoals, keptRivalGoals)}`;
+
+  if (outcome > keptOutcome) return `${name} cambió el partido: sin tocar nada habrías ${verb} ${score} a los 90 minutos.`;
+  if (outcome < keptOutcome) return `${name} te salió caro: sin tocar nada habrías ${verb} ${score} a los 90 minutos.`;
+  return `${name}: sin tocar nada también habrías ${verb}, ${score} a los 90 minutos.`;
 }
 
 export function isExtraTimeFactor(factor: MatchKeyFactor | undefined): boolean {

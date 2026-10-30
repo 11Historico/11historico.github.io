@@ -7,6 +7,7 @@ const SAVE_KEY = "once_historico_zurigorri_saved_game_v1";
 const fixture = readFileSync(new URL("./fixtures/career-strong.json", import.meta.url), "utf8");
 
 const ADVANCE_BUTTONS = [
+  /^Seguir igual$/,
   /^Saltar$/,
   /^Continuar$/,
   /^Continuar temporada$/,
