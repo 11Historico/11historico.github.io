@@ -17,6 +17,7 @@ import type {
   CoachSkills,
   MatchApproach,
   MatchApproachEffect,
+  MatchExpectedGoals,
   MatchKeyFactor,
   MatchResult,
   RivalTeam,
@@ -66,6 +67,7 @@ export interface SimulateEuropeanMatchOutput {
   /** Factor que decidió el partido en 90 minutos (v0.25.74). Ausente si hubo prórroga o penaltis. */
   keyFactor?: MatchKeyFactor;
   approachEffect?: MatchApproachEffect;
+  expectedGoals?: MatchExpectedGoals;
 }
 
 function toEuropeanGoalEvents(matchResult: MatchResult, isHome: boolean): EuropeanGoalEvent[] {
@@ -270,14 +272,14 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
       ? "draw"
       : "loss";
   const goalEvents = toEuropeanGoalEvents(matchResult, isHome);
-  const { keyFactor, approachEffect } = matchResult;
+  const { keyFactor, approachEffect, expectedGoals } = matchResult;
 
   if (!isKnockout) {
-    return { userGoals, opponentGoals, result, goalEvents, keyFactor, approachEffect };
+    return { userGoals, opponentGoals, result, goalEvents, keyFactor, approachEffect, expectedGoals };
   }
 
   if (result !== "draw") {
-    return { userGoals, opponentGoals, result, decidedBy: "regular_time", goalEvents, keyFactor, approachEffect };
+    return { userGoals, opponentGoals, result, decidedBy: "regular_time", goalEvents, keyFactor, approachEffect, expectedGoals };
   }
 
   // Empate a los 90' en semifinal/final: prórroga y, si sigue igual, penaltis.
@@ -300,6 +302,7 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
       regularTimeOpponentGoals: opponentGoals,
       goalEvents,
       approachEffect,
+      expectedGoals,
     };
   }
 
@@ -315,5 +318,6 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
     penaltyShootout,
     goalEvents,
     approachEffect,
+    expectedGoals,
   };
 }

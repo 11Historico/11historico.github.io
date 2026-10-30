@@ -1,0 +1,49 @@
+.match-dominance {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px 8px;
+  margin: 0 0 12px;
+}
+
+.match-dominance small {
+  grid-column: 1 / -1;
+  color: #f2d2d7;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.match-dominance-value {
+  font-size: 0.82rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.match-dominance-bar {
+  display: flex;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.match-dominance-bar span {
+  transition: width 600ms ease;
+}
+
+.match-dominance-user {
+  background: #ffe08a;
+}
+
+.match-dominance-rival {
+  background: rgba(255, 255, 255, 0.38);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .match-dominance-bar span {
+    transition: none;
+  }
+}

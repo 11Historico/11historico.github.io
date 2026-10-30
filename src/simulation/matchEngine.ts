@@ -5,6 +5,7 @@ import type {
   GoalEvent,
   MatchApproach,
   MatchKeyFactor,
+  MatchLineDuel,
   MatchResult,
   RivalTeam,
   TeamRating,
@@ -578,6 +579,16 @@ function generateRivalGoalEvents(params: {
   return events.sort((a, b) => a.minute - b.minute);
 }
 
+/** Las líneas que se enfrentan en un partido, para la previa y la crónica (v0.25.76). */
+export function getMatchLineDuel(teamRating: TeamRating, rival: RivalTeam): MatchLineDuel {
+  return {
+    userAttack: Math.round(teamRating.attack),
+    userDefense: Math.round(teamRating.defense),
+    rivalAttack: Math.round(rival.ratings.attack),
+    rivalDefense: Math.round(rival.ratings.defense),
+  };
+}
+
 function playMatch(params: SimulateMatchParams, random: RandomGenerator): MatchResult {
   const {
     fixtureId,
@@ -626,8 +637,10 @@ function playMatch(params: SimulateMatchParams, random: RandomGenerator): MatchR
     userAverage: getAverageUserRating(teamRating),
     rivalAverage: getAverageRivalRating(rival),
   });
-  let userGoals = sampleGoalsFromExpectedGoals(userExpectedGoals * approachMultipliers.user, random);
-  let rivalGoals = sampleGoalsFromExpectedGoals(rivalExpectedGoals * approachMultipliers.rival, random);
+  const userMatchExpectedGoals = userExpectedGoals * approachMultipliers.user;
+  const rivalMatchExpectedGoals = rivalExpectedGoals * approachMultipliers.rival;
+  let userGoals = sampleGoalsFromExpectedGoals(userMatchExpectedGoals, random);
+  let rivalGoals = sampleGoalsFromExpectedGoals(rivalMatchExpectedGoals, random);
 
   const varianceAdjusted = applyUnderdogAndDrawVariance({
     userGoals,
@@ -718,6 +731,12 @@ function playMatch(params: SimulateMatchParams, random: RandomGenerator): MatchR
     userTeamLost,
     cleanSheetForUserTeam: rivalGoals === 0,
     keyFactor,
+    expectedGoals: {
+      user: Math.round(userMatchExpectedGoals * 100) / 100,
+      rival: Math.round(rivalMatchExpectedGoals * 100) / 100,
+      userIsHome,
+    },
+    lineDuel: getMatchLineDuel(teamRating, rival),
   };
 }
 

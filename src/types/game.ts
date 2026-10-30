@@ -407,6 +407,21 @@ export interface MatchApproachEffect {
   balancedRivalGoals: number;
 }
 
+/** Goles esperados con los que se jugó el partido (v0.25.76). Solo informa. */
+export interface MatchExpectedGoals {
+  user: number;
+  rival: number;
+  userIsHome: boolean;
+}
+
+/** Líneas enfrentadas en el partido, con los ratings que usó el motor (v0.25.76). Solo informa. */
+export interface MatchLineDuel {
+  userAttack: number;
+  userDefense: number;
+  rivalAttack: number;
+  rivalDefense: number;
+}
+
 export interface MatchResult {
   fixtureId: string;
   matchday: number;
@@ -429,6 +444,8 @@ export interface MatchResult {
   cleanSheetForUserTeam?: boolean;
   keyFactor?: MatchKeyFactor;
   approachEffect?: MatchApproachEffect;
+  expectedGoals?: MatchExpectedGoals;
+  lineDuel?: MatchLineDuel;
 }
 
 // ==========================

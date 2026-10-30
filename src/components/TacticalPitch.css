@@ -394,3 +394,16 @@
       0 16px 34px rgba(0, 0, 0, 0.35);
   }
 }
+
+/* Mini campo del partido: quién ha marcado (oro) y quién ha asistido (blanco), v0.25.76. */
+.tactical-marker-goal .tactical-shirt {
+  background: #ffe08a;
+  color: #451600;
+  box-shadow: 0 0 0 3px rgba(255, 224, 138, 0.45);
+}
+
+.tactical-marker-assist .tactical-shirt {
+  background: #ffffff;
+  color: #451600;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+}

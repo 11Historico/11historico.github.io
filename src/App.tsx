@@ -1554,6 +1554,7 @@ export default function App() {
             qualification={careerPendingSupercopa}
             result={careerCurrentSupercopaResult}
             coachSkills={selectedCoach?.coachSeason.skills}
+            pitch={selectedFormation && { formation: selectedFormation, selectedPlayers }}
             getSemifinalPreview={(approach) =>
               teamRating &&
               getSupercopaSemifinalPreview({

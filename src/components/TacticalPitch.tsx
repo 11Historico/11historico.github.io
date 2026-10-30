@@ -17,6 +17,9 @@ interface TacticalPitchProps {
   highlightedSlotIds?: string[];
   activeSlotId?: string;
   onSlotClick?: (slot: FormationSlot) => void;
+
+  /** Quién ha marcado o asistido en el partido, por nombre. Se resaltan con su nombre (v0.25.76). */
+  goalContributions?: Record<string, "goal" | "assist">;
 }
 
 type PitchCoordinates = {
@@ -276,6 +279,7 @@ export function TacticalPitch({
   highlightedSlotIds = [],
   activeSlotId,
   onSlotClick,
+  goalContributions,
 }: TacticalPitchProps) {
   const highlightedSlots = new Set(highlightedSlotIds);
   const hasInteractiveSelection = highlightedSlots.size > 0;
@@ -301,6 +305,7 @@ export function TacticalPitch({
         const isHighlighted = !selectedPlayer && highlightedSlots.has(slot.id);
         const isActive = activeSlotId === slot.id;
         const isClickable = Boolean(onSlotClick && isHighlighted);
+        const contribution = selectedPlayer && goalContributions?.[selectedPlayer.playerSeason.name];
 
         return (
           <button
@@ -310,7 +315,9 @@ export function TacticalPitch({
               selectedPlayer ? "tactical-marker-filled" : ""
             } ${isHighlighted ? "tactical-marker-highlighted" : ""} ${
               isActive ? "tactical-marker-active" : ""
-            } ${isClickable ? "tactical-marker-clickable" : ""}`}
+            } ${isClickable ? "tactical-marker-clickable" : ""} ${
+              contribution ? `tactical-marker-${contribution}` : ""
+            }`}
             style={{
               left: `${coordinates.x}%`,
               top: `${coordinates.y}%`,
@@ -327,7 +334,7 @@ export function TacticalPitch({
               {selectedPlayer ? selectedPlayer.position : slot.label}
             </span>
 
-            {showNames && (
+            {(showNames || contribution) && (
               <strong className="tactical-player-name">
                 {selectedPlayer ? selectedPlayer.playerSeason.name : isHighlighted ? "Elegir aquí" : "Libre"}
               </strong>

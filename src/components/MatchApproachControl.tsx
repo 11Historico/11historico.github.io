@@ -3,6 +3,7 @@
 
 import { COACH_SPECIALIST_SKILL, coachReinforcesApproach } from "../simulation/matchEngine";
 import type { CoachSkills, MatchApproach } from "../types/game";
+import { MatchIcon } from "./MatchIcon";
 
 import "./MatchApproachControl.css";
 
@@ -54,6 +55,7 @@ export function MatchApproachControl({
             aria-pressed={value === option.value}
             onClick={() => onChange(option.value)}
           >
+            <MatchIcon kind={option.value} />
             {option.label}
           </button>
         ))}
