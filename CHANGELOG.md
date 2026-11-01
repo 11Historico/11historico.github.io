@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.25.81 — El descanso avisa de que te espera
+
+- **Ya no parece un bloqueo:** en el minuto 45 un recuadro dorado dice que el partido está en pausa y que elijas cómo jugar la segunda parte para continuar.
+- **Solo es visual:** las opciones y sus efectos no cambian, en Copa ni en Europa.
+
 ## v0.25.80 — La etiqueta del equipo ya informa
 
 - **Según tu plantilla:** la pantalla final dice si tu equipo es ofensivo, sólido, de mediocampo o equilibrado, comparando la media real de cada línea. Antes, el 92 % de los equipos salía como «Equipo dominador de mediocampo».

@@ -232,6 +232,8 @@ test("en Copa, el partido se para en el descanso y la decisión se cuenta en el 
   const close = page.getByRole("button", { name: "Cerrar el partido" });
   await expect(close).toBeVisible({ timeout: 15_000 });
   await expect(page.locator(".match-sequence .match-sequence-clock")).toHaveText("45'");
+  // v0.25.81: la pausa se explica, para que no parezca que el juego se ha bloqueado.
+  await expect(page.getByText("Descanso: el partido está en pausa")).toBeVisible();
   // Nada delata el resultado antes de decidir: la tarjeta de Copa sigue en esta ronda.
   await expect(page.getByRole("region", { name: "Próximo partido de Copa" })).toContainText(new RegExp(round, "i"));
   await expect(page.locator(".recent-results-card").first().locator("article")).toHaveCount(0);

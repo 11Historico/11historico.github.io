@@ -42,3 +42,41 @@
   color: #ffe08a;
   font-weight: 700;
 }
+
+/* El partido espera al jugador: el pulso avisa de que no se ha quedado bloqueado. */
+.match-half-time {
+  padding: 12px 14px;
+  border: 1px solid #ffe08a;
+  border-radius: 14px;
+  background: rgba(255, 224, 138, 0.1);
+  animation: matchHalfTimePulse 1.8s ease-in-out infinite;
+}
+
+.match-half-time-title {
+  color: #ffe08a;
+  font-size: 1.02rem;
+  font-weight: 850;
+}
+
+.match-half-time .match-approach-option {
+  border-color: #ffe08a;
+  color: #fff;
+}
+
+.match-half-time .match-approach-option:hover,
+.match-half-time .match-approach-option:focus-visible {
+  background: #ffe08a;
+  color: #451600;
+}
+
+@keyframes matchHalfTimePulse {
+  50% {
+    box-shadow: 0 0 0 4px rgba(255, 224, 138, 0.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .match-half-time {
+    animation: none;
+  }
+}

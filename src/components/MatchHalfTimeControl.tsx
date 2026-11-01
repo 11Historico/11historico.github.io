@@ -24,8 +24,9 @@ export function MatchHalfTimeControl({ onChoice }: { onChoice: (choice: HalfTime
 
   return (
     <div ref={controlRef} className="match-approach match-half-time">
+      <strong className="match-half-time-title">Descanso: el partido está en pausa</strong>
+      <p>Elige cómo jugar la segunda parte para continuar.</p>
       <div className="match-approach-options" role="group" aria-label="Decisión del descanso">
-        <span>Descanso</span>
         {OPTIONS.map((option) => (
           <button key={option.value} type="button" className="match-approach-option" onClick={() => onChoice(option.value)}>
             <MatchIcon kind={option.icon} />
