@@ -11,4 +11,4 @@ export const APP_STATUS = "Versión pública estable: Modo carrera completo (Lig
 // que hacía fácil dejar alguno desactualizado al publicar una fase nueva;
 // ver v0.24.7 — Europa Career Release Stabilization).
 export const CURRENT_RELEASE_TAG = `${APP_VERSION}_STABLE_PUBLIC_RELEASE`;
-export const CURRENT_RELEASE_DOC = "docs/v0_25_81_HALF_TIME_PAUSE.md";
+export const CURRENT_RELEASE_DOC = "docs/v0_25_82_NEXT_MATCH_AFTER_CURRENT.md";

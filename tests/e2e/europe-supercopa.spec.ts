@@ -119,6 +119,9 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
     await page.waitForTimeout(300);
   }
 
+  // v0.25.82: el partido europeo no se enseña hasta que acaba el que se está jugando.
+  await expect(page.locator(".match-sequence-skip")).toHaveCount(0, { timeout: 15_000 });
+
   // v0.25.72: el local va a la izquierda, juegue en casa o fuera, igual que el marcador.
   const teams = page.locator(".european-match-event-team");
   await expect(teams.first()).toContainText("Local");
@@ -138,9 +141,10 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   const seasonGoalsBefore = await seasonGoals.allTextContents();
 
   await simulateEuropean.click();
-  await expect(page.getByText(/Previa europea|Partido en juego/)).toBeVisible();
+  const liveLabel = page.locator(".european-match-sequence-live");
+  await expect(liveLabel).toHaveText(/Previa europea|Partido en juego/);
   // Durante el partido el marcador va en directo (antes de v0.25.51 mostraba "–" hasta el final).
-  await expect(page.getByText("Partido en juego")).toBeVisible();
+  await expect(liveLabel).toHaveText("Partido en juego");
   await expect(page.locator(".european-match-sequence-live-score strong").first()).toHaveText(/^\d+$/);
 
   // v0.25.78: el partido se para a los 45'. Mientras no decidas, no se puede avanzar.
@@ -167,8 +171,10 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   // y la Conference pasa a una tarjeta de próximo partido.
   await page.getByRole("button", { name: /^Simular$/ }).click();
   await expect(page.getByRole("region", { name: "Evento europeo" })).toHaveCount(0);
-  await expect(page.getByRole("region", { name: "Próximo partido europeo" })).toBeVisible();
+  // v0.25.82: durante la simulación no se enseña; vuelve al pararla y acabar el partido.
+  await expect(page.getByRole("region", { name: "Próximo partido europeo" })).toHaveCount(0);
   await page.getByRole("button", { name: "Parar simulación" }).click();
+  await expect(page.getByRole("region", { name: "Próximo partido europeo" })).toBeVisible({ timeout: 15_000 });
   expect(pageErrors).toEqual([]);
 });
 
@@ -225,8 +231,7 @@ test("en Copa, el partido se para en el descanso y la decisión se cuenta en el 
   }
 
   const cupPreview = page.getByRole("region", { name: "Previa del próximo partido" });
-  await expect(cupPreview.getByRole("button", { name: "Ofensivo" })).toBeVisible();
-  const round = (await cupPreview.locator("span").first().innerText()).split("·")[2].trim();
+  await expect(cupPreview.getByRole("button", { name: "Ofensivo" })).toBeVisible({ timeout: 15_000 });
   await cup.click();
 
   const close = page.getByRole("button", { name: "Cerrar el partido" });
@@ -234,12 +239,15 @@ test("en Copa, el partido se para en el descanso y la decisión se cuenta en el 
   await expect(page.locator(".match-sequence .match-sequence-clock")).toHaveText("45'");
   // v0.25.81: la pausa se explica, para que no parezca que el juego se ha bloqueado.
   await expect(page.getByText("Descanso: el partido está en pausa")).toBeVisible();
-  // Nada delata el resultado antes de decidir: la tarjeta de Copa sigue en esta ronda.
-  await expect(page.getByRole("region", { name: "Próximo partido de Copa" })).toContainText(new RegExp(round, "i"));
+  // Nada delata el resultado antes de decidir, y el siguiente partido no se enseña hasta que acaba este (v0.25.82).
+  await expect(page.getByRole("heading", { name: "Partido en juego" })).toBeVisible();
+  await expect(cupPreview).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Próximo partido de Copa" })).toHaveCount(0);
   await expect(page.locator(".recent-results-card").first().locator("article")).toHaveCount(0);
   await close.click();
 
   await expect(page.locator(".match-sequence .match-approach-effect")).toContainText("Cerrar el partido", { timeout: 15_000 });
+  await expect(cupPreview).toBeVisible();
   expect(pageErrors).toEqual([]);
 });
 
