@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.25.83 — El marcador de la Supercopa se ve
+
+- **Resultados legibles:** los goles salían en amarillo sobre blanco y el marcador, desalineado. Ahora la tarjeta del partido se ve como en Liga y Copa.
+- **Solo es visual:** la Supercopa se juega igual.
+
 ## v0.25.82 — El siguiente partido espera a que acabe el actual
 
 - **Sin adelantos:** mientras se juega un partido, la previa del siguiente y las tarjetas de Copa y Europa no aparecen, y la tarjeta de acciones se titula «Partido en juego».

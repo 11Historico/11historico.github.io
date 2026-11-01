@@ -45,7 +45,6 @@
 }
 
 .career-supercopa-participants article,
-.career-supercopa-results-list article,
 .career-supercopa-result {
   padding: 16px;
   border-radius: 20px;
@@ -53,8 +52,7 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.career-supercopa-participants span,
-.career-supercopa-results-list span {
+.career-supercopa-participants span {
   display: block;
   color: #ffd7de;
   font-size: 0.78rem;
@@ -62,8 +60,7 @@
   letter-spacing: 0.08em;
 }
 
-.career-supercopa-participants strong,
-.career-supercopa-results-list strong {
+.career-supercopa-participants strong {
   display: block;
   margin-top: 8px;
   color: #ffe08a;

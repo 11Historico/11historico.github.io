@@ -270,8 +270,11 @@ test("la Supercopa se reproduce partido a partido y el veredicto llega al final"
   // Mientras se juegan los partidos no hay veredicto ni botón para seguir.
   await expect(page.getByText("Supercopa en directo")).toBeVisible();
   await expect(page.getByRole("button", { name: /^Jugar Liga/ })).toHaveCount(0);
+  await expect(page.locator(".match-sequence")).toHaveCount(1);
 
   await expect(page.getByRole("heading", { name: /Campeón de Supercopa|Eliminado en/ })).toBeVisible({ timeout: 30_000 });
+  // v0.25.83: el marcador se ve igual que en Liga: número rojo sobre el círculo blanco.
+  await expect(page.locator(".score-team strong").first()).toHaveCSS("color", "rgb(176, 0, 32)");
   // v0.25.76: tu partido lleva dominio y mini campo; el partido entre rivales, no.
   await expect(page.locator(".match-sequence .match-dominance").first()).toBeVisible();
   await expect(page.locator(".match-sequence-pitch").first()).toBeVisible();
