@@ -32,8 +32,8 @@ async function advanceOnce(page: Page): Promise<boolean> {
   for (const name of ADVANCE_BUTTONS) {
     const button = page.getByRole("button", { name }).first();
     if ((await button.count()) > 0 && (await button.isVisible()) && (await button.isEnabled())) {
-      await button.click();
-      return true;
+      // Con tope: «Saltar» desaparece al llegar al descanso y, sin él, el clic lo esperaría para siempre.
+      return button.click({ timeout: 2_000 }).then(() => true, () => false);
     }
   }
 
