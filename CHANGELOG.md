@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.82 — El siguiente partido espera a que acabe el actual
+
+- **Sin adelantos:** mientras se juega un partido, la previa del siguiente y las tarjetas de Copa y Europa no aparecen, y la tarjeta de acciones se titula «Partido en juego».
+- **Sin empezar a ciegas:** los botones de jugar Copa y Europa esperan a que termine el partido actual.
+- **Solo es visual:** no cambia ningún resultado ni el orden de los partidos.
+
 ## v0.25.81 — El descanso avisa de que te espera
 
 - **Ya no parece un bloqueo:** en el minuto 45 un recuadro dorado dice que el partido está en pausa y que elijas cómo jugar la segunda parte para continuar.

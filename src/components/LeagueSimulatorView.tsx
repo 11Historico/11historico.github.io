@@ -210,6 +210,10 @@ export function LeagueSimulatorView({
   const [tournamentBeforeMatch, setTournamentBeforeMatch] = useState<EuropeanTournamentState | undefined>();
   const [isEuropeanSequencePlaying, setIsEuropeanSequencePlaying] = useState(false);
   const shownEuropeanTournament = isEuropeanSequencePlaying && tournamentBeforeMatch ? tournamentBeforeMatch : europeanTournament;
+  const isMatchPlaying = isSequencePlaying || isEuropeanSequencePlaying;
+  // El siguiente partido no se enseña hasta que acaba el actual (v0.25.82).
+  // En la simulación automática tampoco entre jornadas: la página daría un salto en cada una.
+  const hideNextMatch = isMatchPlaying || isAutoSimulating;
 
   // Envuelve el setter de estado para que la oferta pendiente también se
   // persista fuera de este componente (ver `initialPendingSeasonLuckWheelOffer`).
@@ -263,7 +267,7 @@ export function LeagueSimulatorView({
     [shownContext.cupState.results]
   );
 
-  const diagnosis = getCurrentLeagueDiagnosis(context);
+  const diagnosis = getCurrentLeagueDiagnosis(shownContext);
   // Previa del siguiente partido de Liga o Copa (v0.25.74).
   const matchPreview = useMemo(
     () => getNextUserMatchPreview({ context, teamRating: effectiveTeamRating, selectedPlayers, approach }),
@@ -277,7 +281,7 @@ export function LeagueSimulatorView({
   const leagueProgressLabel = `Jornada ${Math.min(shownMatchesPlayed + 1, 38)} / 38`;
 
   const pendingEuropeanMatch = shouldPlayEuropeanMatchAtLeagueMatchday(europeanTournament, leagueMatchesPlayed + 1);
-  const europeanEventMatch = justPlayedEuropeanMatch ?? pendingEuropeanMatch;
+  const europeanEventMatch = justPlayedEuropeanMatch ?? (hideNextMatch ? undefined : pendingEuropeanMatch);
   // Un entrenador especialista en Europa suma +1, como el de Copa en la Copa (v0.25.75).
   const europeanUserRating = effectiveTeamRating.overall + getCoachCompetitionBoost(context, "europe");
   const europeanOdds = useMemo(
@@ -722,7 +726,7 @@ export function LeagueSimulatorView({
 
   // Una tarjeta por competición. Lo pendiente usa la tarjeta completa; lo que viene después, una compacta.
   const eventCards: Record<LeagueEventKind, ReactNode> = {
-    copa: upcomingCupFixture && (pendingCupFixture ? (
+    copa: !hideNextMatch && upcomingCupFixture && (pendingCupFixture ? (
       <section key="copa" className="cup-event-card">
         <span>
           <CompetitionIcon kind="copa" />
@@ -757,7 +761,7 @@ export function LeagueSimulatorView({
         onPlayingChange={setIsEuropeanSequencePlaying}
         onContinue={handleContinueAfterEuropeanMatch}
       />
-    ) : nextEuropeanMatch && (
+    ) : !hideNextMatch && nextEuropeanMatch && (
       <section key="europa" className="cup-event-card next-event-card" aria-label="Próximo partido europeo">
         <span>
           <CompetitionIcon kind={getEuropeanCompetitionIconKind(nextEuropeanMatch.competition)} />
@@ -813,9 +817,9 @@ export function LeagueSimulatorView({
         <main className="league-main-panel">
           <div className={`league-actions-card ${isAutoSimulating ? "league-actions-card-running" : ""}`}>
             <div>
-              <h2>{pendingCupFixture ? "Toca Copa del Rey" : pendingEuropeanMatch ? "Noche europea" : context.state.completed ? "Liga terminada" : "Próximo paso"}</h2>
+              <h2>{hideNextMatch ? "Partido en juego" : pendingCupFixture ? "Toca Copa del Rey" : pendingEuropeanMatch ? "Noche europea" : context.state.completed ? "Liga terminada" : "Próximo paso"}</h2>
               <p>{isAutoSimulating ? `${leagueProgressLabel} · Simulación automática en marcha.` : diagnosis}</p>
-              {matchPreview && (pendingCupFixture || !pendingEuropeanMatch) && (
+              {!hideNextMatch && matchPreview && (pendingCupFixture || !pendingEuropeanMatch) && (
                 <section className="next-match-preview" aria-label="Previa del próximo partido">
                   <span>
                     Próximo partido · {matchPreview.competition === "cup" ? "Copa del Rey" : "LaLiga"} · {matchPreview.label} ·{" "}
@@ -836,7 +840,7 @@ export function LeagueSimulatorView({
                   />
                 </section>
               )}
-              {pendingEuropeanMatch && europeanOdds && !pendingCupFixture && (
+              {!hideNextMatch && pendingEuropeanMatch && europeanOdds && !pendingCupFixture && (
                 <section className="next-match-preview" aria-label="Previa del próximo partido">
                   <span>
                     Próximo partido · {getEuropeanCompetitionLabel(pendingEuropeanMatch.competition)} ·{" "}
@@ -867,7 +871,7 @@ export function LeagueSimulatorView({
 
             {pendingCupFixture ? (
               <div className="league-buttons">
-                <button type="button" onClick={handleSimulateNextCupMatch} disabled={Boolean(pendingHalfTime)}>
+                <button type="button" onClick={handleSimulateNextCupMatch} disabled={isMatchPlaying}>
                   Simular partido de Copa
                 </button>
 
@@ -875,7 +879,7 @@ export function LeagueSimulatorView({
                   type="button"
                   className="secondary-league-button"
                   onClick={handleSimulateFullCupAndFinishSeason}
-                  disabled={Boolean(pendingHalfTime)}
+                  disabled={isMatchPlaying}
                 >
                   Simular Copa y terminar temporada
                 </button>
@@ -883,7 +887,7 @@ export function LeagueSimulatorView({
             ) : (
               <div className="league-buttons">
                 {pendingEuropeanMatch && (
-                  <button type="button" onClick={handleSimulateEuropeanMatch} disabled={Boolean(pendingHalfTime)}>
+                  <button type="button" onClick={handleSimulateEuropeanMatch} disabled={isMatchPlaying}>
                     Simular partido europeo
                   </button>
                 )}
