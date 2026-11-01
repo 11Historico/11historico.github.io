@@ -51,12 +51,13 @@ export function MatchSequence({
   onHalfTimeChoice?: (choice: HalfTimeChoice) => void;
 }) {
   const playbackMultiplier = getMatchPlaybackMultiplier(useMatchPlaybackSpeed());
-  const durationMs = getMatchSequenceDurationMs(playbackMultiplier);
-  const stopMs = onHalfTimeChoice ? getHalfTimeElapsedMs(result.goalEvents, playbackMultiplier) : durationMs;
+  // El tiempo se cuenta a velocidad normal: cambiar de velocidad no adelanta ni atrasa el partido.
+  const durationMs = getMatchSequenceDurationMs();
+  const stopMs = onHalfTimeChoice ? getHalfTimeElapsedMs(result.goalEvents) : durationMs;
   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   const [elapsedMs, setElapsedMs] = useState(() => (reducedMotion ? stopMs : 0));
   const isAtHalfTime = Boolean(onHalfTimeChoice) && elapsedMs >= stopMs;
-  const frame = getMatchSequenceFrame(result.goalEvents, elapsedMs, playbackMultiplier);
+  const frame = getMatchSequenceFrame(result.goalEvents, elapsedMs);
   const isFinal = frame.stage === "final";
   const homeGoals = isFinal ? result.homeGoals : countGoalsForTeam(frame.visibleGoals, result.homeTeamName);
   const awayGoals = isFinal ? result.awayGoals : countGoalsForTeam(frame.visibleGoals, result.awayTeamName);
@@ -76,11 +77,11 @@ export function MatchSequence({
     if (isFinal || isAtHalfTime) return undefined;
 
     const intervalId = window.setInterval(() => {
-      setElapsedMs((current) => Math.min(stopMs, current + MATCH_SEQUENCE_TICK_MS));
+      setElapsedMs((current) => Math.min(stopMs, current + MATCH_SEQUENCE_TICK_MS / playbackMultiplier));
     }, MATCH_SEQUENCE_TICK_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [isAtHalfTime, isFinal, stopMs]);
+  }, [isAtHalfTime, isFinal, playbackMultiplier, stopMs]);
 
   return (
     <article className={`last-result-card match-sequence ${result.competition === "cup" ? "match-sequence-cup" : "match-sequence-league"}`}>

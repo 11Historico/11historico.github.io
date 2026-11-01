@@ -193,6 +193,41 @@ test("en Europa, arriesgar en el descanso se cuenta en el resultado", async ({ p
   expect(pageErrors).toEqual([]);
 });
 
+test("en Europa, cambiar la velocidad en el descanso no se salta la decisión", async ({ page }) => {
+  await loadSave(page, europeanSave());
+
+  await advanceToEuropeanMatch(page);
+  await page.getByRole("button", { name: "Lento" }).click();
+  await page.getByRole("button", { name: "Simular partido europeo" }).click();
+  const keepPlaying = page.getByRole("button", { name: "Seguir igual" });
+  await expect(keepPlaying).toBeVisible({ timeout: 15_000 });
+
+  // v0.25.84: antes desaparecían las opciones y la carrera quedaba bloqueada.
+  await page.getByRole("button", { name: "Rápido" }).click();
+  await expect(page.locator(".european-match-sequence-clock")).toHaveText("45'");
+  await expect(page.getByText("Resultado europeo")).toHaveCount(0);
+  await keepPlaying.click();
+
+  await expect(page.getByText("Resultado europeo")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("button", { name: "Continuar temporada" })).toBeVisible();
+});
+
+test("en Europa, la simulación automática no corre durante el partido", async ({ page }) => {
+  await loadSave(page, europeanSave());
+
+  await page.getByRole("button", { name: /^Simular$/ }).click();
+  const simulateEuropean = page.getByRole("button", { name: "Simular partido europeo" });
+  await simulateEuropean.click({ timeout: 60_000 });
+
+  // v0.25.84: antes podía seguir y borrar el partido sin dejar decidir, y los botones se quedaban apagados.
+  await expect(page.getByRole("button", { name: "Parar simulación" })).toHaveCount(0);
+  const keepPlaying = page.getByRole("button", { name: "Seguir igual" });
+  await expect(keepPlaying).toBeVisible({ timeout: 15_000 });
+  await keepPlaying.click();
+  await expect(page.getByText("Resultado europeo")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("button", { name: "Continuar temporada" })).toBeVisible();
+});
+
 test("recargar en el descanso cuenta como seguir igual: el partido ya está jugado", async ({ page }) => {
   await loadSave(page, europeanSave());
 
@@ -244,6 +279,9 @@ test("en Copa, el partido se para en el descanso y la decisión se cuenta en el 
   await expect(cupPreview).toHaveCount(0);
   await expect(page.getByRole("region", { name: "Próximo partido de Copa" })).toHaveCount(0);
   await expect(page.locator(".recent-results-card").first().locator("article")).toHaveCount(0);
+  // v0.25.84: cambiar de velocidad en el descanso no enseña el resultado final.
+  await page.getByRole("button", { name: "Rápido" }).click();
+  await expect(page.locator(".match-sequence .match-sequence-clock")).toHaveText("45'");
   await close.click();
 
   await expect(page.locator(".match-sequence .match-approach-effect")).toContainText("Cerrar el partido", { timeout: 15_000 });
