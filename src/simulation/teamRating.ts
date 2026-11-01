@@ -507,28 +507,35 @@ function detectWeaknesses(rating: Pick<TeamRating, NumericTeamRatingKey>): strin
   return weaknesses;
 }
 
+// Puntos de media que debe sacar una línea a otra para marcar el estilo del equipo.
+const PROFILE_LINE_EDGE = 4;
+
 /**
- * Etiqueta general del perfil del equipo.
+ * Etiqueta general del perfil del equipo. Solo es texto: no afecta a los partidos.
  */
-function detectProfileLabel(rating: Pick<TeamRating, NumericTeamRatingKey>): string {
+function detectProfileLabel(
+  rating: Pick<TeamRating, NumericTeamRatingKey>,
+  lines: LineAverages,
+  formation: Formation
+): string {
   if (rating.overall >= 88 && rating.attack >= 84 && rating.defense >= 84) {
     return "Once histórico de nivel campeón";
   }
 
-  if (rating.attack >= 86 && rating.defense < 80) {
+  // Las líneas del rating salen casi iguales por el tope, y por eso el estilo se lee
+  // de la media real de cada línea (v0.25.80). Sin delanteros, los medios son el ataque.
+  const attack = formation.slots.some((slot) => slot.line === "attack") ? lines.attack : lines.midfield;
+
+  if (attack - lines.defense >= PROFILE_LINE_EDGE) {
     return "Equipo ofensivo y vertical";
   }
 
-  if (rating.defense >= 86 && rating.attack < 80) {
+  if (lines.defense - attack >= PROFILE_LINE_EDGE) {
     return "Equipo sólido y competitivo";
   }
 
-  if (rating.control >= 86) {
+  if (lines.midfield - (attack + lines.defense) / 2 >= PROFILE_LINE_EDGE) {
     return "Equipo dominador de mediocampo";
-  }
-
-  if (rating.physical >= 86) {
-    return "Equipo físico e intenso";
   }
 
   if (rating.overall >= 82) {
@@ -596,7 +603,7 @@ export function calculateTeamRating(params: {
 
   return {
     ...cappedRating,
-    profileLabel: detectProfileLabel(cappedRating),
+    profileLabel: detectProfileLabel(cappedRating, baseRatings.lineAverages, formation),
     strengths: detectStrengths(cappedRating),
     weaknesses: detectWeaknesses(cappedRating),
   };

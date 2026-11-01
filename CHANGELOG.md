@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.25.80 — La etiqueta del equipo ya informa
+
+- **Según tu plantilla:** la pantalla final dice si tu equipo es ofensivo, sólido, de mediocampo o equilibrado, comparando la media real de cada línea. Antes, el 92 % de los equipos salía como «Equipo dominador de mediocampo».
+- **Solo es texto:** no cambia ningún resultado. Desaparece «Equipo físico e intenso», que casi nunca salía.
+
 ## v0.25.79 — El 4-6-0 ya no se hunde
 
 - **Los medios hacen de delanteros:** el 4-6-0 no tiene línea de ataque y el juego le daba un 50 en ella. Superaba 0,42 temporadas de media y ahora supera 2,18, a la altura de las demás formaciones.

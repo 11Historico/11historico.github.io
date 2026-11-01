@@ -37,6 +37,37 @@ function averageOverall(players: SelectedPlayer[]): number {
   return players.reduce((sum, selected) => sum + selected.playerSeason.overall, 0) / players.length;
 }
 
+describe("Etiqueta del equipo (v0.25.80)", () => {
+  function labelFor(formationId: string, overalls: { attack: number; midfield: number; defense: number }): string {
+    const formation = getFormation(formationId);
+    const lineBySlot = new Map(formation.slots.map((slot) => [slot.id, slot.line]));
+    const selectedPlayers = buildSquad(formation).map((selected) => {
+      const line = lineBySlot.get(selected.slotId);
+      const overall = line === "attack" ? overalls.attack : line === "midfield" ? overalls.midfield : overalls.defense;
+
+      return { ...selected, playerSeason: { ...selected.playerSeason, overall } };
+    });
+
+    return calculateTeamRating({ formation, selectedPlayers, selectedCoach }).profileLabel;
+  }
+
+  it("lee el estilo de la media real de cada línea", () => {
+    expect(labelFor("4-3-3", { attack: 84, midfield: 78, defense: 76 })).toBe("Equipo ofensivo y vertical");
+    expect(labelFor("4-3-3", { attack: 76, midfield: 78, defense: 84 })).toBe("Equipo sólido y competitivo");
+    expect(labelFor("4-3-3", { attack: 76, midfield: 84, defense: 76 })).toBe("Equipo dominador de mediocampo");
+  });
+
+  it("sin una línea que destaque, la etiqueta depende del nivel", () => {
+    expect(labelFor("4-3-3", { attack: 81, midfield: 81, defense: 81 })).toBe("Equipo equilibrado de alto nivel");
+    expect(labelFor("4-3-3", { attack: 76, midfield: 76, defense: 76 })).toBe("Equipo competitivo");
+  });
+
+  it("en un 4-6-0 los medios cuentan como ataque", () => {
+    expect(labelFor("4-6-0", { attack: 0, midfield: 84, defense: 76 })).toBe("Equipo ofensivo y vertical");
+    expect(labelFor("4-6-0", { attack: 0, midfield: 76, defense: 84 })).toBe("Equipo sólido y competitivo");
+  });
+});
+
 describe("Formación sin delanteros (v0.25.79)", () => {
   it("en un 4-6-0 los medios hacen de delanteros: su ataque no se hunde", () => {
     const formation = getFormation("4-6-0");
