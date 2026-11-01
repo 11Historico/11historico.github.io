@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.25.79 — El 4-6-0 ya no se hunde
+
+- **Los medios hacen de delanteros:** el 4-6-0 no tiene línea de ataque y el juego le daba un 50 en ella. Superaba 0,42 temporadas de media y ahora supera 2,18, a la altura de las demás formaciones.
+- **Solo cambia esta formación:** el resto de resultados son idénticos. Las carreras ya empezadas se corrigen al volver a pasar por el resumen del equipo.
+
 ## v0.25.78 — Decisión en el descanso
 
 - **Pausa en el minuto 45:** en los partidos sueltos de Copa y Europa decides viendo el marcador: seguir igual, arriesgar o cerrar el partido.

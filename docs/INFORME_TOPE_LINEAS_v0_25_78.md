@@ -4,6 +4,8 @@ Mide si conviene relajar `capRatingBySquadAverage` para que el draft cambie cóm
 
 Se repite con `npm run audit:linecap`, y es reproducible. Son 19.800 carreras y unos 8.000 drafts simulados.
 
+**Nota:** el 4-6-0 se corrigió en la v0.25.79, así que el comando ya no reproduce las filas de esa formación ni la fila de prueba. El resto de tablas no cambia.
+
 ## Conclusiones
 
 1. **Relajar el tope no da lo que buscábamos, y no propongo tocarlo.** La auditoría anterior lo señalaba como el arreglo con más potencial para el draft. Esta medición lo desmiente: subir el tope hace al equipo más fuerte, no más distinto.

@@ -218,9 +218,13 @@ function calculateBaseRatings(
   const midfielders = getPlayersByLine(selectedPlayers, formation, "midfield").map(
     (selected) => selected.playerSeason
   );
-  const attackers = getPlayersByLine(selectedPlayers, formation, "attack").map(
-    (selected) => selected.playerSeason
-  );
+  // Sin línea de ataque en la formación (4-6-0), los medios hacen de delanteros:
+  // si no, esa línea valdría el 50 de reserva y el equipo se hundiría (v0.25.79).
+  const attackers = formation.slots.some((slot) => slot.line === "attack")
+    ? getPlayersByLine(selectedPlayers, formation, "attack").map(
+      (selected) => selected.playerSeason
+    )
+    : midfielders;
 
   const attack = weightedAverage([
     {
