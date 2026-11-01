@@ -146,12 +146,13 @@ function EuropeanMatchSequence({
   onPlayingChange?: (playing: boolean) => void;
 }) {
   const playbackMultiplier = getMatchPlaybackMultiplier(useMatchPlaybackSpeed());
-  const durationMs = getEuropeanSequenceDurationMs(match, playbackMultiplier);
-  const stopMs = onHalfTimeChoice ? getEuropeanHalfTimeElapsedMs(playbackMultiplier) : durationMs;
+  // El tiempo se cuenta a velocidad normal: cambiar de velocidad no adelanta ni atrasa el partido.
+  const durationMs = getEuropeanSequenceDurationMs(match);
+  const stopMs = onHalfTimeChoice ? getEuropeanHalfTimeElapsedMs() : durationMs;
   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   const [elapsedMs, setElapsedMs] = useState(() => (reducedMotion ? stopMs : 0));
   const isAtHalfTime = Boolean(onHalfTimeChoice) && elapsedMs >= stopMs;
-  const frame = getEuropeanSequenceFrame(match, elapsedMs, playbackMultiplier);
+  const frame = getEuropeanSequenceFrame(match, elapsedMs);
   const isFinal = frame.stage === "final";
   const score = frame.stage === "regular" && frame.minute !== undefined
     ? getEuropeanLiveScore(match.goalEvents, frame.minute)
@@ -184,11 +185,11 @@ function EuropeanMatchSequence({
     if (isFinal || isAtHalfTime) return undefined;
 
     const intervalId = window.setInterval(() => {
-      setElapsedMs((current) => Math.min(stopMs, current + EUROPEAN_SEQUENCE_TICK_MS));
+      setElapsedMs((current) => Math.min(stopMs, current + EUROPEAN_SEQUENCE_TICK_MS / playbackMultiplier));
     }, EUROPEAN_SEQUENCE_TICK_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [isAtHalfTime, isFinal, stopMs]);
+  }, [isAtHalfTime, isFinal, playbackMultiplier, stopMs]);
 
   const progressPercent = Math.min(100, (elapsedMs / durationMs) * 100);
   const liveText = isAtHalfTime

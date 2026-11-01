@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.84 — El descanso ya no puede bloquear la carrera
+
+- **Sin bloqueos:** cambiar la velocidad en el descanso europeo dejaba la carrera parada, sin opciones ni forma de seguir. Y la simulación automática podía borrar un partido europeo sin dejar decidir, con los botones apagados para siempre.
+- **Sin adelantos:** cambiar la velocidad en el descanso de Copa enseñaba el resultado final. Ahora la velocidad solo cambia lo rápido que avanza el partido, nunca en qué punto está.
+- **No cambia ningún resultado.** Si te ocurrió, recarga la página: la partida sigue donde estaba.
+
 ## v0.25.83 — El marcador de la Supercopa se ve
 
 - **Resultados legibles:** los goles salían en amarillo sobre blanco y el marcador, desalineado. Ahora la tarjeta del partido se ve como en Liga y Copa.

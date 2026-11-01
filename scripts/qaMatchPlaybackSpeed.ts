@@ -60,7 +60,7 @@ function testWiring(): void {
 
   assert(view.includes("<PlaybackSpeedControl />"), "La tarjeta de acciones debe mostrar el selector de velocidad.");
   assert(view.includes("AUTO_SIMULATION_DELAY_MS * playbackMultiplier"), "La pausa entre partidos debe escalar con la velocidad.");
-  assert(card.includes("getEuropeanSequenceDurationMs(match, playbackMultiplier)"), "La secuencia europea debe usar la velocidad.");
+  assert(card.includes("EUROPEAN_SEQUENCE_TICK_MS / playbackMultiplier"), "La secuencia europea debe usar la velocidad.");
   assert(speedStore.includes("try {") && speedStore.includes("catch"), "La preferencia debe tolerar un almacenamiento no disponible.");
   assert(leagueCss.includes("@media (prefers-reduced-motion: reduce)"), "Liga debe respetar el movimiento reducido.");
   assert(europeanCss.includes("@media (prefers-reduced-motion: reduce)"), "Europa debe respetar el movimiento reducido.");

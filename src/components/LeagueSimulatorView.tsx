@@ -435,6 +435,9 @@ export function LeagueSimulatorView({
   function handleSimulateEuropeanMatch() {
     if (!europeanTournament || !pendingEuropeanMatch) return;
 
+    // Como en Copa: si la simulación siguiera, borraría este partido antes de decidir en el descanso.
+    setIsAutoSimulating(false);
+
     const input: SimulateEuropeanMatchInput = {
       userTeamRating: europeanUserRating,
       opponentRating: pendingEuropeanMatch.opponent.rating,
@@ -510,7 +513,7 @@ export function LeagueSimulatorView({
 
   useEffect(() => {
     // La siguiente jornada espera a que termine la secuencia del partido actual.
-    if (!isAutoSimulating || isSequencePlaying) return undefined;
+    if (!isAutoSimulating || isMatchPlaying) return undefined;
 
     if (context.state.completed || getPendingCupFixture(context) || pendingEuropeanMatch) {
       const stopTimeoutId = window.setTimeout(() => {
@@ -563,7 +566,7 @@ export function LeagueSimulatorView({
     }, AUTO_SIMULATION_DELAY_MS * playbackMultiplier);
 
     return () => window.clearTimeout(timeoutId);
-  }, [commitContext, context, effectiveTeamRating, finishIfReady, isAutoSimulating, isSequencePlaying, maybeOfferSeasonLuckWheel, pendingEuropeanMatch, playbackMultiplier, selectedPlayers]);
+  }, [commitContext, context, effectiveTeamRating, finishIfReady, isAutoSimulating, isMatchPlaying, maybeOfferSeasonLuckWheel, pendingEuropeanMatch, playbackMultiplier, selectedPlayers]);
 
   function simulateLeagueUntilNextEvent(params: {
     initialContext: UserLeagueSimulationContext;

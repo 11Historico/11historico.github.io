@@ -95,8 +95,8 @@ function testWiring(): void {
   assert(view.includes("<MatchSequence"), "La vista debe usar MatchSequence para el último resultado.");
   assert(!view.includes('<article className="last-result-card">'), "La tarjeta estática de resultado debe haberse sustituido.");
   assert(
-    view.includes("if (!isAutoSimulating || isSequencePlaying) return undefined;"),
-    "La auto-simulación debe esperar a que termine la secuencia.",
+    view.includes("if (!isAutoSimulating || isMatchPlaying) return undefined;"),
+    "La auto-simulación debe esperar a que termine la secuencia, también la europea.",
   );
   assert(view.includes("onPlayingChange={setIsSequencePlaying}"), "La secuencia debe avisar a la vista cuando juega.");
   assert(css.includes(".match-sequence-cup"), "La Copa debe tener su estilo propio.");
