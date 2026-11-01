@@ -3,15 +3,13 @@
 // Estudio del tope de las líneas (capRatingBySquadAverage). No cambia el juego: las
 // alternativas solo existen dentro de esta auditoría. Reproducible: npm run audit:linecap
 
-import { createRandomPlayerRoundSeasons } from "../src/app/draftSeasons";
 import { applyDifficultyToTeamRating } from "../src/career/teamPower";
 import { ATHLETIC_SEASONS } from "../src/data/athletic/seasons";
 import { FORMATIONS } from "../src/data/formations";
-import { getAvailableSlotsForPlayer, isPlayerAlreadySelected, resolvePlayerSlotPlacement } from "../src/domain/positionRules";
 import { calculateTeamRating } from "../src/simulation/teamRating";
-import type { Formation, FormationSlot, GameDifficulty, PlayerSeason, SeasonId, SelectedCoach, SelectedPlayer, TeamRating } from "../src/types/game";
+import type { Formation, FormationSlot, GameDifficulty, PlayerSeason, TeamRating } from "../src/types/game";
 
-import { mean, meanWithMargin, playCareer, seedCareer, share, type CareerTeam, type Policy } from "./auditCareerRunner";
+import { draftTeam, mean, meanWithMargin, playCareer, seedCareer, share, type CareerTeam, type DraftedTeam, type DraftStyle, type Policy } from "./auditCareerRunner";
 
 const DRAFTS = Number(process.argv.find((arg) => arg.startsWith("--drafts="))?.split("=")[1] ?? 1300);
 const CAREERS_PER_CELL = Number(process.argv.find((arg) => arg.startsWith("--careers="))?.split("=")[1] ?? 300);
@@ -38,14 +36,6 @@ function ratingWithoutSoftCap(team: DraftedTeam): TeamRating {
   return rating;
 }
 
-type DraftStyle = "best" | "random" | "attack" | "defense" | "attackExtreme" | "defenseExtreme";
-
-interface DraftedTeam {
-  formation: Formation;
-  selectedPlayers: SelectedPlayer[];
-  selectedCoach: SelectedCoach;
-}
-
 const STYLES: { label: string; style: DraftStyle }[] = [
   { label: "Mejor media", style: "best" },
   { label: "Al azar", style: "random" },
@@ -54,56 +44,6 @@ const STYLES: { label: string; style: DraftStyle }[] = [
   { label: "Ataque extremo", style: "attackExtreme" },
   { label: "Defensa extrema", style: "defenseExtreme" },
 ];
-
-const seasonsById = new Map(ATHLETIC_SEASONS.map((season) => [season.season as SeasonId, season]));
-const FRONT_LINES: FormationSlot["line"][] = ["attack", "midfield"];
-
-/** Cuánto le gusta a cada estilo poner a este jugador en este hueco. */
-function pickScore(player: PlayerSeason, slot: FormationSlot, style: DraftStyle): number {
-  const isFront = FRONT_LINES.includes(slot.line);
-
-  if (style === "best") return player.overall;
-  if (style === "random") return Math.random();
-  if (style === "attack") return player.overall + (isFront ? 100 : 0);
-  if (style === "defense") return player.overall + (isFront ? 0 : 100);
-  if (style === "attackExtreme") return isFront ? 100 + player.overall : -player.overall;
-  return isFront ? -player.overall : 100 + player.overall;
-}
-
-function draftTeam(formation: Formation, style: DraftStyle): DraftedTeam {
-  const seasons = createRandomPlayerRoundSeasons(formation.slots.length);
-  const selectedPlayers: SelectedPlayer[] = [];
-
-  for (const seasonId of seasons) {
-    // Si la temporada no tiene a nadie que encaje, el juego ofrece otra.
-    const pool = [seasonId, ...ATHLETIC_SEASONS.map((season) => season.season as SeasonId)];
-    let best: { player: PlayerSeason; slot: FormationSlot; score: number } | undefined;
-
-    for (const id of pool) {
-      for (const player of seasonsById.get(id)?.players ?? []) {
-        if (isPlayerAlreadySelected(player, selectedPlayers)) continue;
-
-        for (const slot of getAvailableSlotsForPlayer({ player, formation, selectedPlayers })) {
-          const score = pickScore(player, slot, style);
-          if (!best || score > best.score) best = { player, slot, score };
-        }
-      }
-      if (best) break;
-    }
-
-    if (!best) throw new Error("No se pudo completar el draft.");
-    const placement = resolvePlayerSlotPlacement(best.player, best.slot);
-    selectedPlayers.push({ slotId: best.slot.id, position: placement.assignedPosition as SelectedPlayer["position"], playerSeason: best.player });
-  }
-
-  // Tres entrenadores de temporadas al azar: se queda el de más media.
-  const coaches = createRandomPlayerRoundSeasons(3)
-    .map((id) => seasonsById.get(id)?.coach)
-    .filter((coach) => coach !== undefined)
-    .sort((a, b) => b.overall - a.overall);
-
-  return { formation, selectedPlayers, selectedCoach: { coachSeason: coaches[0] } };
-}
 
 function pct(values: boolean[]): string {
   return share(values.filter(Boolean).length, values.length);

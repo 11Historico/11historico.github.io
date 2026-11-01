@@ -8,12 +8,15 @@
 
 import { readFileSync } from "node:fs";
 
+import { createRandomPlayerRoundSeasons } from "../src/app/draftSeasons";
 import { calculateCareerArcadeScore, getFinalCareerTrophyCounts } from "../src/career/careerRanking";
 import { applyCareerRivalProgression, CAREER_RELEGATION_POSITION, evaluateCareerObjective, getEuropeanQualification } from "../src/career/careerRules";
 import { awardEuropeanPrestigeToCareer } from "../src/career/europeanPrestige";
 import { awardEuropeanTrophyToCareer } from "../src/career/europeanTrophies";
 import { createCareerSupercopaQualification, getSupercopaSemifinalPreview, simulateCareerSupercopa } from "../src/career/supercopaRules";
 import { applyCareerRatingBonus, applyDifficultyToTeamRating } from "../src/career/teamPower";
+import { ATHLETIC_SEASONS } from "../src/data/athletic/seasons";
+import { getAvailableSlotsForPlayer, isPlayerAlreadySelected, resolvePlayerSlotPlacement } from "../src/domain/positionRules";
 import { EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS, shouldPlayEuropeanMatchAtLeagueMatchday } from "../src/europe/europeanCalendar";
 import {
   appendEuropeanQualification,
@@ -40,7 +43,7 @@ import {
 import { USER_TEAM_ID } from "../src/data/laliga2526Teams";
 import { applyHalfTimeChoice, type MatchOdds } from "../src/simulation/matchEngine";
 import type { CareerSupercopaQualification, CareerTrophyCounts } from "../src/types/career";
-import type { FinalGameSummary, Formation, GameDifficulty, HalfTimeChoice, MatchApproach, MatchResult, RivalTeam, SelectedCoach, SelectedPlayer, TeamRating } from "../src/types/game";
+import type { FinalGameSummary, Formation, FormationSlot, GameDifficulty, HalfTimeChoice, MatchApproach, MatchResult, PlayerSeason, RivalTeam, SeasonId, SelectedCoach, SelectedPlayer, TeamRating } from "../src/types/game";
 
 // Tope por carrera: sin él, un equipo muy fuerte puede no terminar nunca. La tabla dice cuántas llegan.
 const MAX_SEASONS = 25;
@@ -85,6 +88,65 @@ export function seedCareer(seed: number): void {
   clock = 1_700_000_000_000 + seed * 1_000_003;
 }
 
+export type DraftStyle = "best" | "random" | "attack" | "defense" | "attackExtreme" | "defenseExtreme";
+
+export interface DraftedTeam {
+  formation: Formation;
+  selectedPlayers: SelectedPlayer[];
+  selectedCoach: SelectedCoach;
+}
+
+const seasonsById = new Map(ATHLETIC_SEASONS.map((season) => [season.season as SeasonId, season]));
+const FRONT_LINES: FormationSlot["line"][] = ["attack", "midfield"];
+
+/** Cuánto le gusta a cada estilo poner a este jugador en este hueco. */
+function pickScore(player: PlayerSeason, slot: FormationSlot, style: DraftStyle): number {
+  const isFront = FRONT_LINES.includes(slot.line);
+
+  if (style === "best") return player.overall;
+  if (style === "random") return Math.random();
+  if (style === "attack") return player.overall + (isFront ? 100 : 0);
+  if (style === "defense") return player.overall + (isFront ? 0 : 100);
+  if (style === "attackExtreme") return isFront ? 100 + player.overall : -player.overall;
+  return isFront ? -player.overall : 100 + player.overall;
+}
+
+/** Draft simulado con las reglas del juego: una temporada al azar por ronda y un jugador que encaje. */
+export function draftTeam(formation: Formation, style: DraftStyle): DraftedTeam {
+  const seasons = createRandomPlayerRoundSeasons(formation.slots.length);
+  const selectedPlayers: SelectedPlayer[] = [];
+
+  for (const seasonId of seasons) {
+    // Si la temporada no tiene a nadie que encaje, el juego ofrece otra.
+    const pool = [seasonId, ...ATHLETIC_SEASONS.map((season) => season.season as SeasonId)];
+    let best: { player: PlayerSeason; slot: FormationSlot; score: number } | undefined;
+
+    for (const id of pool) {
+      for (const player of seasonsById.get(id)?.players ?? []) {
+        if (isPlayerAlreadySelected(player, selectedPlayers)) continue;
+
+        for (const slot of getAvailableSlotsForPlayer({ player, formation, selectedPlayers })) {
+          const score = pickScore(player, slot, style);
+          if (!best || score > best.score) best = { player, slot, score };
+        }
+      }
+      if (best) break;
+    }
+
+    if (!best) throw new Error("No se pudo completar el draft.");
+    const placement = resolvePlayerSlotPlacement(best.player, best.slot);
+    selectedPlayers.push({ slotId: best.slot.id, position: placement.assignedPosition as SelectedPlayer["position"], playerSeason: best.player });
+  }
+
+  // Tres entrenadores de temporadas al azar: se queda el de más media.
+  const coaches = createRandomPlayerRoundSeasons(3)
+    .map((id) => seasonsById.get(id)?.coach)
+    .filter((coach) => coach !== undefined)
+    .sort((a, b) => b.overall - a.overall);
+
+  return { formation, selectedPlayers, selectedCoach: { coachSeason: coaches[0] } };
+}
+
 const trophyPlausibilitySource = readFileSync("apps-script/globalRankingBackend.gs", "utf8").replace(/\r\n/g, "\n").match(/function checkTrophyPlausibility_\([\s\S]*?\n\}\n/);
 if (!trophyPlausibilitySource) throw new Error("No se encuentra checkTrophyPlausibility_ en globalRankingBackend.gs.");
 const checkTrophyPlausibility = new Function(`${trophyPlausibilitySource[0]}\nreturn checkTrophyPlausibility_;`)() as (seasons: number, trophies: CareerTrophyCounts) => void;
@@ -100,7 +162,7 @@ function pickApproach(policy: ApproachPolicy, oddsFor: (approach: MatchApproach)
   return ranked[0].approach;
 }
 
-function pickHalfTime(policy: HalfTimePolicy, margin: number, userIsWeaker: boolean): HalfTimeChoice {
+export function pickHalfTime(policy: HalfTimePolicy, margin: number, userIsWeaker: boolean): HalfTimeChoice {
   if (policy === "keep") return "keep";
 
   const good: HalfTimeChoice = margin < 0 ? "push" : margin > 0 ? "close" : userIsWeaker ? "close" : "keep";
@@ -110,9 +172,9 @@ function pickHalfTime(policy: HalfTimePolicy, margin: number, userIsWeaker: bool
 }
 
 const advanceValue = (odds: MatchOdds) => odds.win + odds.draw / 2;
-const pointsValue = (odds: MatchOdds) => 3 * odds.win + odds.draw;
+export const pointsValue = (odds: MatchOdds) => 3 * odds.win + odds.draw;
 
-function getHalfTimeMargin(result: MatchResult): number {
+export function getHalfTimeMargin(result: MatchResult): number {
   const userName = result.expectedGoals?.userIsHome ? result.homeTeamName : result.awayTeamName;
   const firstHalf = result.goalEvents.filter((goal) => goal.minute <= 45);
   const userGoals = firstHalf.filter((goal) => goal.teamName === userName).length;
