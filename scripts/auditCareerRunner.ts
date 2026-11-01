@@ -301,6 +301,9 @@ export function playCareer(params: {
   let goalsFor = 0;
   let goalsAgainst = 0;
   let leagueMatches = 0;
+  // La 1.ª temporada compara en igualdad: en las siguientes, quien sobrevive más se enfrenta a rivales mejores.
+  let firstSeasonPosition = 0;
+  let firstSeasonPoints = 0;
 
   seedCareer(seed);
 
@@ -338,6 +341,10 @@ export function playCareer(params: {
     goalsFor += userRow?.goalsFor ?? 0;
     goalsAgainst += userRow?.goalsAgainst ?? 0;
     leagueMatches += userRow?.played ?? 0;
+    if (completedSeasons === 0) {
+      firstSeasonPosition = summary.leaguePosition;
+      firstSeasonPoints = userRow?.points ?? 0;
+    }
 
     const wonCopa = Boolean(summary.cupTrophyWon);
     const copaWinnerLeaguePosition = getCopaWinnerLeaguePosition(summary);
@@ -372,6 +379,8 @@ export function playCareer(params: {
         reachedCap: !objective.isGameOver,
         plausible,
         averagePosition: leaguePositions / seasonsPlayed,
+        firstSeasonPosition,
+        firstSeasonPoints,
         goalsForPerMatch: goalsFor / Math.max(1, leagueMatches),
         goalsAgainstPerMatch: goalsAgainst / Math.max(1, leagueMatches),
       };

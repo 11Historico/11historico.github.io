@@ -13,6 +13,7 @@ import { draftTeam, getHalfTimeMargin, mean, meanWithMargin, pickHalfTime, playC
 
 const CAREERS_PER_CELL = Number(process.argv.find((arg) => arg.startsWith("--careers="))?.split("=")[1] ?? 300);
 // --only=texto: solo las políticas cuyo nombre lo contiene. Cada carrera tiene su semilla, así que las filas no cambian.
+// npm se queda con --only: se pasa llamando directamente a node .audit-dist/auditLeagueDecisions.js.
 const ONLY = process.argv.find((arg) => arg.startsWith("--only="))?.split("=")[1] ?? "";
 const LEAGUE_MATCHDAYS = 38;
 // Menos tiradas que la previa del juego: se calcula en cada partido de cada carrera.
@@ -27,8 +28,8 @@ interface LeaguePolicy {
   approach: LeagueApproach;
   /** Solo decide en las últimas jornadas. Sin definir, en todas. */
   lastMatchdays?: number;
-  /** Solo decide contra rivales de su nivel o mejores. */
-  bigMatches?: boolean;
+  /** Solo decide si la media del rival llega a la del equipo menos este margen. */
+  bigMatchMargin?: number;
   halfTime?: "good" | "bad";
   cups: Policy;
 }
@@ -47,8 +48,21 @@ const POLICIES: LeaguePolicy[] = [
   { label: "Últimas 5 jornadas, con descanso", decisions: "10", approach: "best", lastMatchdays: 5, halfTime: "good", cups: CUPS_WELL },
   { label: "Últimas 10 jornadas", decisions: "10", approach: "best", lastMatchdays: 10, cups: CUPS_WELL },
   { label: "Últimas 10 jornadas, con descanso", decisions: "20", approach: "best", lastMatchdays: 10, halfTime: "good", cups: CUPS_WELL },
-  { label: "Partidos grandes", decisions: "", approach: "best", bigMatches: true, cups: CUPS_WELL },
-  { label: "Partidos grandes, con descanso", decisions: "", approach: "best", bigMatches: true, halfTime: "good", cups: CUPS_WELL },
+  { label: "Partidos grandes", decisions: "", approach: "best", bigMatchMargin: 1, cups: CUPS_WELL },
+  { label: "Partidos grandes, con descanso", decisions: "", approach: "best", bigMatchMargin: 1, halfTime: "good", cups: CUPS_WELL },
+  { label: "Partidos grandes, solo descanso", decisions: "", approach: "none", bigMatchMargin: 1, halfTime: "good", cups: CUPS_WELL },
+  { label: "Partidos grandes, solo descanso, decide mal", decisions: "", approach: "none", bigMatchMargin: 1, halfTime: "bad", cups: CUPS_WELL },
+  { label: "Partidos grandes, decide mal", decisions: "", approach: "worst", bigMatchMargin: 1, cups: CUPS_WELL },
+  { label: "Partidos grandes, con descanso, decide mal", decisions: "", approach: "worst", bigMatchMargin: 1, halfTime: "bad", cups: CUPS_WELL },
+  ...[3, -1, -3].flatMap((margin): LeaguePolicy[] => {
+    const label = `Partidos grandes (margen ${margin > 0 ? "+" : ""}${margin})`;
+
+    return [
+      { label, decisions: "", approach: "best", bigMatchMargin: margin, cups: CUPS_WELL },
+      { label: `${label}, con descanso`, decisions: "", approach: "best", bigMatchMargin: margin, halfTime: "good", cups: CUPS_WELL },
+      { label: `${label}, con descanso, decide mal`, decisions: "", approach: "worst", bigMatchMargin: margin, halfTime: "bad", cups: CUPS_WELL },
+    ];
+  }),
   { label: "Todos los partidos", decisions: "38", approach: "best", cups: CUPS_WELL },
   { label: "Todos los partidos, con descanso", decisions: "76", approach: "best", halfTime: "good", cups: CUPS_WELL },
   { label: "Todos los partidos, decide mal", decisions: "76", approach: "worst", halfTime: "bad", cups: CUPS_BADLY },
@@ -58,7 +72,11 @@ let current: LeaguePolicy = POLICIES[0];
 // Qué planteamiento resulta ser el mejor, partido a partido: si siempre es el mismo, no hay decisión.
 let chosen: Record<MatchApproach, number> = { balanced: 0, attacking: 0, defensive: 0 };
 let decidedThisMatch = false;
-const BIG_MATCH_MARGIN = 1;
+// Partidos en que se decide y carreras que llegan, por número de temporada: los rivales suben con el tiempo.
+let lastMatchday = 0;
+let seasonIndex = 0;
+let decidedBySeason: number[] = [];
+let careersBySeason: number[] = [];
 
 function isDecisionMatchday(matchday: number): boolean {
   return current.lastMatchdays === undefined || matchday > LEAGUE_MATCHDAYS - current.lastMatchdays;
@@ -95,7 +113,12 @@ function getLeagueApproach(params: {
 (globalThis as { __auditLeague?: unknown }).__auditLeague = {
   matchOptions(params: Parameters<typeof getLeagueApproach>[0] & { matchday: number }) {
     decidedThisMatch = isDecisionMatchday(params.matchday)
-      && (!current.bigMatches || params.rival.ratings.overall >= getAverageUserRating(params.teamRating) - BIG_MATCH_MARGIN);
+      && (current.bigMatchMargin === undefined || params.rival.ratings.overall >= getAverageUserRating(params.teamRating) - current.bigMatchMargin);
+
+    if (params.matchday <= lastMatchday) seasonIndex += 1;
+    if (params.matchday <= lastMatchday || lastMatchday === 0) careersBySeason[seasonIndex] = (careersBySeason[seasonIndex] ?? 0) + 1;
+    lastMatchday = params.matchday;
+    if (decidedThisMatch) decidedBySeason[seasonIndex] = (decidedBySeason[seasonIndex] ?? 0) + 1;
 
     if (!decidedThisMatch) return {};
 
@@ -125,17 +148,21 @@ let rejected = 0;
 for (const { label: difficultyLabel, value: difficulty } of DIFFICULTIES) {
   for (const { label: draftLabel, style } of DRAFTS) {
     console.log(`\n### Dificultad ${difficultyLabel} · draft «${draftLabel}»\n`);
-    console.log("| Jugador | Decisiones en Liga por temporada | Temporadas superadas | Pasa la 1.ª | Posición media | Títulos por temporada | Goles a favor por partido | En contra | Puntuación | Elige ataque | Equilibrado | Defensa |");
-    console.log("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+    console.log("| Jugador | Decisiones en Liga por temporada | Partidos en que decide, temporadas 1.ª · 3.ª · 5.ª | Temporadas superadas | Pasa la 1.ª | Posición en la 1.ª | Puntos en la 1.ª | Posición media | Títulos por temporada | Goles a favor por partido | En contra | Puntuación | Elige ataque | Equilibrado | Defensa |");
+    console.log("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
 
     for (const policy of POLICIES.filter((item) => item.label.includes(ONLY))) {
       current = policy;
       chosen = { balanced: 0, attacking: 0, defensive: 0 };
+      decidedBySeason = [];
+      careersBySeason = [];
 
       const careers = Array.from({ length: CAREERS_PER_CELL }, (_, index) => {
         const seed = index + 1;
         seedCareer(seed + 7_000_000);
         const team = draftTeam(FORMATIONS[index % FORMATIONS.length], style);
+        lastMatchday = 0;
+        seasonIndex = 0;
 
         return playCareer({ policy: policy.cups, seed, difficulty, team: { ...team, teamRating: calculateTeamRating(team) } });
       });
@@ -146,12 +173,16 @@ for (const { label: difficultyLabel, value: difficulty } of DIFFICULTIES) {
       rejected += careers.filter((career) => !career.plausible).length;
 
       const decided = chosen.attacking + chosen.balanced + chosen.defensive;
+      const decidedInSeason = (index: number) => (careersBySeason[index] ? ((decidedBySeason[index] ?? 0) / careersBySeason[index]).toFixed(1) : "-");
 
       console.log(`| ${[
         policy.label,
         policy.decisions || (decided / Math.max(1, seasons)).toFixed(1),
+        [0, 2, 4].map(decidedInSeason).join(" · "),
         meanWithMargin(careers.map((career) => career.completedSeasons)),
         share(careers.filter((career) => career.completedSeasons >= 1).length, careers.length),
+        meanWithMargin(careers.map((career) => career.firstSeasonPosition)),
+        meanWithMargin(careers.map((career) => career.firstSeasonPoints)),
         mean(careers.map((career) => career.averagePosition)).toFixed(1),
         (titles / Math.max(1, seasons)).toFixed(2),
         mean(careers.map((career) => career.goalsForPerMatch)).toFixed(2),
