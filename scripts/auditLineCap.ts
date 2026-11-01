@@ -16,10 +16,10 @@ import { mean, meanWithMargin, playCareer, seedCareer, share, type CareerTeam, t
 const DRAFTS = Number(process.argv.find((arg) => arg.startsWith("--drafts="))?.split("=")[1] ?? 1300);
 const CAREERS_PER_CELL = Number(process.argv.find((arg) => arg.startsWith("--careers="))?.split("=")[1] ?? 300);
 
-const globals = globalThis as { __auditLineHeadroom?: number; __auditSoftHeadroom?: number; __auditMidfieldAttack?: boolean };
+const globals = globalThis as { __auditLineHeadroom?: number; __auditSoftHeadroom?: number };
 
-// El 4-6-0 no tiene delanteros y su ataque se hunde (secciones 3 y 8): se mide aparte
-// para que no distorsione las medias y las comparaciones por estilo del resto.
+// El 4-6-0 no tiene delanteros con los que comparar a los defensas: se mide aparte
+// para que no distorsione las comparaciones por estilo del resto.
 const NO_ATTACKERS_FORMATION = "4-6-0";
 const COMMON_FORMATIONS = FORMATIONS.filter((formation) => formation.id !== NO_ATTACKERS_FORMATION);
 
@@ -299,8 +299,6 @@ interface Scenario {
   afterCompression?: boolean;
   /** Fuerza una diferencia exacta de ataque - defensa, sin cambiar la fuerza del equipo. */
   forcedGap?: number;
-  /** Prueba: sin delanteros, los medios hacen de delanteros. */
-  midfieldAttack?: boolean;
 }
 
 const ACTUAL: Scenario = { label: "Actual (+8)" };
@@ -315,13 +313,6 @@ const SCENARIOS: Scenario[] = [
 ];
 
 function getCareerTeam(team: DraftedTeam, scenario: Scenario, difficulty: GameDifficulty): CareerTeam {
-  if (scenario.midfieldAttack) {
-    globals.__auditMidfieldAttack = true;
-    const teamRating = calculateTeamRating(team);
-    globals.__auditMidfieldAttack = undefined;
-    return { ...team, teamRating };
-  }
-
   if (scenario.forcedGap !== undefined) {
     const capped = calculateTeamRating(team);
     const effective = applyDifficultyToTeamRating(capped, difficulty, true);
@@ -494,9 +485,12 @@ for (const formationId of ["5-4-1", "5-3-2", "4-3-3", "3-3-4", NO_ATTACKERS_FORM
   }
 }
 
-const noAttackers = FORMATIONS.find((item) => item.id === NO_ATTACKERS_FORMATION);
-if (!noAttackers) throw new Error(`Falta la formación ${NO_ATTACKERS_FORMATION}.`);
-console.log(careerRow(`${NO_ATTACKERS_FORMATION} · prueba: los medios hacen de delanteros`, runCell({ style: "best", formation: noAttackers, difficulty: "dificil", scenario: { label: "Medios arriba", midfieldAttack: true }, policy: NEVER_DECIDES })));
+for (const formationId of ["4-3-3", NO_ATTACKERS_FORMATION]) {
+  const formation = FORMATIONS.find((item) => item.id === formationId);
+  if (!formation) throw new Error(`Falta la formación ${formationId}.`);
+
+  console.log(careerRow(`${formationId} · Actual (+8), dificultad Fácil`, runCell({ style: "best", formation, difficulty: "normal", scenario: ACTUAL, policy: NEVER_DECIDES })));
+}
 
 console.log("\n## 8b. Cuánto reacciona el motor a las líneas\n\nDraft «Mejor media» en 4-3-3, dificultad Normal. Misma fuerza: solo cambia la diferencia entre ataque y defensa, ya en valores efectivos.\n");
 console.log(CAREER_HEADER);
