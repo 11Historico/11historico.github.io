@@ -34,6 +34,8 @@ import { getMatchPlaybackMultiplier, useMatchPlaybackSpeed } from "./matchPlayba
 import { MatchDominanceBar } from "./MatchDominanceBar";
 import { MatchIcon } from "./MatchIcon";
 import { MatchHalfTimeControl } from "./MatchHalfTimeControl";
+import { getEuropeanVerdict, type MatchVerdict } from "./matchVerdict";
+import { MatchVerdictBanner } from "./MatchVerdictBanner";
 import TacticalPitch from "./TacticalPitch";
 import {
   getGoalContributions,
@@ -139,11 +141,14 @@ function EuropeanMatchSequence({
   pitch,
   onHalfTimeChoice,
   onPlayingChange,
+  verdict,
 }: {
   match: EuropeanTournamentMatch;
   pitch?: EuropeanMatchPitch;
   onHalfTimeChoice?: (choice: HalfTimeChoice) => void;
   onPlayingChange?: (playing: boolean) => void;
+  /** Solo se enseña al final del partido, para no adelantar el resultado (v0.25.86). */
+  verdict?: MatchVerdict;
 }) {
   const playbackMultiplier = getMatchPlaybackMultiplier(useMatchPlaybackSpeed());
   // El tiempo se cuenta a velocidad normal: cambiar de velocidad no adelanta ni atrasa el partido.
@@ -216,6 +221,7 @@ function EuropeanMatchSequence({
             <span>{getResultLabel(match)}</span>
           </div>
           {getEuropeanMatchDecisionText(match) && <small>{getEuropeanMatchDecisionText(match)}</small>}
+          {verdict && <MatchVerdictBanner verdict={verdict} />}
           {match.keyFactor && (
             <p className="match-key-factor">
               <MatchIcon kind={getMatchKeyFactorIcon(match.keyFactor)} />
@@ -368,7 +374,7 @@ export function EuropeanMatchEvent({
 
       {isPlayed && (
         <div className="european-match-event-result">
-          <EuropeanMatchSequence key={match.id} match={match} pitch={pitch} onHalfTimeChoice={onHalfTimeChoice} onPlayingChange={onPlayingChange} />
+          <EuropeanMatchSequence key={match.id} match={match} pitch={pitch} onHalfTimeChoice={onHalfTimeChoice} onPlayingChange={onPlayingChange} verdict={getEuropeanVerdict(tournament, match)} />
         </div>
       )}
 
