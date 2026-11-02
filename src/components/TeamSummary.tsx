@@ -29,6 +29,8 @@ interface TeamSummaryProps {
   careerRatingBonus?: number;
   difficulty?: GameDifficulty;
   isCareerMode?: boolean;
+  /** Temporada que se va a jugar, en formato corto («27/28»). */
+  seasonLabel?: string;
 }
 
 type SafeTeamRating = TeamRating & {
@@ -187,6 +189,7 @@ export function TeamSummary({
   careerRatingBonus = 0,
   difficulty = "normal",
   isCareerMode = false,
+  seasonLabel = "25/26",
 }: TeamSummaryProps) {
   const teamRating = useMemo(
     () => getSafeTeamRating(formation, selectedPlayers, selectedCoach),
@@ -228,7 +231,7 @@ export function TeamSummary({
           <div>
             <h1>Athletic Club Histórico</h1>
             <p>
-              Revisa tu once, entrenador y perfil colectivo antes de empezar la Liga 25/26.
+              Revisa tu once, entrenador y perfil colectivo antes de empezar la Liga {seasonLabel}.
             </p>
           </div>
 
@@ -237,7 +240,7 @@ export function TeamSummary({
             className="start-league-button start-league-button-header"
             onClick={handleStartLeague}
           >
-            {startButtonLabel ?? "Empezar Liga 25/26"}
+            {startButtonLabel ?? `Empezar Liga ${seasonLabel}`}
           </button>
         </div>
       </header>

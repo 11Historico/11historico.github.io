@@ -221,6 +221,7 @@ function buildCareerSeasonResult(
   summary: FinalGameSummary,
   seasonLabel = CAREER_INITIAL_SEASON_LABEL,
   wonSupercopa = false,
+  playedSupercopa = false,
 ): CareerSeasonResult {
   const wonCopa = Boolean(summary.cupTrophyWon);
   const copaWinnerLeaguePosition = getExternalCopaWinnerLeaguePosition(summary);
@@ -231,6 +232,7 @@ function buildCareerSeasonResult(
     wonLeague: summary.leaguePosition === 1,
     wonCopa,
     wonSupercopa,
+    playedSupercopa,
     isRelegated: summary.leaguePosition >= CAREER_RELEGATION_POSITION,
     europeanQualification: getEuropeanQualification(summary.leaguePosition, wonCopa, copaWinnerLeaguePosition),
     copaWinnerLeaguePosition,
@@ -260,6 +262,8 @@ export default function App() {
   const [careerCompletedSeasons, setCareerCompletedSeasons] = useState(() => savedGame?.careerCompletedSeasons ?? 0);
   const [careerBestLeaguePosition, setCareerBestLeaguePosition] = useState<number | undefined>(() => savedGame?.careerBestLeaguePosition);
   const [careerSeasonLabel, setCareerSeasonLabel] = useState(() => savedGame?.careerSeasonLabel ?? CAREER_INITIAL_SEASON_LABEL);
+  // «2027/28» → «27/28», el formato corto de los textos de Liga. En partida rápida cada pantalla usa «25/26».
+  const shownSeasonLabel = isCareerMode ? careerSeasonLabel.slice(2) : undefined;
   const [careerTrophyCounts, setCareerTrophyCounts] = useState<CareerTrophyCounts>(() => savedGame?.careerTrophyCounts ?? createEmptyCareerTrophyCounts());
   const [careerLeagueRivals, setCareerLeagueRivals] = useState<RivalTeam[]>(() => savedGame?.careerLeagueRivals ?? getInitialCareerLeagueRivals());
   const [careerSecondDivisionPool, setCareerSecondDivisionPool] = useState<RivalTeam[]>(() => savedGame?.careerSecondDivisionPool ?? getInitialCareerSecondDivisionPool());
@@ -770,7 +774,12 @@ export default function App() {
     setPhase("finished");
 
     if (isCareerMode) {
-      const seasonResult = buildCareerSeasonResult(summary, careerSeasonLabel, Boolean(careerCurrentSupercopaResult?.won));
+      const seasonResult = buildCareerSeasonResult(
+        summary,
+        careerSeasonLabel,
+        Boolean(careerCurrentSupercopaResult?.won),
+        Boolean(careerCurrentSupercopaResult),
+      );
       const objectiveResult = evaluateCareerObjective(seasonResult);
       const nextBestLeaguePosition = getBestCareerLeaguePosition(careerBestLeaguePosition, seasonResult.leaguePosition);
 
@@ -1545,6 +1554,7 @@ export default function App() {
             careerRatingBonus={isCareerMode ? careerSeasonRatingBonus : 0}
             difficulty={difficulty}
             isCareerMode={isCareerMode}
+            seasonLabel={shownSeasonLabel}
           />
         )}
 
@@ -1584,6 +1594,7 @@ export default function App() {
             leagueRivals={isCareerMode ? careerLeagueRivals : undefined}
             careerCompletedSeasons={careerCompletedSeasons}
             careerTrophyCounts={isCareerMode ? careerTrophyCounts : undefined}
+            seasonLabel={shownSeasonLabel}
             initialContext={leagueContext}
             onContextChange={setLeagueContext}
             initialPendingSeasonLuckWheelOffer={pendingSeasonLuckWheelOffer}
@@ -1703,6 +1714,7 @@ export default function App() {
             careerTrophyCounts={displayedCareerTrophyCounts}
             europeanQualification={isCareerMode ? careerEuropeanQualification : undefined}
             europeanTournament={isCareerMode ? europeanCareerState.currentTournament : undefined}
+            seasonLabel={shownSeasonLabel}
           />
         )}
       </div>

@@ -353,12 +353,13 @@ export function CareerSeasonOutcome({
           <article>
             <span>Descenso</span>
             <strong>{seasonResult.isRelegated ? "Sí" : "No"}</strong>
-            <small>{seasonResult.isRelegated ? "Condición dura de Game Over" : "Sigue vivo si cumple objetivo"}</small>
+            <small>{seasonResult.isRelegated ? "Condición dura de Game Over" : "Mantiene la categoría"}</small>
           </article>
           <article>
             <span>Supercopa</span>
-            <strong>{seasonResult.wonSupercopa ? "Campeón" : "Sin título"}</strong>
-            <small>{seasonResult.wonSupercopa ? "+2 palmarés" : "No salva la temporada"}</small>
+            {/* Las partidas guardadas antes de la v0.25.85 no saben si se jugó: siguen con «Sin título». */}
+            <strong>{seasonResult.wonSupercopa ? "Campeón" : seasonResult.playedSupercopa === false ? "No jugada" : "Sin título"}</strong>
+            <small>{seasonResult.wonSupercopa ? "+2 palmarés" : seasonResult.playedSupercopa === false ? "No clasificado" : "No salva la temporada"}</small>
           </article>
         </div>
 

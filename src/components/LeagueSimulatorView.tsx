@@ -92,6 +92,8 @@ interface LeagueSimulatorViewProps {
   leagueRivals?: RivalTeam[];
   careerCompletedSeasons?: number;
   careerTrophyCounts?: CareerTrophyCounts;
+  /** Temporada en juego, en formato corto («27/28»). */
+  seasonLabel?: string;
   initialContext?: UserLeagueSimulationContext;
   onContextChange?: (context: UserLeagueSimulationContext) => void;
   onSeasonLuckWheelPlayerChange?: (context: UserLeagueSimulationContext) => void;
@@ -176,6 +178,7 @@ export function LeagueSimulatorView({
   leagueRivals,
   careerCompletedSeasons = 0,
   careerTrophyCounts,
+  seasonLabel = "25/26",
   initialContext,
   onContextChange,
   onSeasonLuckWheelPlayerChange,
@@ -800,7 +803,7 @@ export function LeagueSimulatorView({
 
       <header className="league-header">
         <div>
-          <p className="eyebrow">LaLiga 25/26 + Copa del Rey</p>
+          <p className="eyebrow">LaLiga {seasonLabel} + Copa del Rey</p>
           <h1>Simulación de temporada</h1>
           <p>
             {isCareerMode ? "Carrera" : "Partida rápida"}: simula Liga y Copa con ritmo partido a partido. Puedes dejar correr

@@ -1016,7 +1016,10 @@ export function getCupStatusLabel(cupState: CupSimulationState): string {
   if (cupState.status === "won") return "Campeón de Copa";
   if (cupState.status === "eliminated") {
     const lastResult = cupState.results[cupState.results.length - 1];
-    const eliminatedLabel = lastResult?.roundName ? `Eliminado en ${lastResult.roundName}` : "Eliminado en Copa";
+    // Perder la final es quedar subcampeón, no «Eliminado en Final» (v0.25.85).
+    const eliminatedLabel = lastResult?.roundName === "Final"
+      ? "Subcampeón"
+      : lastResult?.roundName ? `Eliminado en ${lastResult.roundName}` : "Eliminado en Copa";
     return cupState.championTeamName
       ? `${eliminatedLabel} · Campeón: ${cupState.championTeamName}`
       : eliminatedLabel;
