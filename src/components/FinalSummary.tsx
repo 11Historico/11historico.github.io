@@ -44,6 +44,8 @@ interface FinalSummaryProps {
   teamRating: TeamRating;
   careerTrophyCounts?: CareerTrophyCounts;
   europeanQualification?: EuropeanQualificationResult;
+  /** Temporada jugada, en formato corto («27/28»). */
+  seasonLabel?: string;
   onRestart?: () => void;
   onReturnToCareer?: () => void;
   onShare?: (shareText: string) => void;
@@ -164,7 +166,9 @@ function getCupSummaryText(summary: FinalGameSummary): string {
   if (summary.cupTrophyWon) return "Campeón de Copa";
 
   if (summary.cupStatus === "eliminated") {
-    const baseLabel = summary.cupUserEliminatedRoundName
+    const baseLabel = summary.cupUserEliminatedRoundName === "Final"
+      ? "Subcampeón"
+      : summary.cupUserEliminatedRoundName
       ? `Eliminado en ${summary.cupUserEliminatedRoundName}`
       : summary.cupRoundReached ?? "Eliminado en Copa";
 
@@ -358,13 +362,13 @@ function ResultStatCard({
   );
 }
 
-function LeagueTableFinal({ table, summary }: { table?: LeagueTableRow[]; summary: FinalGameSummary }) {
+function LeagueTableFinal({ table, summary, seasonLabel }: { table?: LeagueTableRow[]; summary: FinalGameSummary; seasonLabel: string }) {
   if (!table || table.length === 0) {
     return (
       <section className="final-league-table-card final-league-table-empty">
         <div className="final-league-table-header">
           <div>
-            <span>LaLiga 25/26</span>
+            <span>LaLiga {seasonLabel}</span>
             <h2>Clasificación final completa</h2>
           </div>
         </div>
@@ -382,7 +386,7 @@ function LeagueTableFinal({ table, summary }: { table?: LeagueTableRow[]; summar
     <section className="final-league-table-card">
       <div className="final-league-table-header">
         <div>
-          <span>LaLiga 25/26</span>
+          <span>LaLiga {seasonLabel}</span>
           <h2>Clasificación final completa</h2>
         </div>
         <small>{table.length} equipos</small>
@@ -694,6 +698,7 @@ export function FinalSummary({
   careerTrophyCounts,
   europeanQualification,
   europeanTournament,
+  seasonLabel = "25/26",
   onRestart,
   onReturnToCareer,
   onShare,
@@ -753,7 +758,7 @@ export function FinalSummary({
       <div className="final-summary-layout final-summary-layout-polished">
         <main className="final-main-panel">
           <section className="final-hero-card final-hero-card-polished">
-            <span>Clasificación final · Liga 25/26</span>
+            <span>Clasificación final · Liga {seasonLabel}</span>
             <strong>{summary.leaguePosition}º</strong>
             <p>
               {summary.points} puntos · {summary.wins} victorias · {summary.draws} empates ·{" "}
@@ -806,8 +811,8 @@ export function FinalSummary({
             </FinalAccordion>
           )}
 
-          <FinalAccordion title="Clasificación final completa" eyebrow="LaLiga 25/26" competition="liga" defaultOpen>
-            <LeagueTableFinal table={summary.table} summary={summary} />
+          <FinalAccordion title="Clasificación final completa" eyebrow={`LaLiga ${seasonLabel}`} competition="liga" defaultOpen>
+            <LeagueTableFinal table={summary.table} summary={summary} seasonLabel={seasonLabel} />
           </FinalAccordion>
 
           <FinalAccordion title="Historial local" eyebrow="Últimas partidas" defaultOpen={false}>

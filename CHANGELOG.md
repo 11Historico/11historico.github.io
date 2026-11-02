@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.85 — Textos de la temporada que cuadran con lo jugado
+
+- **Supercopa:** si no te clasificaste, el resumen dice «No jugada» en vez de «Sin título».
+- **Descenso:** dice «Mantiene la categoría» en vez de «Sigue vivo si cumple objetivo», que no tenía sentido en el Game Over.
+- **Copa del Rey:** perder la final es «Subcampeón», no «Eliminado en Final».
+- **Temporada correcta:** en carrera, la pantalla del once, la Liga y el resumen final dicen la temporada en curso, no siempre «25/26».
+- **Solo es texto:** no cambia ningún resultado ni regla.
+
 ## v0.25.84 — El descanso ya no puede bloquear la carrera
 
 - **Sin bloqueos:** cambiar la velocidad en el descanso europeo dejaba la carrera parada, sin opciones ni forma de seguir. Y la simulación automática podía borrar un partido europeo sin dejar decidir, con los botones apagados para siempre.

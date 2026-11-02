@@ -29,6 +29,8 @@ export interface CareerSeasonResult {
   wonLeague: boolean;
   wonCopa: boolean;
   wonSupercopa: boolean;
+  /** Si el usuario jugó la Supercopa esa temporada (v0.25.85). Falta en partidas guardadas antes. */
+  playedSupercopa?: boolean;
   isRelegated: boolean;
   europeanQualification: EuropeanCompetition;
   /** Posición en Liga del campeón de Copa externo (null si ganó el usuario o no se conoce). */
