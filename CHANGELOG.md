@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.86 — Cartel de eliminatoria
+
+- **Sabes al momento qué ha pasado:** al acabar un partido de Copa o uno europeo que decide la eliminatoria sale un cartel: «Has clasificado», «Has sido eliminado», «Subcampeón» o «¡Campeón!».
+- **Sin adelantos:** el cartel solo aparece al final del partido, nunca en el descanso.
+- **Solo es visual:** no cambia ningún resultado ni regla.
+
 ## v0.25.85 — Textos de la temporada que cuadran con lo jugado
 
 - **Supercopa:** si no te clasificaste, el resumen dice «No jugada» en vez de «Sin título».

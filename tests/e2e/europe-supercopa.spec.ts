@@ -162,6 +162,8 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   await expect(page.locator(".european-match-event-summary")).toContainText("1/");
   await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-key-factor")).not.toBeEmpty();
   await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-approach-effect")).toContainText("ofensivo");
+  // v0.25.86: el primer partido de la fase inicial no decide nada, así que no lleva cartel.
+  await expect(page.locator(".match-verdict")).toHaveCount(0);
   // v0.25.76 y v0.25.77: barra de dominio y mini campo. Los goles europeos no suman a las estadísticas.
   await expect(page.getByRole("region", { name: "Evento europeo" }).getByRole("img", { name: /Dominio según los goles esperados/ })).toBeVisible();
   await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-sequence-pitch")).toBeVisible();
@@ -282,9 +284,12 @@ test("en Copa, el partido se para en el descanso y la decisión se cuenta en el 
   // v0.25.84: cambiar de velocidad en el descanso no enseña el resultado final.
   await page.getByRole("button", { name: "Rápido" }).click();
   await expect(page.locator(".match-sequence .match-sequence-clock")).toHaveText("45'");
+  // v0.25.86: el cartel de la eliminatoria solo sale al final.
+  await expect(page.locator(".match-verdict")).toHaveCount(0);
   await close.click();
 
   await expect(page.locator(".match-sequence .match-approach-effect")).toContainText("Cerrar el partido", { timeout: 15_000 });
+  await expect(page.locator(".match-sequence .match-verdict")).toHaveText(/^(Has clasificado|Has sido eliminado)/);
   await expect(cupPreview).toBeVisible();
   expect(pageErrors).toEqual([]);
 });

@@ -8,6 +8,8 @@ import { CompetitionIcon } from "./CompetitionIcon";
 import { MatchDominanceBar } from "./MatchDominanceBar";
 import { MatchHalfTimeControl } from "./MatchHalfTimeControl";
 import { MatchIcon } from "./MatchIcon";
+import { getCupVerdict } from "./matchVerdict";
+import { MatchVerdictBanner } from "./MatchVerdictBanner";
 import TacticalPitch from "./TacticalPitch";
 import { TeamKitIcon, TeamWithKit } from "./TeamKitIcon";
 import {
@@ -63,6 +65,7 @@ export function MatchSequence({
   const awayGoals = isFinal ? result.awayGoals : countGoalsForTeam(frame.visibleGoals, result.awayTeamName);
   const showPitch = pitch && result.userTeamPlayed !== false;
   const lineDuelText = isFinal ? getLineDuelText(result) : undefined;
+  const cupVerdict = getCupVerdict(result);
 
   // En layout: la vista retiene la clasificación antes del primer pintado del partido.
   useLayoutEffect(() => {
@@ -124,6 +127,8 @@ export function MatchSequence({
           }}
         />
       )}
+
+      {isFinal && cupVerdict && <MatchVerdictBanner verdict={cupVerdict} />}
 
       {isFinal && result.userTeamPlayed !== false && result.keyFactor && (
         <p className="match-key-factor">
