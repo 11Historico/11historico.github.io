@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.87 — Cuadro de la Copa del Rey
+
+- **Nueva pestaña «Cuadro de Copa»:** junto a «Clasificación europea», el cuadro completo en espejo: dieciseisavos a cada lado y la final en el centro.
+- **Los 16 cruces se juegan:** antes solo existía tu camino. Ahora se simulan todos los cruces, y tus rivales salen de su lado del cuadro.
+- **Sin adelantos:** cada ronda se ve cuando has jugado tu cruce o, si ya caíste, cuando la Liga llega a su jornada.
+- **Si caes, el cuadro manda:** el que te eliminó se enfrenta a quien gana el otro lado, no a un equipo nuevo. El campeón sigue saliendo casi siempre de los de arriba.
+- **Tus partidos no cambian:** mismos rivales, mismos campos y misma forma de simularlos.
+
 ## v0.25.86 — Cartel de eliminatoria
 
 - **Sabes al momento qué ha pasado:** al acabar un partido de Copa o uno europeo que decide la eliminatoria sale un cartel: «Has clasificado», «Has sido eliminado», «Subcampeón» o «¡Campeón!».

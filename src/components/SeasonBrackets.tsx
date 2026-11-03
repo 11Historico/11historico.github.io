@@ -13,6 +13,7 @@ import {
 } from "../career/seasonBrackets";
 import { getEuropeanMatchDecisionText } from "../europe/europeanTournament";
 import type { EuropeanTournamentMatch } from "../europe/europeanTypes";
+import type { CupBracketRound, CupBracketTie } from "../simulation/leagueSimulator";
 import type { MatchResult } from "../types/game";
 // Solo en Copa: los rivales europeos van sin equipaciones (ver europeanOpponents.ts).
 import { isExtraTimeFactor } from "./matchSequenceTimeline";
@@ -26,18 +27,18 @@ const STATUS_LABEL: Record<BracketStatus, string> = {
   pending: "Sin jugar",
 };
 
-function TeamLine({ name, goals, won }: { name: string; goals: number; won: boolean }) {
+function TeamLine({ name, goals, won }: { name: string; goals?: number; won: boolean }) {
   const classes = ["season-bracket-team"];
   if (won) classes.push("season-bracket-team-won");
   if (isUserTeamName(name)) classes.push("season-bracket-team-user");
 
   return (
     <div className={classes.join(" ")}>
-      <span className="season-bracket-team-name">
+      <span className="season-bracket-team-name" title={name}>
         <TeamKitIcon teamName={name} />
         <span>{name}</span>
       </span>
-      <strong>{goals}</strong>
+      {goals !== undefined && <strong>{goals}</strong>}
     </div>
   );
 }
@@ -66,6 +67,54 @@ export function CupBracket({ rows }: { rows: CupBracketRow[] }) {
           {row.result ? <CupMatchCard result={row.result} /> : <p className="season-bracket-empty">Sin datos de esta ronda.</p>}
         </section>
       ))}
+    </div>
+  );
+}
+
+function CupTieCard({ tie }: { tie: CupBracketTie }) {
+  if (!tie.homeTeamName || !tie.awayTeamName) {
+    return <div className="season-bracket-match cup-mirror-tie cup-mirror-tie-empty">Por decidir</div>;
+  }
+
+  const winner = tie.result ? getCupMatchWinner(tie.result) : undefined;
+
+  return (
+    <div className="season-bracket-match cup-mirror-tie">
+      <TeamLine name={tie.homeTeamName} goals={tie.result?.homeGoals} won={winner === "home"} />
+      <TeamLine name={tie.awayTeamName} goals={tie.result?.awayGoals} won={winner === "away"} />
+    </div>
+  );
+}
+
+/** Cuadro de la Copa en espejo (v0.25.87): dieciseisavos a cada lado y la final en el centro. */
+export function CupMirrorBracket({ rounds }: { rounds: CupBracketRound[] }) {
+  const sideRounds = rounds.slice(0, -1);
+  const final = rounds.at(-1);
+  const column = (round: CupBracketRound, side: "left" | "right" | "final") => {
+    const half = round.ties.length / 2;
+    const ties = side === "final" ? round.ties : side === "left" ? round.ties.slice(0, half) : round.ties.slice(half);
+
+    return (
+      <section
+        key={`${round.roundName}-${side}`}
+        className="cup-mirror-column"
+        aria-label={side === "final" ? round.roundName : `${round.roundName}, lado ${side === "left" ? "izquierdo" : "derecho"}`}
+      >
+        <header>{round.roundName}</header>
+        <div className="cup-mirror-ties">
+          {ties.map((tie, index) => (
+            <CupTieCard key={index} tie={tie} />
+          ))}
+        </div>
+      </section>
+    );
+  };
+
+  return (
+    <div className="cup-mirror" aria-label="Cuadro de la Copa del Rey">
+      {sideRounds.map((round) => column(round, "left"))}
+      {final && column(final, "final")}
+      {[...sideRounds].reverse().map((round) => column(round, "right"))}
     </div>
   );
 }
