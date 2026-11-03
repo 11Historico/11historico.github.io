@@ -96,6 +96,28 @@ test("la liga permite consultar la clasificación europea y el palmarés", async
   expect(pageErrors).toEqual([]);
 });
 
+test("la pestaña del cuadro de Copa enseña los 16 cruces en espejo y cabe en el móvil", async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.setViewportSize({ width: 375, height: 812 });
+  await loadSave(page, europeanSave());
+
+  await page.getByRole("tab", { name: "Cuadro de Copa" }).click();
+  const bracket = page.getByLabel("Cuadro de la Copa del Rey");
+  await expect(bracket.locator(".cup-mirror-column")).toHaveCount(9);
+  await expect(bracket.getByRole("region", { name: "Final", exact: true })).toBeVisible();
+  // v0.25.87: antes de jugar solo se conocen los dieciseisavos, ocho por lado; tú vas arriba a la izquierda.
+  const left = bracket.getByRole("region", { name: "Dieciseisavos, lado izquierdo" });
+  await expect(left.locator(".cup-mirror-tie")).toHaveCount(8);
+  await expect(bracket.getByRole("region", { name: "Dieciseisavos, lado derecho" }).locator(".cup-mirror-tie")).toHaveCount(8);
+  await expect(left.locator(".cup-mirror-tie").first()).toContainText("Athletic Club Histórico");
+  await expect(bracket.getByRole("region", { name: "Octavos, lado izquierdo" })).toContainText("Por decidir");
+
+  // El cuadro se desplaza dentro de su tarjeta; la página no.
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+  expect(pageErrors).toEqual([]);
+});
+
 test("el partido europeo se reproduce en directo antes de mostrar el resultado", async ({ page }) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));

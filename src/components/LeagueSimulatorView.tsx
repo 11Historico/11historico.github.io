@@ -17,6 +17,7 @@ import type { CareerTrophyCounts } from "../types/career";
 import PalmaresTrophyCase from "./PalmaresTrophyCase";
 
 import {
+  buildCupBracket,
   canFinishSeason,
   createFinalLeagueSummary,
   createUserLeagueSimulation,
@@ -66,6 +67,7 @@ import type { EuropeanTournamentMatch, EuropeanTournamentState } from "../europe
 import EuropeanMatchEvent from "./EuropeanMatchEvent";
 import { CompetitionIcon } from "./CompetitionIcon";
 import EuropeanLeagueTable from "./EuropeanLeagueTable";
+import { CupMirrorBracket } from "./SeasonBrackets";
 import { MatchApproachControl } from "./MatchApproachControl";
 import { MatchOddsBar } from "./MatchOddsBar";
 import { MatchSequence } from "./MatchSequence";
@@ -197,8 +199,8 @@ export function LeagueSimulatorView({
   // Contexto justo antes de lastResult: se muestra mientras se reproduce el partido (ver shownContext).
   const [contextBeforeResult, setContextBeforeResult] = useState<UserLeagueSimulationContext | undefined>(undefined);
   const [isAutoSimulating, setIsAutoSimulating] = useState(false);
-  // Pestaña de consulta bajo las acciones: la jornada (por defecto), la clasificación europea o el palmarés.
-  const [consultTab, setConsultTab] = useState<"jornada" | "europa" | "palmares">("jornada");
+  // Pestaña de consulta bajo las acciones: la jornada (por defecto), el cuadro de Copa, la clasificación europea o el palmarés.
+  const [consultTab, setConsultTab] = useState<"jornada" | "copa" | "europa" | "palmares">("jornada");
   const [isSequencePlaying, setIsSequencePlaying] = useState(false);
   const playbackMultiplier = getMatchPlaybackMultiplier(useMatchPlaybackSpeed());
   const [pendingWheelOffer, setPendingWheelOfferState] = useState<SeasonLuckWheelOffer | undefined>(
@@ -282,6 +284,11 @@ export function LeagueSimulatorView({
   const shownUserRow = shownUserSummary.row;
   const shownMatchesPlayed = shownUserRow?.played ?? 0;
   const leagueProgressLabel = `Jornada ${Math.min(shownMatchesPlayed + 1, 38)} / 38`;
+  // Con shownContext: mientras se juega tu cruce, el cuadro no enseña la ronda (v0.25.87).
+  const cupBracketRounds = useMemo(
+    () => (consultTab === "copa" ? buildCupBracket(shownContext.cupState, shownMatchesPlayed) : []),
+    [consultTab, shownContext.cupState, shownMatchesPlayed]
+  );
 
   const pendingEuropeanMatch = shouldPlayEuropeanMatchAtLeagueMatchday(europeanTournament, leagueMatchesPlayed + 1);
   const europeanEventMatch = justPlayedEuropeanMatch ?? (hideNextMatch ? undefined : pendingEuropeanMatch);
@@ -919,39 +926,55 @@ export function LeagueSimulatorView({
             )}
           </div>
 
-          {(europeanTournament || (isCareerMode && careerTrophyCounts)) && (
-            <div className="league-consult-tabs" role="tablist" aria-label="Consultar">
+          <div className="league-consult-tabs" role="tablist" aria-label="Consultar">
+            <button
+              type="button"
+              role="tab"
+              className="league-consult-tab"
+              aria-selected={consultTab === "jornada"}
+              onClick={() => setConsultTab("jornada")}
+            >
+              Jornada
+            </button>
+            <button
+              type="button"
+              role="tab"
+              className="league-consult-tab"
+              aria-selected={consultTab === "copa"}
+              onClick={() => setConsultTab("copa")}
+            >
+              Cuadro de Copa
+            </button>
+            {europeanTournament && (
               <button
                 type="button"
                 role="tab"
                 className="league-consult-tab"
-                aria-selected={consultTab === "jornada"}
-                onClick={() => setConsultTab("jornada")}
+                aria-selected={consultTab === "europa"}
+                onClick={() => setConsultTab("europa")}
               >
-                Jornada
+                Clasificación europea
               </button>
-              {europeanTournament && (
-                <button
-                  type="button"
-                  role="tab"
-                  className="league-consult-tab"
-                  aria-selected={consultTab === "europa"}
-                  onClick={() => setConsultTab("europa")}
-                >
-                  Clasificación europea
-                </button>
-              )}
-              {isCareerMode && careerTrophyCounts && (
-                <button
-                  type="button"
-                  role="tab"
-                  className="league-consult-tab"
-                  aria-selected={consultTab === "palmares"}
-                  onClick={() => setConsultTab("palmares")}
-                >
-                  Palmarés
-                </button>
-              )}
+            )}
+            {isCareerMode && careerTrophyCounts && (
+              <button
+                type="button"
+                role="tab"
+                className="league-consult-tab"
+                aria-selected={consultTab === "palmares"}
+                onClick={() => setConsultTab("palmares")}
+              >
+                Palmarés
+              </button>
+            )}
+          </div>
+
+          {consultTab === "copa" && (
+            <div role="tabpanel" aria-label="Cuadro de Copa">
+              <section className="table-card">
+                <h2>Cuadro de la Copa del Rey</h2>
+                <CupMirrorBracket rounds={cupBracketRounds} />
+              </section>
             </div>
           )}
 

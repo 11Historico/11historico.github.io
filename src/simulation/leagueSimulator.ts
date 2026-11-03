@@ -1529,6 +1529,179 @@ function simulateCupTeamVsTeam(params: {
   return resolveCupTie(rawResult, seed + 101);
 }
 
+const CUP_BRACKET_TEAMS = 32;
+
+export interface CupBracketTie {
+  homeTeamName?: string;
+  awayTeamName?: string;
+  result?: MatchResult;
+}
+
+export interface CupBracketRound {
+  roundName: string;
+  ties: CupBracketTie[];
+}
+
+function seededShuffle<T>(items: T[], seed: number): T[] {
+  const shuffled = [...items];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(seededRandom(seed + index * 13) * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+
+  return shuffled;
+}
+
+function getTieWinnerName(tie?: CupBracketTie): string | undefined {
+  return tie?.result ? getCupWinnerFromResult(tie.result).winnerName : undefined;
+}
+
+function simulateBracketTie(params: {
+  fixture: CupFixture;
+  home: RivalTeam;
+  away: RivalTeam;
+  seed: number;
+  forcedWinnerName?: string;
+}): MatchResult {
+  const { fixture, home, away, seed, forcedWinnerName } = params;
+  const simulate = (attempt: number) =>
+    simulateCupTeamVsTeam({
+      roundName: fixture.roundName,
+      roundId: fixture.roundId,
+      matchday: fixture.gateMatchday,
+      home,
+      away,
+      seed: seed + attempt * 7919,
+    });
+
+  // Si el ganador ya está decidido, se repite el partido hasta que gane; si no lo consigue,
+  // se le da la vuelta al marcador (la Copa nunca acaba en empate).
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const result = simulate(attempt);
+    if (!forcedWinnerName || getCupWinnerFromResult(result).winnerName === forcedWinnerName) return result;
+  }
+
+  const result = simulate(0);
+  return { ...result, homeGoals: result.awayGoals, awayGoals: result.homeGoals };
+}
+
+/**
+ * Cruces de la Copa que no son el tuyo (v0.25.87): 32 equipos y 16 cruces de dieciseisavos.
+ * El cruce 0 de cada ronda es tu camino y queda vacío (sale de los resultados guardados).
+ * Para la misma Copa siempre da lo mismo: la semilla sale de los ids del sorteo.
+ * Cada rival ya sorteado gana sus cruces hasta la ronda en que le tocas; si caes antes, solo
+ * hasta tu ronda de eliminación, y desde ahí el cuadro se juega libre.
+ */
+function simulateCupBracketSides(fixtures: CupFixture[], eliminatedRoundIndex = Infinity): CupBracketTie[][] {
+  const pool = getAllCupTeams();
+  const primeraIds = new Set(getLaliga2526RivalsExcludingAthletic().map((team) => team.id));
+  const seed = hashString(fixtures.map((fixture) => fixture.id).join("|"));
+  const drawnRivals = fixtures.map((fixture) => getCupTeamById(fixture.rivalTeamId));
+  const usedIds = new Set(drawnRivals.map((team) => team?.id).filter((id): id is string => Boolean(id)));
+  // Favorito de cada lado: si caes antes, es quien te sale después. Misma horquilla de media que
+  // el rival que se elegía antes de v0.25.87, para que la Copa la sigan ganando los de arriba.
+  const favorites = fixtures.map((fixture, roundIndex) => {
+    if (roundIndex < 2) return undefined;
+    const minOverall = fixture.roundId === "final" ? 82 : fixture.roundId === "semi_final" ? 78 : 70;
+    const maxOverall = fixture.roundId === "final" ? 94 : fixture.roundId === "semi_final" ? 90 : 86;
+    return pickCupRival({ pool, minOverall, maxOverall, usedTeamIds: usedIds, seed: seed + roundIndex * 37 });
+  });
+  // En dieciseisavos entran antes los de Primera, como en la Copa real.
+  const fillers = seededShuffle(pool.filter((team) => !usedIds.has(team.id)), seed)
+    .sort((a, b) => Number(primeraIds.has(b.id)) - Number(primeraIds.has(a.id)));
+
+  // Tu rival de la ronda r sale del bloque de cruces [2^(r-1), 2^r) de dieciseisavos: el
+  // sorteado en la primera mitad del bloque y el favorito en la segunda.
+  const slots: (RivalTeam | undefined)[] = new Array(CUP_BRACKET_TEAMS).fill(undefined);
+  const coin = (salt: number) => (seededRandom(seed + salt) < 0.5 ? 0 : 1);
+  for (let roundIndex = 1; roundIndex < fixtures.length; roundIndex += 1) {
+    slots[2 ** roundIndex + coin(roundIndex * 7)] = drawnRivals[roundIndex];
+    if (favorites[roundIndex]) slots[2 ** roundIndex + 2 ** (roundIndex - 1) + coin(roundIndex * 11)] = favorites[roundIndex];
+  }
+  for (let index = 2; index < CUP_BRACKET_TEAMS; index += 1) {
+    slots[index] ??= fillers.shift();
+  }
+
+  // Un equipo gana a la fuerza en las rondas anteriores a forcedUntil. El sorteado y el favorito
+  // se cruzan en la ronda r-1: gana el sorteado si para entonces seguías vivo.
+  const forcedUntil = new Map<string | undefined, number>();
+  drawnRivals.forEach((team, roundIndex) => forcedUntil.set(team?.name, Math.min(roundIndex, eliminatedRoundIndex + 1)));
+  favorites.forEach((team, roundIndex) => {
+    if (team) forcedUntil.set(team.name, eliminatedRoundIndex < roundIndex - 1 ? roundIndex : roundIndex - 1);
+  });
+  const rounds: CupBracketTie[][] = [];
+  let teams = slots;
+
+  fixtures.forEach((fixture, roundIndex) => {
+    const ties: CupBracketTie[] = [];
+    const winners: (RivalTeam | undefined)[] = [];
+
+    for (let tieIndex = 0; tieIndex < teams.length / 2; tieIndex += 1) {
+      const home = teams[tieIndex * 2];
+      const away = teams[tieIndex * 2 + 1];
+
+      if (tieIndex === 0 || !home || !away) {
+        ties.push({});
+        winners.push(undefined);
+        continue;
+      }
+
+      const forced = [home, away].find((team) => roundIndex < (forcedUntil.get(team.name) ?? 0));
+      const result = simulateBracketTie({
+        fixture,
+        home,
+        away,
+        seed: seed + roundIndex * 1009 + tieIndex * 101,
+        forcedWinnerName: forced?.name,
+      });
+      ties.push({ homeTeamName: home.name, awayTeamName: away.name, result });
+      winners.push(getTieWinnerName({ result }) === home.name ? home : away);
+    }
+
+    rounds.push(ties);
+    teams = winners;
+  });
+
+  return rounds;
+}
+
+/**
+ * Cuadro completo de la Copa para la pestaña «Cuadro de Copa» (v0.25.87). El cruce 0 de cada
+ * ronda es tu camino, con los resultados guardados. Una ronda se enseña cuando se ha jugado tu
+ * cruce (o, si ya caíste, cuando la Liga llega a su jornada): así no se adelanta nada.
+ */
+export function buildCupBracket(cupState: CupSimulationState, leagueMatchesPlayed: number): CupBracketRound[] {
+  const { fixtures } = cupState;
+  const eliminatedIndex = fixtures.findIndex((fixture) => fixture.roundName === cupState.userEliminatedRoundName);
+  const sides = simulateCupBracketSides(fixtures, eliminatedIndex < 0 ? Infinity : eliminatedIndex);
+  const stored = [...cupState.results, ...(cupState.simulatedRemainingResults ?? [])];
+  let previousRevealed = true;
+
+  return fixtures.map((fixture, roundIndex) => {
+    const mainResult = stored.find((result) => result.roundName === fixture.roundName);
+    const revealed = Boolean(mainResult) && leagueMatchesPlayed >= fixture.gateMatchday;
+    const showTeams = previousRevealed;
+    previousRevealed = revealed;
+
+    const ties = (sides[roundIndex] ?? []).map((tie, tieIndex): CupBracketTie => {
+      if (!showTeams) return {};
+      if (tieIndex > 0) return revealed ? tie : { homeTeamName: tie.homeTeamName, awayTeamName: tie.awayTeamName };
+      if (mainResult) {
+        return { homeTeamName: mainResult.homeTeamName, awayTeamName: mainResult.awayTeamName, result: revealed ? mainResult : undefined };
+      }
+
+      // Tu próximo cruce: el rival sorteado, que ya ha ganado su lado del cuadro.
+      const rivalName = roundIndex === 0 ? getCupRivalDisplayName(fixture.rivalTeamId) : getTieWinnerName(sides[roundIndex - 1]?.[1]);
+      return fixture.venue === "home"
+        ? { homeTeamName: USER_TEAM_NAME, awayTeamName: rivalName }
+        : { homeTeamName: rivalName, awayTeamName: USER_TEAM_NAME };
+    });
+
+    return { roundName: fixture.roundName, ties };
+  });
+}
+
 function simulateRemainingCupAfterUserElimination(params: {
   cupState: CupSimulationState;
   eliminatedBy: RivalTeam;
@@ -1543,6 +1716,8 @@ function simulateRemainingCupAfterUserElimination(params: {
     ...cupState.fixtures.map((fixture) => fixture.rivalTeamId),
   ]);
 
+  const sides = simulateCupBracketSides(cupState.fixtures, eliminatedRoundIndex);
+
   let aliveTeam = eliminatedBy;
   const simulatedRemainingResults: MatchResult[] = [];
   let runnerUpTeam: RivalTeam | undefined;
@@ -1551,7 +1726,10 @@ function simulateRemainingCupAfterUserElimination(params: {
     const fixture = cupState.fixtures[index];
     const minOverall = fixture.roundId === "final" ? 82 : fixture.roundId === "semi_final" ? 78 : 70;
     const maxOverall = fixture.roundId === "final" ? 94 : fixture.roundId === "semi_final" ? 90 : 86;
-    const opponent = pickCupRival({
+    // v0.25.87: el rival es el que gana el otro lado del cuadro (ver simulateCupBracketSides).
+    // Antes salía un equipo nuevo y el cuadro no cuadraba.
+    const sideWinnerName = getTieWinnerName(sides[index - 1]?.[1]);
+    const opponent = pool.find((team) => team.name === sideWinnerName) ?? pickCupRival({
       pool,
       minOverall,
       maxOverall,

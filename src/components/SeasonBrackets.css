@@ -118,6 +118,74 @@
   font-size: 0.82rem;
 }
 
+/* Cuadro de Copa en espejo (v0.25.87): nueve columnas; en pantallas estrechas se desplaza
+   dentro de la tarjeta, sin mover la página. */
+.cup-mirror {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(128px, 1fr));
+  gap: 6px;
+  /* Sin esto, las nueve columnas ensanchan la tarjeta y la página: el cuadro no aporta
+     ancho propio y ocupa el de la tarjeta. */
+  width: 0;
+  min-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.cup-mirror-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cup-mirror-column > header {
+  padding: 4px 0 8px;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* space-around deja cada cruce a la altura de los dos de los que sale. */
+.cup-mirror-ties {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 6px;
+}
+
+.cup-mirror-tie {
+  gap: 2px;
+  min-width: 0;
+  padding: 6px;
+  border-radius: 10px;
+}
+
+.cup-mirror-tie .season-bracket-team {
+  min-width: 0;
+  font-size: 0.74rem;
+}
+
+.cup-mirror-tie .season-bracket-team-name > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cup-mirror-tie .team-kit-icon {
+  zoom: 0.6;
+  flex-shrink: 0;
+}
+
+.cup-mirror-tie-empty {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.74rem;
+  text-align: center;
+}
+
 @media (max-width: 640px) {
   .season-bracket {
     grid-auto-flow: row;
