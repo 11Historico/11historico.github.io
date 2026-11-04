@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.88 — Rango esperado en Liga
+
+- **Sabes qué es lo normal:** encima de la clasificación, una línea dice dónde suele acabar tu once con estos rivales, por ejemplo «entre el 5.º y el 8.º».
+- **Y cómo vas:** desde la jornada 10 añade tu puesto y si estás por encima, dentro o por debajo de lo esperado.
+- **Sale de la misma simulación del juego:** 100 Ligas con tu once y otras formas de los rivales, sin adelantar los resultados de esta temporada.
+- **No cambia nada del juego:** ni resultados ni azar de la partida.
+
 ## v0.25.87 — Cuadro de la Copa del Rey
 
 - **Nueva pestaña «Cuadro de Copa»:** junto a «Clasificación europea», el cuadro completo en espejo: dieciseisavos a cada lado y la final en el centro.

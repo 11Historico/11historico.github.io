@@ -82,6 +82,9 @@ test("la liga permite consultar la clasificación europea y el palmarés", async
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await loadSave(page, europeanSave());
 
+  // v0.25.88: rango esperado en Liga, sin comparar todavía con el puesto.
+  await expect(page.locator(".expected-range-note")).toHaveText(/^Lo normal con este once y estos rivales: acabar (entre el \d+\.º y el \d+\.º|el \d+\.º)\.$/);
+
   await page.getByRole("tab", { name: "Clasificación europea" }).click();
   const table = page.getByRole("region", { name: "Clasificación de la competición europea" });
   await expect(table.getByRole("heading", { name: "Clasificación europea · fase de liga" })).toBeVisible();
