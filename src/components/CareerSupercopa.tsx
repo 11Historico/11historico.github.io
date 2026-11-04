@@ -114,9 +114,7 @@ export function CareerSupercopa({
                   key={match.fixtureId}
                   result={match}
                   pitch={pitch}
-                  onPlayingChange={(playing) => {
-                    if (!playing) setPlayingIndex((current) => (current === index ? index + 1 : current));
-                  }}
+                  onFinished={() => setPlayingIndex((current) => (current === index ? index + 1 : current))}
                 />
               ))}
             </div>

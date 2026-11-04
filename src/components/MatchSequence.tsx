@@ -42,11 +42,18 @@ function getMatchSequenceTag(result: MatchResult): string {
 export function MatchSequence({
   result,
   onPlayingChange,
+  onFinished,
   pitch,
   onHalfTimeChoice,
 }: {
   result: MatchResult;
-  onPlayingChange: (playing: boolean) => void;
+  /** También avisa con false al desmontarse: necesita una función estable. */
+  onPlayingChange?: (playing: boolean) => void;
+  /**
+   * Solo al llegar al final del partido (v0.25.89). Para la Supercopa, que encadena partidos:
+   * con onPlayingChange, StrictMode o cualquier repintado adelantaban al siguiente.
+   */
+  onFinished?: () => void;
   /** Tu once, para el mini campo (v0.25.76). No se muestra en partidos entre rivales. */
   pitch?: { formation: Formation; selectedPlayers: SelectedPlayer[] };
   /** Mientras hay decisión pendiente, el partido se para a los 45' (v0.25.78). */
@@ -69,12 +76,16 @@ export function MatchSequence({
 
   // En layout: la vista retiene la clasificación antes del primer pintado del partido.
   useLayoutEffect(() => {
-    onPlayingChange(!isFinal);
+    onPlayingChange?.(!isFinal);
   }, [isFinal, onPlayingChange]);
 
   useLayoutEffect(() => {
-    return () => onPlayingChange(false);
+    return () => onPlayingChange?.(false);
   }, [onPlayingChange]);
+
+  useEffect(() => {
+    if (isFinal) onFinished?.();
+  }, [isFinal, onFinished]);
 
   useEffect(() => {
     if (isFinal || isAtHalfTime) return undefined;
