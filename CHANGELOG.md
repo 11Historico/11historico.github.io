@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.25.89 — La Supercopa no se salta partidos
+
+- **Partido a partido:** la Supercopa podía enseñar las dos semifinales y la final a la vez y acabar en un segundo. Ahora cada partido empieza cuando acaba el anterior.
+- **No cambia ningún resultado:** solo cómo se reproducen.
+
 ## v0.25.88 — Rango esperado en Liga
 
 - **Sabes qué es lo normal:** encima de la clasificación, una línea dice dónde suele acabar tu once con estos rivales, por ejemplo «entre el 5.º y el 8.º».
