@@ -763,6 +763,13 @@
 }
 
 /* Clasificación europea: los puestos que pasan a semifinales (v0.25.55). */
+/* Rango esperado en Liga (v0.25.88). */
+.expected-range-note {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
 .european-league-table-note {
   margin: 0 0 10px;
   font-size: 0.82rem;

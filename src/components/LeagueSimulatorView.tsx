@@ -67,6 +67,7 @@ import type { EuropeanTournamentMatch, EuropeanTournamentState } from "../europe
 import EuropeanMatchEvent from "./EuropeanMatchEvent";
 import { CompetitionIcon } from "./CompetitionIcon";
 import EuropeanLeagueTable from "./EuropeanLeagueTable";
+import { estimateExpectedLeagueRange, getExpectedLeagueRangeText, type ExpectedLeagueRange } from "../simulation/expectedLeagueRange";
 import { CupMirrorBracket } from "./SeasonBrackets";
 import { MatchApproachControl } from "./MatchApproachControl";
 import { MatchOddsBar } from "./MatchOddsBar";
@@ -150,6 +151,9 @@ function PlaybackSpeedControl() {
     </div>
   );
 }
+
+// Antes, la clasificación se mueve demasiado para comparar con el rango esperado (v0.25.88).
+const EXPECTED_RANGE_COMPARE_FROM = 10;
 
 function normalizeLeagueContext(
   initialContext: UserLeagueSimulationContext | undefined,
@@ -284,6 +288,17 @@ export function LeagueSimulatorView({
   const shownUserRow = shownUserSummary.row;
   const shownMatchesPlayed = shownUserRow?.played ?? 0;
   const leagueProgressLabel = `Jornada ${Math.min(shownMatchesPlayed + 1, 38)} / 38`;
+  // Rango esperado (v0.25.88): unas décimas de segundo de cálculo, después de pintar la pantalla.
+  // Depende del calendario, los rivales y el once, no de cada partido jugado.
+  const [expectedRange, setExpectedRange] = useState<ExpectedLeagueRange>();
+  const seasonFixtures = context.state.fixtures;
+  const seasonRivals = context.rivals;
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setExpectedRange(estimateExpectedLeagueRange({ fixtures: seasonFixtures, rivals: seasonRivals, teamRating: effectiveTeamRating, selectedPlayers }));
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [seasonFixtures, seasonRivals, effectiveTeamRating, selectedPlayers]);
   // Con shownContext: mientras se juega tu cruce, el cuadro no enseña la ronda (v0.25.87).
   const cupBracketRounds = useMemo(
     () => (consultTab === "copa" ? buildCupBracket(shownContext.cupState, shownMatchesPlayed) : []),
@@ -1057,6 +1072,11 @@ export function LeagueSimulatorView({
         <aside className="league-side-panel">
           <section className="table-card">
             <h2>Clasificación</h2>
+            {expectedRange && (
+              <p className="expected-range-note">
+                {getExpectedLeagueRangeText(expectedRange, shownMatchesPlayed >= EXPECTED_RANGE_COMPARE_FROM ? shownUserSummary.position : undefined)}
+              </p>
+            )}
 
             <div className="league-table">
               <div className="league-table-head">
