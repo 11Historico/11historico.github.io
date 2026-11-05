@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.91 — Premio seguro en el centro perfecto de la ruleta
+
+- **Aciertas el centro, tienes premio:** si paras la flecha de la ruleta de temporada en el centro perfecto, siempre sale premio. Antes podía salir «Sin efecto» (30 %) o incluso castigo (5 %).
+- **El resto, igual:** las demás zonas, los premios y la velocidad de la flecha no cambian.
+- **Se explica en pantalla:** «En el centro perfecto el premio está asegurado».
+
 ## v0.25.90 — Supercopa en dos pasos y con cuadro
 
 - **Semifinal y final por separado:** «Jugar las semifinales» juega las dos semifinales. Si pasas, ves la previa de la final, eliges su planteamiento y la juegas con «Jugar la final». Si caes, la final entre rivales se juega a continuación.

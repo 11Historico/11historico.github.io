@@ -1,5 +1,37 @@
 import { describe, expect, it } from "vitest";
-import { buildAcceptedSeasonLuckWheelState, type SeasonLuckWheelResolvedResult } from "../../src/career/seasonLuckWheel";
+import {
+  buildAcceptedSeasonLuckWheelState,
+  getSeasonLuckWheelPrecisionZone,
+  resolveSeasonLuckWheel,
+  type SeasonLuckWheelResolvedResult,
+} from "../../src/career/seasonLuckWheel";
+
+describe("centro perfecto de la ruleta", () => {
+  const rolls = Array.from({ length: 100 }, (_, index) => index / 100);
+
+  it("siempre da premio, sea cual sea la tirada", () => {
+    for (const position of [0.445, 0.5, 0.555]) {
+      for (const roll of rolls) {
+        const resolved = resolveSeasonLuckWheel({
+          seasonId: "2025/26",
+          triggerEvent: "mid_season",
+          precisionPosition: position,
+          randomGroup: roll,
+          randomPrize: roll,
+          randomText: roll,
+        });
+        expect(resolved.precisionZone.id).toBe("perfect_center");
+        expect(resolved.resultGroup).toBe("positive");
+      }
+    }
+  });
+
+  it("deja igual las demás zonas", () => {
+    expect(getSeasonLuckWheelPrecisionZone(0.6).probabilities).toEqual({ positive: 50, neutral: 35, negative: 15 });
+    expect(getSeasonLuckWheelPrecisionZone(0.3).probabilities).toEqual({ positive: 40, neutral: 40, negative: 20 });
+    expect(getSeasonLuckWheelPrecisionZone(0).probabilities).toEqual({ positive: 10, neutral: 40, negative: 50 });
+  });
+});
 
 const result: SeasonLuckWheelResolvedResult = {
   seasonId: "2025/26",
@@ -15,7 +47,7 @@ const result: SeasonLuckWheelResolvedResult = {
     label: "Centro perfecto",
     minDistanceFromCenter: 0,
     maxDistanceFromCenter: 0.06,
-    probabilities: { positive: 65, neutral: 30, negative: 5 },
+    probabilities: { positive: 100, neutral: 0, negative: 0 },
   },
   appearanceText: "Aparece la suerte.",
   resultText: "Sale bien.",
