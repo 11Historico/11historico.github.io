@@ -67,6 +67,8 @@ export interface CareerTeam {
   teamRating: TeamRating;
   /** Cambio de líneas después de la compresión de carrera, para probar alternativas. */
   effectiveLineShift?: Partial<Record<"attack" | "defense" | "control", number>>;
+  /** Rating de simulación en lugar de la compresión de carrera, para probar alternativas (auditSimulationRating). */
+  simulationRating?: (seasonRating: TeamRating, difficulty: GameDifficulty) => TeamRating;
 }
 
 // Azar fijado por carrera: la misma carrera empieza igual en todas las políticas. El reloj
@@ -193,6 +195,7 @@ function playSeason(params: {
   gameId: string;
   baseRating: TeamRating;
   lineShift: CareerTeam["effectiveLineShift"];
+  simulationRating: CareerTeam["simulationRating"];
   difficulty: GameDifficulty;
   formationName: string;
   selectedPlayers: SelectedPlayer[];
@@ -201,8 +204,8 @@ function playSeason(params: {
   completedSeasons: number;
   tournament: EuropeanTournamentState | null | undefined;
 }) {
-  const { policy, gameId, baseRating, lineShift, difficulty, formationName, selectedPlayers, selectedCoach, rivals, completedSeasons } = params;
-  const compressedRating = applyDifficultyToTeamRating(baseRating, difficulty, true);
+  const { policy, gameId, baseRating, lineShift, simulationRating, difficulty, formationName, selectedPlayers, selectedCoach, rivals, completedSeasons } = params;
+  const compressedRating = simulationRating ? simulationRating(baseRating, difficulty) : applyDifficultyToTeamRating(baseRating, difficulty, true);
   const effectiveRating = lineShift
     ? {
       ...compressedRating,
@@ -326,6 +329,7 @@ export function playCareer(params: {
       gameId,
       baseRating: seasonRating,
       lineShift: team.effectiveLineShift,
+      simulationRating: team.simulationRating,
       difficulty,
       formationName: team.formation.name,
       selectedPlayers: team.selectedPlayers,
