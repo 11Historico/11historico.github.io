@@ -74,6 +74,8 @@ export interface CareerSupercopaResult {
   results: MatchResult[];
   played: boolean;
   won: boolean;
+  /** Semifinales jugadas y estás en la final, que se juega aparte (v0.25.90). Sin campeón todavía. */
+  awaitingFinal?: boolean;
   eliminatedRoundName?: "Semifinal" | "Final";
   championTeamId: string;
   championTeamName: string;

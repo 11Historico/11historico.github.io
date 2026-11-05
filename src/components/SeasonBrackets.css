@@ -118,11 +118,11 @@
   font-size: 0.82rem;
 }
 
-/* Cuadro de Copa en espejo (v0.25.87): nueve columnas; en pantallas estrechas se desplaza
-   dentro de la tarjeta, sin mover la página. */
+/* Cuadro en espejo (v0.25.87): nueve columnas en Copa y tres en Supercopa (--cup-mirror-columns).
+   En pantallas estrechas se desplaza dentro de la tarjeta, sin mover la página. */
 .cup-mirror {
   display: grid;
-  grid-template-columns: repeat(9, minmax(128px, 1fr));
+  grid-template-columns: repeat(var(--cup-mirror-columns, 9), minmax(128px, 1fr));
   gap: 6px;
   /* Sin esto, las nueve columnas ensanchan la tarjeta y la página: el cuadro no aporta
      ancho propio y ocupa el de la tarjeta. */

@@ -4,13 +4,14 @@ import type {
   CareerSupercopaQualification,
   CareerSupercopaResult,
 } from "../types/career";
-import type { SupercopaSemifinalPreview } from "../career/supercopaRules";
+import { getSupercopaBracketRounds, type SupercopaSemifinalPreview } from "../career/supercopaRules";
 import type { CoachSkills, Formation, MatchApproach, SelectedPlayer } from "../types/game";
 
 import { MatchApproachControl } from "./MatchApproachControl";
 import { MatchOddsBar } from "./MatchOddsBar";
 import { MatchSequence } from "./MatchSequence";
 import { getLineDuelSummary } from "./matchSequenceTimeline";
+import { CupMirrorBracket } from "./SeasonBrackets";
 
 import "./CareerSupercopa.css";
 
@@ -20,9 +21,35 @@ interface CareerSupercopaProps {
   coachSkills?: CoachSkills;
   pitch?: { formation: Formation; selectedPlayers: SelectedPlayer[] };
   getSemifinalPreview: (approach: MatchApproach) => SupercopaSemifinalPreview | undefined;
+  getFinalPreview: (approach: MatchApproach) => SupercopaSemifinalPreview | undefined;
   onSimulate: (approach: MatchApproach) => void;
+  /** La final se juega aparte, con su propio planteamiento (v0.25.90). */
+  onSimulateFinal: (approach: MatchApproach) => void;
   onContinue: () => void;
   onRestart: () => void;
+}
+
+function MatchPreview({ label, preview, approach, coachSkills, onApproachChange }: {
+  label: string;
+  preview?: SupercopaSemifinalPreview;
+  approach: MatchApproach;
+  coachSkills?: CoachSkills;
+  onApproachChange: (approach: MatchApproach) => void;
+}) {
+  return (
+    <section className="career-supercopa-preview" aria-label={label}>
+      <MatchApproachControl value={approach} onChange={onApproachChange} competition="supercopa" coachSkills={coachSkills} />
+      {preview && (
+        <>
+          <p>
+            {label === "Previa de la final" ? "Tu final" : "Tu semifinal"}: {preview.venue === "home" ? "en casa contra" : "fuera contra"} <strong>{preview.rivalName}</strong>
+          </p>
+          <small>{getLineDuelSummary(preview.lineDuel)}</small>
+          <MatchOddsBar odds={preview.odds} note="en 90 minutos; si hay empate, prórroga" />
+        </>
+      )}
+    </section>
+  );
 }
 
 export function CareerSupercopa({
@@ -31,23 +58,29 @@ export function CareerSupercopa({
   coachSkills,
   pitch,
   getSemifinalPreview,
+  getFinalPreview,
   onSimulate,
+  onSimulateFinal,
   onContinue,
   onRestart,
 }: CareerSupercopaProps) {
   const [approach, setApproach] = useState<MatchApproach>("balanced");
-  const preview = result ? undefined : getSemifinalPreview(approach);
   // Partido que se está reproduciendo. Cuando termina, se pasa al siguiente.
   const [playingIndex, setPlayingIndex] = useState(0);
   const [shownResult, setShownResult] = useState(result);
 
+  // Al llegar la final se sigue donde se iba: no se repiten las semifinales.
   if (shownResult !== result) {
     setShownResult(result);
-    setPlayingIndex(0);
+    if (!result || !shownResult) setPlayingIndex(0);
   }
 
   const matchCount = result?.results.length ?? 0;
-  const isFinished = result !== undefined && playingIndex >= matchCount;
+  const allShown = result !== undefined && playingIndex >= matchCount;
+  const isFinished = allShown && !result.awaitingFinal;
+  const isFinalNext = allShown && result.awaitingFinal === true;
+  const semifinalPreview = result ? undefined : getSemifinalPreview(approach);
+  const finalPreview = isFinalNext ? getFinalPreview(approach) : undefined;
 
   return (
     <main className="career-supercopa-screen">
@@ -68,25 +101,19 @@ export function CareerSupercopa({
           ))}
         </div>
 
+        <CupMirrorBracket
+          rounds={getSupercopaBracketRounds(qualification.participants, result, playingIndex)}
+          label="Cuadro de la Supercopa"
+        />
+
         {!result && (
-          <section className="career-supercopa-preview" aria-label="Previa de la semifinal">
-            <MatchApproachControl value={approach} onChange={setApproach} competition="supercopa" coachSkills={coachSkills} />
-            {preview && (
-              <>
-                <p>
-                  Tu semifinal: {preview.venue === "home" ? "en casa contra" : "fuera contra"} <strong>{preview.rivalName}</strong>
-                </p>
-                <small>{getLineDuelSummary(preview.lineDuel)}</small>
-                <MatchOddsBar odds={preview.odds} note="en 90 minutos; si hay empate, prórroga" />
-              </>
-            )}
-          </section>
+          <MatchPreview label="Previa de la semifinal" preview={semifinalPreview} approach={approach} coachSkills={coachSkills} onApproachChange={setApproach} />
         )}
 
         {!result && (
           <div className="career-supercopa-actions">
             <button type="button" className="primary-home-button" onClick={() => onSimulate(approach)}>
-              Simular Supercopa
+              Jugar las semifinales
             </button>
             <button type="button" className="secondary-home-button" onClick={onRestart}>
               Salir
@@ -96,7 +123,7 @@ export function CareerSupercopa({
 
         {result && (
           <section className={`career-supercopa-result ${isFinished && result.won ? "career-supercopa-won" : ""}`}>
-            <p className="eyebrow">{isFinished ? "Resultado" : "Supercopa en directo"}</p>
+            <p className="eyebrow">{isFinished ? "Resultado" : isFinalNext ? "Final de la Supercopa" : "Supercopa en directo"}</p>
 
             {isFinished && (
               <>
@@ -105,6 +132,18 @@ export function CareerSupercopa({
                   Campeón: <strong>{result.championTeamName}</strong>
                   {result.runnerUpTeamName ? <> · Subcampeón: <strong>{result.runnerUpTeamName}</strong></> : null}
                 </p>
+              </>
+            )}
+
+            {isFinalNext && (
+              <>
+                <h2>¡A la final!</h2>
+                <MatchPreview label="Previa de la final" preview={finalPreview} approach={approach} coachSkills={coachSkills} onApproachChange={setApproach} />
+                <div className="career-supercopa-actions">
+                  <button type="button" className="primary-home-button" onClick={() => onSimulateFinal(approach)}>
+                    Jugar la final
+                  </button>
+                </div>
               </>
             )}
 

@@ -333,14 +333,31 @@ test("la Supercopa se reproduce partido a partido y el veredicto llega al final"
   await preview.getByRole("button", { name: "Defensivo" }).click();
   await expect(preview.getByRole("button", { name: "Defensivo" })).toHaveAttribute("aria-pressed", "true");
 
-  await page.getByRole("button", { name: "Simular Supercopa" }).click();
+  // v0.25.90: cuadro en espejo con las dos semifinales y la final por decidir.
+  const bracket = page.getByLabel("Cuadro de la Supercopa");
+  await expect(bracket.locator(".cup-mirror-column")).toHaveCount(3);
+  await expect(bracket.getByRole("region", { name: "Final", exact: true })).toContainText("Por decidir");
+
+  await page.getByRole("button", { name: "Jugar las semifinales" }).click();
 
   // Mientras se juegan los partidos no hay veredicto ni botón para seguir.
   await expect(page.getByText("Supercopa en directo")).toBeVisible();
   await expect(page.getByRole("button", { name: /^Jugar Liga/ })).toHaveCount(0);
   await expect(page.locator(".match-sequence")).toHaveCount(1);
 
+  // Si pasas, la final se juega aparte y con su propio planteamiento.
+  const outcome = page.getByRole("heading", { name: /^(¡A la final!|Eliminado en Semifinal)$/ });
+  await expect(outcome).toBeVisible({ timeout: 30_000 });
+  if ((await outcome.textContent()) === "¡A la final!") {
+    await expect(page.locator(".match-sequence")).toHaveCount(2);
+    await expect(page.getByRole("region", { name: "Previa de la final" })).toContainText(/Victoria \d+\s%/);
+    await expect(page.getByRole("button", { name: /^Jugar Liga/ })).toHaveCount(0);
+    await page.getByRole("button", { name: "Jugar la final" }).click();
+  }
+
   await expect(page.getByRole("heading", { name: /Campeón de Supercopa|Eliminado en/ })).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator(".match-sequence")).toHaveCount(3);
+  await expect(bracket.getByRole("region", { name: "Final", exact: true })).not.toContainText("Por decidir");
   // v0.25.83: el marcador se ve igual que en Liga: número rojo sobre el círculo blanco.
   await expect(page.locator(".score-team strong").first()).toHaveCSS("color", "rgb(176, 0, 32)");
   // v0.25.76: tu partido lleva dominio y mini campo; el partido entre rivales, no.

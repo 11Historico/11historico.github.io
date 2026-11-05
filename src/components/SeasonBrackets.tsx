@@ -3,6 +3,8 @@
 // Cuadros de fin de temporada (v0.25.11): Copa del Rey y torneo europeo en columnas
 // por ronda. La lógica de qué mostrar está en src/career/seasonBrackets.ts.
 
+import type { CSSProperties } from "react";
+
 import {
   getCupMatchWinner,
   isUserTeamName,
@@ -86,8 +88,11 @@ function CupTieCard({ tie }: { tie: CupBracketTie }) {
   );
 }
 
-/** Cuadro de la Copa en espejo (v0.25.87): dieciseisavos a cada lado y la final en el centro. */
-export function CupMirrorBracket({ rounds }: { rounds: CupBracketRound[] }) {
+/**
+ * Cuadro en espejo (v0.25.87): la primera ronda a cada lado y la final en el centro.
+ * Copa: dieciseisavos a final, nueve columnas. Supercopa (v0.25.90): semifinales y final, tres.
+ */
+export function CupMirrorBracket({ rounds, label = "Cuadro de la Copa del Rey" }: { rounds: CupBracketRound[]; label?: string }) {
   const sideRounds = rounds.slice(0, -1);
   const final = rounds.at(-1);
   const column = (round: CupBracketRound, side: "left" | "right" | "final") => {
@@ -111,7 +116,7 @@ export function CupMirrorBracket({ rounds }: { rounds: CupBracketRound[] }) {
   };
 
   return (
-    <div className="cup-mirror" aria-label="Cuadro de la Copa del Rey">
+    <div className="cup-mirror" aria-label={label} style={{ "--cup-mirror-columns": rounds.length * 2 - 1 } as CSSProperties}>
       {sideRounds.map((round) => column(round, "left"))}
       {final && column(final, "final")}
       {[...sideRounds].reverse().map((round) => column(round, "right"))}

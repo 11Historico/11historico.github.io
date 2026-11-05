@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.90 — Supercopa en dos pasos y con cuadro
+
+- **Semifinal y final por separado:** «Jugar las semifinales» juega las dos semifinales. Si pasas, ves la previa de la final, eliges su planteamiento y la juegas con «Jugar la final». Si caes, la final entre rivales se juega a continuación.
+- **Cuadro como el de Copa:** una semifinal a cada lado y la final en el centro. Cada resultado aparece cuando acaba su partido.
+- **Sin confusiones:** los partidos entre rivales dicen «Terminado» en vez de «Final», que se confundía con la ronda.
+- **Misma simulación:** cada partido se simula igual que antes. Lo nuevo es que puedes cambiar de planteamiento para la final.
+
 ## v0.25.89 — La Supercopa no se salta partidos
 
 - **Partido a partido:** la Supercopa podía enseñar las dos semifinales y la final a la vez y acabar en un segundo. Ahora cada partido empieza cuando acaba el anterior.
