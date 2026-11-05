@@ -19,6 +19,7 @@
 //   concederse aunque se recalcule sobre el mismo torneo.
 
 import { getEuropeanCareerTrophyLabel } from "./europeanTrophies";
+import { getEuropeanLeaguePhaseUserPosition } from "../europe/europeanTournament";
 import type { EuropeanTournamentState } from "../europe/europeanTypes";
 
 export type EuropeanPrestigeTier = "champion" | "runner_up" | "semifinal" | "league_phase";
@@ -94,11 +95,16 @@ export function buildEuropeanPrestigeReward(tournament: EuropeanTournamentState)
     };
   }
 
+  // v0.25.92: el puesto en la tabla dice lo cerca que se quedó de semifinales.
+  const position = getEuropeanLeaguePhaseUserPosition(tournament);
+  const teams = tournament.matches.filter((match) => match.phase === "league_phase").length + 1;
+  const place = position > 0 ? ` (${position}.º de ${teams})` : "";
+
   return {
     tier,
     competitionLabel,
     ratingBonus: 0,
-    narrative: `Participación europea en ${competitionLabel}: la campaña se queda en la fase inicial, sin prestigio adicional para la próxima temporada.`,
+    narrative: `Eliminado en la fase inicial de ${competitionLabel}${place}: sin prestigio adicional para la próxima temporada.`,
   };
 }
 

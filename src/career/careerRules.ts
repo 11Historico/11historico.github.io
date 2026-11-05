@@ -46,6 +46,9 @@ export function getEuropeanQualification(
 }
 
 function getCareerObjectiveSuccessReason(result: CareerSeasonResult): string {
+  // v0.25.92: el título de Liga se nombra, no solo la plaza europea que da.
+  if (result.wonLeague && result.wonCopa) return "Objetivo cumplido: campeón de Liga y de Copa del Rey.";
+  if (result.wonLeague) return "Objetivo cumplido: campeón de Liga y clasificación a Champions League.";
   if (result.wonCopa) return "Objetivo cumplido: campeón de Copa del Rey.";
   if (result.europeanQualification === "champions") {
     return "Objetivo cumplido: clasificación a Champions League.";

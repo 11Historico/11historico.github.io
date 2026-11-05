@@ -96,7 +96,7 @@ function getCareerRewardProfile(
         "Has cumplido el objetivo por clasificación europea. Puedes hacer una mejora prudente antes de la siguiente temporada.",
       playerActionLabel: "Cambiar 1 jugador",
       coachActionLabel: "Cambiar entrenador",
-      extraNote: "Europa mantiene viva la carrera, pero no desbloquea premio extra en esta versión.",
+      extraNote: "Europa mantiene viva la carrera, pero no da premio extra.",
     };
   }
 
@@ -169,7 +169,7 @@ export function CareerInterseasonReward({
           </article>
           <article>
             <span>Palmarés</span>
-            <strong>{palmaresScore} pts</strong>
+            <strong>{palmaresScore} pts de palmarés</strong>
             <small>Ligas {trophyCounts.liga} · Copas {trophyCounts.copa} · Supercopas {trophyCounts.supercopa} · Europa {getEuropeanTrophyBreakdown(trophyCounts).total}</small>
           </article>
         </div>

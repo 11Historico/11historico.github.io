@@ -338,7 +338,7 @@ export function CareerSeasonOutcome({
           <article>
             <span>Liga</span>
             <strong>{summary.leaguePosition}.º</strong>
-            <small>{summary.points} puntos</small>
+            <small>{seasonResult.wonLeague ? `Campeón · ${summary.points} puntos` : `${summary.points} puntos`}</small>
           </article>
           <article>
             <span>Europa</span>
@@ -348,7 +348,8 @@ export function CareerSeasonOutcome({
           <article>
             <span>Copa del Rey</span>
             <strong>{seasonResult.wonCopa ? "Campeón" : summary.cupRoundReached ?? "Sin título"}</strong>
-            <small>{seasonResult.wonCopa ? "Objetivo cumplido" : "No salva la temporada"}</small>
+            {/* v0.25.92: con el objetivo ya cumplido por la Liga, «No salva la temporada» sonaba a fracaso. */}
+            <small>{seasonResult.wonCopa ? "Objetivo cumplido" : survived ? "Objetivo ya cumplido por la Liga" : "No salva la temporada"}</small>
           </article>
           <article>
             <span>Descenso</span>
@@ -413,7 +414,7 @@ export function CareerSeasonOutcome({
           <section className="career-season-challenge" aria-label="Retar a otros jugadores">
             <h2>Reta a otros jugadores</h2>
             <p>
-              Comparte tu marca hasta esta temporada: {challengeEntry.arcadeScore} puntos y {challengeEntry.completedSeasons}{" "}
+              Comparte tu marca hasta esta temporada: {challengeEntry.arcadeScore} puntos de ranking y {challengeEntry.completedSeasons}{" "}
               {challengeEntry.completedSeasons === 1 ? "temporada superada" : "temporadas superadas"}.
             </p>
             <ChallengeLinkButton link={challengeLinkUrl} />
