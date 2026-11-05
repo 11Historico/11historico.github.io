@@ -129,7 +129,8 @@ export const SEASON_LUCK_WHEEL_PRECISION_ZONES: SeasonLuckWheelPrecisionZone[] =
     label: "Centro perfecto",
     minDistanceFromCenter: 0,
     maxDistanceFromCenter: 0.06,
-    probabilities: { positive: 65, neutral: 30, negative: 5 },
+    // v0.25.91: parar en el centro perfecto asegura premio (antes 65 / 30 / 5).
+    probabilities: { positive: 100, neutral: 0, negative: 0 },
   },
   {
     id: "good_center",

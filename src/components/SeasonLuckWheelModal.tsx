@@ -321,7 +321,8 @@ export default function SeasonLuckWheelModal({
             </div>
 
             <p>
-              Para cerca del centro para mejorar tus opciones. En los extremos aumenta el riesgo de castigo.
+              En el centro perfecto el premio está asegurado. Cerca del centro mejoras tus opciones; en los
+              extremos aumenta el riesgo de castigo.
               La flecha empieza lenta y acelera poco a poco.
             </p>
 
