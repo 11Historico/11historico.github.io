@@ -60,10 +60,8 @@ export function MatchApproachControl({
           </button>
         ))}
       </div>
-      <p>
-        {selected?.hint}
-        {competition === "supercopa" && " Vale para todos tus partidos de la Supercopa."}
-      </p>
+      {/* Desde v0.25.90 la final de la Supercopa tiene su propio planteamiento: ya no vale para toda. */}
+      <p>{selected?.hint}</p>
       {getCoachNotes(value, competition, coachSkills).map((note) => (
         <p key={note} className="match-approach-coach">{note}</p>
       ))}

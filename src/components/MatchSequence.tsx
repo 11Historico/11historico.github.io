@@ -102,7 +102,8 @@ export function MatchSequence({
       <div className="last-result-top">
         {isFinal ? (
           result.userTeamPlayed === false ? (
-            <span className="match-sequence-clock">Final</span>
+            // «Terminado» y no «Final»: en la Supercopa se confundía con la ronda (v0.25.90).
+            <span className="match-sequence-clock">Terminado</span>
           ) : (
             <span className={getResultClass(result)}>
               {getResultBadge(result)}

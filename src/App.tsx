@@ -101,8 +101,10 @@ import {
 
 import {
   createCareerSupercopaQualification,
+  getSupercopaFinalPreview,
   getSupercopaSemifinalPreview,
-  simulateCareerSupercopa,
+  simulateSupercopaFinal,
+  simulateSupercopaSemifinals,
 } from "./career/supercopaRules";
 
 import "./App.css";
@@ -749,7 +751,8 @@ export default function App() {
   function handleSimulateCareerSupercopa(approach: MatchApproach) {
     if (!careerPendingSupercopa || !teamRating) return;
 
-    const result = simulateCareerSupercopa({
+    // v0.25.90: primero las semifinales; si pasas, la final se juega aparte.
+    const result = simulateSupercopaSemifinals({
       qualification: careerPendingSupercopa,
       teamRating,
       selectedPlayers,
@@ -759,6 +762,19 @@ export default function App() {
     });
 
     setCareerCurrentSupercopaResult(result);
+  }
+
+  function handleSimulateCareerSupercopaFinal(approach: MatchApproach) {
+    if (!careerCurrentSupercopaResult?.awaitingFinal || !teamRating) return;
+
+    setCareerCurrentSupercopaResult(simulateSupercopaFinal({
+      semifinals: careerCurrentSupercopaResult,
+      teamRating,
+      selectedPlayers,
+      rivals: careerLeagueRivals,
+      approach,
+      coachSkills: selectedCoach?.coachSeason.skills,
+    }));
   }
 
   function handleContinueAfterSupercopa() {
@@ -1576,7 +1592,20 @@ export default function App() {
                 coachSkills: selectedCoach?.coachSeason.skills,
               })
             }
+            getFinalPreview={(approach) =>
+              teamRating &&
+              careerCurrentSupercopaResult &&
+              getSupercopaFinalPreview({
+                semifinals: careerCurrentSupercopaResult,
+                teamRating,
+                selectedPlayers,
+                rivals: careerLeagueRivals,
+                approach,
+                coachSkills: selectedCoach?.coachSeason.skills,
+              })
+            }
             onSimulate={handleSimulateCareerSupercopa}
+            onSimulateFinal={handleSimulateCareerSupercopaFinal}
             onContinue={handleContinueAfterSupercopa}
             onRestart={handleRestart}
           />

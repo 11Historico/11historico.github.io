@@ -16,6 +16,7 @@ import type {
   TeamRating,
 } from "../types/game";
 import { USER_TEAM_ID } from "../data/laliga2526Teams";
+import type { CupBracketRound } from "../simulation/leagueSimulator";
 import { USER_TEAM_NAME } from "../simulation/leagueTable";
 import { estimateMatchOdds, getMatchLineDuel, simulateMatch, type MatchOdds, type MatchVenue } from "../simulation/matchEngine";
 
@@ -336,19 +337,21 @@ export interface SupercopaSemifinalPreview {
   lineDuel: MatchLineDuel;
 }
 
-/** Previa de la semifinal del usuario (v0.25.75): la final depende de quién la alcance. */
-export function getSupercopaSemifinalPreview(params: {
-  qualification: CareerSupercopaQualification;
+interface SupercopaUserMatchParams {
   teamRating: TeamRating;
   selectedPlayers: SelectedPlayer[];
   rivals: RivalTeam[];
   approach?: MatchApproach;
   coachSkills?: CoachSkills;
-}): SupercopaSemifinalPreview | undefined {
-  const { qualification, teamRating, selectedPlayers, rivals, approach, coachSkills } = params;
-  const pairing = createPairings(qualification.participants).find((pair) => pair.some((team) => team.teamId === USER_TEAM_ID));
+}
 
-  if (!pairing) return undefined;
+function getUserMatchPreview(
+  pairing: [CareerSupercopaParticipant, CareerSupercopaParticipant] | undefined,
+  params: SupercopaUserMatchParams,
+): SupercopaSemifinalPreview | undefined {
+  const { teamRating, selectedPlayers, rivals, approach, coachSkills } = params;
+
+  if (!pairing || !pairing.some((team) => team.teamId === USER_TEAM_ID)) return undefined;
 
   const venue: MatchVenue = pairing[0].teamId === USER_TEAM_ID ? "home" : "away";
   const rival = findRival(venue === "home" ? pairing[1] : pairing[0], rivals);
@@ -361,24 +364,52 @@ export function getSupercopaSemifinalPreview(params: {
   };
 }
 
-export function simulateCareerSupercopa(params: {
+/** Previa de la semifinal del usuario (v0.25.75): la final depende de quién la alcance. */
+export function getSupercopaSemifinalPreview(
+  params: SupercopaUserMatchParams & { qualification: CareerSupercopaQualification },
+): SupercopaSemifinalPreview | undefined {
+  const pairing = createPairings(params.qualification.participants).find((pair) => pair.some((team) => team.teamId === USER_TEAM_ID));
+  return getUserMatchPreview(pairing, params);
+}
+
+/** Los dos ganadores de semifinales, en el orden en que juegan la final (el primero en casa). */
+function getSupercopaFinalists(semifinals: CareerSupercopaResult): [CareerSupercopaParticipant, CareerSupercopaParticipant] | undefined {
+  const pairings = createPairings(semifinals.participants);
+  const [semi1, semi2] = semifinals.results;
+
+  if (pairings.length < 2 || !semi1 || !semi2) return undefined;
+
+  const winner = (pair: [CareerSupercopaParticipant, CareerSupercopaParticipant], result: MatchResult) =>
+    result.homeGoals > result.awayGoals ? pair[0] : pair[1];
+
+  return [winner(pairings[0], semi1), winner(pairings[1], semi2)];
+}
+
+/** Previa de la final del usuario (v0.25.90), con las semifinales ya jugadas. */
+export function getSupercopaFinalPreview(
+  params: SupercopaUserMatchParams & { semifinals: CareerSupercopaResult },
+): SupercopaSemifinalPreview | undefined {
+  return getUserMatchPreview(getSupercopaFinalists(params.semifinals), params);
+}
+
+interface SupercopaSimulationParams extends SupercopaUserMatchParams {
   qualification: CareerSupercopaQualification;
-  teamRating: TeamRating;
-  selectedPlayers: SelectedPlayer[];
-  rivals: RivalTeam[];
   seed?: number;
-  approach?: MatchApproach;
-  coachSkills?: CoachSkills;
-}): CareerSupercopaResult {
+}
+
+/**
+ * Las dos semifinales (v0.25.90). Si pasas a la final, se para ahí (awaitingFinal): la final se
+ * juega aparte, con su propio planteamiento. Si no, la final entre rivales se juega a la vez.
+ */
+export function simulateSupercopaSemifinals(params: SupercopaSimulationParams): CareerSupercopaResult {
   const { qualification, teamRating, selectedPlayers, rivals, seed = Date.now(), approach, coachSkills } = params;
   const pairings = createPairings(qualification.participants);
-  const results: MatchResult[] = [];
 
   if (pairings.length < 2) {
     return {
       seasonLabel: qualification.seasonLabel,
       participants: qualification.participants,
-      results,
+      results: [],
       played: false,
       won: false,
       championTeamId: "",
@@ -386,36 +417,47 @@ export function simulateCareerSupercopa(params: {
     };
   }
 
-  const semi1 = simulateSupercopaMatch({
-    roundName: "Semifinal",
-    home: pairings[0][0],
-    away: pairings[0][1],
-    teamRating,
-    selectedPlayers,
-    rivals,
-    seed: seed + 101,
-    approach,
-    coachSkills,
-  });
-  results.push(semi1.result);
+  const [semi1, semi2] = pairings.map((pairing, index) =>
+    simulateSupercopaMatch({
+      roundName: "Semifinal",
+      home: pairing[0],
+      away: pairing[1],
+      teamRating,
+      selectedPlayers,
+      rivals,
+      seed: seed + 101 * (index + 1),
+      approach,
+      coachSkills,
+    }),
+  );
+  const semifinals: CareerSupercopaResult = {
+    seasonLabel: qualification.seasonLabel,
+    participants: qualification.participants,
+    results: [semi1.result, semi2.result],
+    played: true,
+    won: false,
+    awaitingFinal: true,
+    championTeamId: "",
+    championTeamName: "",
+  };
 
-  const semi2 = simulateSupercopaMatch({
-    roundName: "Semifinal",
-    home: pairings[1][0],
-    away: pairings[1][1],
-    teamRating,
-    selectedPlayers,
-    rivals,
-    seed: seed + 202,
-    approach,
-    coachSkills,
-  });
-  results.push(semi2.result);
+  const userInFinal = semi1.winner.teamId === USER_TEAM_ID || semi2.winner.teamId === USER_TEAM_ID;
+  return userInFinal ? semifinals : simulateSupercopaFinal({ ...params, seed, semifinals });
+}
+
+/** La final, a partir de las semifinales ya jugadas (v0.25.90). */
+export function simulateSupercopaFinal(
+  params: SupercopaUserMatchParams & { semifinals: CareerSupercopaResult; seed?: number },
+): CareerSupercopaResult {
+  const { semifinals, teamRating, selectedPlayers, rivals, seed = Date.now(), approach, coachSkills } = params;
+  const finalists = getSupercopaFinalists(semifinals);
+
+  if (!finalists) return semifinals;
 
   const final = simulateSupercopaMatch({
     roundName: "Final",
-    home: semi1.winner,
-    away: semi2.winner,
+    home: finalists[0],
+    away: finalists[1],
     teamRating,
     selectedPlayers,
     rivals,
@@ -423,20 +465,17 @@ export function simulateCareerSupercopa(params: {
     approach,
     coachSkills,
   });
-  results.push(final.result);
 
   const userWon = final.winner.teamId === USER_TEAM_ID;
-  const userSemi = [semi1, semi2].find(
-    (semi) => semi.result.homeTeamName === USER_TEAM_NAME || semi.result.awayTeamName === USER_TEAM_NAME,
-  );
-  const userReachedFinal = final.result.homeTeamName === USER_TEAM_NAME || final.result.awayTeamName === USER_TEAM_NAME;
-  const eliminatedRoundName = userWon ? undefined : userReachedFinal ? "Final" : userSemi ? "Semifinal" : undefined;
-  const runnerUp = final.winner.teamId === semi1.winner.teamId ? semi2.winner : semi1.winner;
+  const userPlayedSemi = semifinals.results.some((result) => result.homeTeamName === USER_TEAM_NAME || result.awayTeamName === USER_TEAM_NAME);
+  const userReachedFinal = finalists.some((team) => team.teamId === USER_TEAM_ID);
+  const eliminatedRoundName = userWon ? undefined : userReachedFinal ? "Final" : userPlayedSemi ? "Semifinal" : undefined;
+  const runnerUp = final.winner.teamId === finalists[0].teamId ? finalists[1] : finalists[0];
 
   return {
-    seasonLabel: qualification.seasonLabel,
-    participants: qualification.participants,
-    results,
+    seasonLabel: semifinals.seasonLabel,
+    participants: semifinals.participants,
+    results: [...semifinals.results, final.result],
     played: true,
     won: userWon,
     eliminatedRoundName,
@@ -445,4 +484,37 @@ export function simulateCareerSupercopa(params: {
     runnerUpTeamId: runnerUp.teamId,
     runnerUpTeamName: runnerUp.teamName,
   };
+}
+
+/** La Supercopa entera de una vez, con el mismo planteamiento: auditorías y tests. */
+export function simulateCareerSupercopa(params: SupercopaSimulationParams): CareerSupercopaResult {
+  const seed = params.seed ?? Date.now();
+  const semifinals = simulateSupercopaSemifinals({ ...params, seed });
+  return semifinals.awaitingFinal ? simulateSupercopaFinal({ ...params, seed, semifinals }) : semifinals;
+}
+
+/**
+ * Cuadro de la Supercopa (v0.25.90), con la forma del de Copa: una semifinal a cada lado y la
+ * final en el centro. `shownMatches`: partidos ya vistos; los demás salen sin resultado.
+ */
+export function getSupercopaBracketRounds(
+  participants: CareerSupercopaParticipant[],
+  result: CareerSupercopaResult | undefined,
+  shownMatches: number,
+): CupBracketRound[] {
+  const pairings = createPairings(participants);
+  const results = result?.results ?? [];
+  const finalists = result && shownMatches >= 2 ? getSupercopaFinalists(result) : undefined;
+  const shown = (index: number) => (index < shownMatches ? results[index] : undefined);
+
+  return [
+    {
+      roundName: "Semifinal",
+      ties: pairings.map((pair, index) => ({ homeTeamName: pair[0].teamName, awayTeamName: pair[1].teamName, result: shown(index) })),
+    },
+    {
+      roundName: "Final",
+      ties: [finalists ? { homeTeamName: finalists[0].teamName, awayTeamName: finalists[1].teamName, result: shown(2) } : {}],
+    },
+  ];
 }
