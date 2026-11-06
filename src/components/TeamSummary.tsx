@@ -5,6 +5,8 @@ import { useMemo } from "react";
 import type {
   Formation,
   GameDifficulty,
+  RivalTeam,
+  RivalTeamRatings,
   SelectedCoach,
   SelectedPlayer,
   TeamRating,
@@ -31,6 +33,74 @@ interface TeamSummaryProps {
   isCareerMode?: boolean;
   /** Temporada que se va a jugar, en formato corto («27/28»). */
   seasonLabel?: string;
+  /** Rivales de Liga de la temporada, ya con la progresión de carrera (v0.25.94). */
+  leagueRivals?: RivalTeam[];
+}
+
+// Líneas que tienen par en los rivales: el físico no lo tienen, y su «midfield» es nuestro control.
+const STRENGTH_LINES: { label: string; user: keyof TeamRating & ("attack" | "defense" | "control" | "goalkeeping" | "mentality"); rival: keyof RivalTeamRatings }[] = [
+  { label: "Ataque", user: "attack", rival: "attack" },
+  { label: "Defensa", user: "defense", rival: "defense" },
+  { label: "Control", user: "control", rival: "midfield" },
+  { label: "Portería", user: "goalkeeping", rival: "goalkeeping" },
+  { label: "Mentalidad", user: "mentality", rival: "mentality" },
+];
+
+/**
+ * v0.25.94: la fuerza con la que juega la carrera, en la escala de los rivales de LaLiga.
+ * Los 85-88 del once histórico no se comparan con los 74-91 de los rivales; esta sí.
+ */
+function LeagueStrengthCard({ rating, rivals }: { rating: TeamRating; rivals: RivalTeam[] }) {
+  const byStrength = [...rivals].sort((a, b) => b.ratings.overall - a.ratings.overall);
+  const strongest = byStrength[0];
+  const leagueAverage = (line: keyof RivalTeamRatings) =>
+    Math.round((rivals.reduce((sum, rival) => sum + rival.ratings[line], 0) / rivals.length) * 10) / 10;
+  const rows = STRENGTH_LINES.map((line) => ({
+    ...line,
+    userValue: rating[line.user],
+    strongestValue: strongest.ratings[line.rival],
+    averageValue: leagueAverage(line.rival),
+  }));
+  const weakest = rows.reduce((worst, row) =>
+    row.userValue - row.strongestValue < worst.userValue - worst.strongestValue ? row : worst
+  );
+  const gap = weakest.strongestValue - weakest.userValue;
+
+  return (
+    <article className="team-summary-strength-card" aria-label="Tu fuerza en LaLiga">
+      <span>Tu fuerza en LaLiga</span>
+      <strong>{formatRatingValue(rating.overall)}</strong>
+      <small>
+        {byStrength.slice(0, 3).map((rival) => `${rival.name} ${rival.ratings.overall}`).join(" · ")}
+      </small>
+      <table>
+        <caption>Tus líneas frente a los rivales</caption>
+        <thead>
+          <tr>
+            <th scope="col">Línea</th>
+            <th scope="col">Tú</th>
+            <th scope="col">{strongest.name}</th>
+            <th scope="col">Media LaLiga</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.label}>
+              <th scope="row">{row.label}</th>
+              <td>{formatRatingValue(row.userValue)}</td>
+              <td>{formatRatingValue(row.strongestValue)}</td>
+              <td>{formatRatingValue(row.averageValue)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p>
+        {gap > 0
+          ? `Donde más te saca ${strongest.name}: ${weakest.label.toLowerCase()} (${formatRatingValue(Math.round(gap * 10) / 10)} puntos).`
+          : `Igualas o superas a ${strongest.name} en todas las líneas.`}
+      </p>
+    </article>
+  );
 }
 
 type SafeTeamRating = TeamRating & {
@@ -190,6 +260,7 @@ export function TeamSummary({
   difficulty = "normal",
   isCareerMode = false,
   seasonLabel = "25/26",
+  leagueRivals,
 }: TeamSummaryProps) {
   const teamRating = useMemo(
     () => getSafeTeamRating(formation, selectedPlayers, selectedCoach),
@@ -268,11 +339,17 @@ export function TeamSummary({
               {teamPowerPreview.hasBonus && (
                 <span>Premio entrenador: +{teamPowerPreview.bonus.toFixed(1)}</span>
               )}
-              {isCareerMode && (
-                <span>Rating que usará la simulación: {formatRatingValue(simulatedRating.overall ?? 0)}</span>
-              )}
             </div>
+            {isCareerMode && (
+              <p className="team-summary-overall-note">
+                Es la media histórica del once. En Liga y Copa juegas con tu fuerza en LaLiga.
+              </p>
+            )}
           </article>
+
+          {isCareerMode && leagueRivals && leagueRivals.length > 0 && (
+            <LeagueStrengthCard rating={simulatedRating} rivals={leagueRivals} />
+          )}
 
           <article className="team-summary-coach-card">
             <span>Entrenador elegido</span>
@@ -293,7 +370,9 @@ export function TeamSummary({
           <article className="team-summary-ratings-card">
             <h2>Ratings que influyen en la temporada</h2>
             <p className="team-summary-rating-note">
-              Estos valores salen de jugadores, formación, entrenador y premios activos. Son los que alimentan Liga, Copa y Supercopa.
+              {isCareerMode
+                ? "Valores históricos del once: jugadores, formación, entrenador y premios activos. La Supercopa los usa tal cual; Liga y Copa, en la escala de LaLiga."
+                : "Estos valores salen de jugadores, formación, entrenador y premios activos. Son los que alimentan Liga, Copa y Supercopa."}
             </p>
             <RatingBar label="Ataque" value={displayedRating.attack ?? 0} />
             <RatingBar label="Defensa" value={displayedRating.defense ?? 0} />

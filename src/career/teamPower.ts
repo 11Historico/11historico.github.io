@@ -57,8 +57,10 @@ export function compressCareerRating(value: number): number {
 export function applyCareerSimulationCompression(teamRating: TeamRating, isCareerMode: boolean): TeamRating {
   if (!isCareerMode) return teamRating;
 
+  // v0.25.94: a una décima, no a entero. Con entero, 87 y 88 visibles daban los dos 84 y
+  // mejorar el once no se notaba. Medido sin efecto en el equilibrio (INFORME_RATING_SIMULACION_v0_25_90).
   const clampCompressed = (value: number) =>
-    Math.max(40, Math.min(99, Math.round(compressCareerRating(value))));
+    Math.max(40, Math.min(99, roundToOne(compressCareerRating(value))));
 
   return {
     ...teamRating,
@@ -85,7 +87,9 @@ export function applyDifficultyToTeamRating(
 ): TeamRating {
   const careerRating = applyCareerSimulationCompression(teamRating, isCareerMode);
   const modifier = getDifficultyRatingModifier(difficulty);
-  const clamp = (value: number) => Math.max(40, Math.min(99, Math.round(value + modifier)));
+  // La carrera conserva la décima de la compresión; la partida rápida sigue en enteros.
+  const round = isCareerMode ? roundToOne : Math.round;
+  const clamp = (value: number) => Math.max(40, Math.min(99, round(value + modifier)));
 
   return {
     ...careerRating,
