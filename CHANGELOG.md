@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.98 — Rivales europeos con su nivel
+
+- **Cada club, su nivel:** los rivales europeos tienen una media fija según su club, con solo ±1 de una temporada a otra. El Bayern o el City salen siempre con 89-91; el Celtic o el Salzburgo, con 85-87; el Lech Poznań, con 77-79. Antes la media se sorteaba en cada torneo y el Celtic podía ser más fuerte que el Bayern.
+- **La Champions no pasa de 91:** ningún rival europeo supera ya al Barça y al Real Madrid.
+- **La dificultad media no cambia:** cada competición conserva su media (Champions 88, Europa League 82, Conference 76), y la probabilidad de pasar es la misma.
+
 ## v0.25.97 — Balance europeo al cerrar la temporada
 
 - **Lo que pasó y lo que era normal:** al cerrar una temporada con Europa, una línea lo resume. Por ejemplo, «Europa: caíste en la fase inicial (4.º de 7). Con tu equipo, lo normal era pasar 1 de cada 3 veces».

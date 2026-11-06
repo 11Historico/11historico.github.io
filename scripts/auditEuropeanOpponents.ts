@@ -4,27 +4,26 @@
 // apuntó que algunas parecían desproporcionadas. Mide, sin cambiar el juego:
 //  1. Qué media sale para cada club, sorteando muchos torneos como hace el juego.
 //  2. Cómo queda frente a los rivales de LaLiga, con su progresión de carrera.
-//  3. La probabilidad de pasar la fase de liga hoy y con una escala alternativa de ejemplo.
+//  3. La probabilidad de pasar la fase de liga.
 // Reproducible: npm run audit:european-opponents (o node .audit-dist/auditEuropeanOpponents.js --tournaments=N)
 
 import { applyCareerRivalProgression, getRivalDifficultyBonus } from "../src/career/careerRules";
 import { pickEuropeanOpponents } from "../src/europe/europeanOpponents";
 import { estimateEuropeanSemifinalChance } from "../src/europe/europeanSemifinalChance";
 import { createEuropeanTournamentForQualification } from "../src/europe/europeanTournament";
-import type { EuropeanCompetition, EuropeanQualificationResult, EuropeanTournamentState } from "../src/europe/europeanTypes";
+import type { EuropeanCompetition, EuropeanQualificationResult } from "../src/europe/europeanTypes";
 import { getInitialCareerLeagueRivals } from "../src/simulation/leagueSimulator";
 
 const TOURNAMENTS = Number(process.argv.find((arg) => arg.startsWith("--tournaments="))?.split("=")[1] ?? 300);
 const DRAWS = 2000;
 const SAMPLES_PER_TOURNAMENT = 60;
 
-const COMPETITIONS: { label: string; value: EuropeanCompetition; range: [number, number]; alternative: [number, number] }[] = [
-  // Rangos del juego (src/europe/europeanOpponents.ts) y una escala alternativa de ejemplo, con techo
-  // en el nivel de Barcelona y Real Madrid (91). La alternativa no es una propuesta cerrada: sirve
-  // para ver cuánto pesa el rango en la probabilidad de pasar.
-  { label: "Champions", value: "champions_league", range: [82, 94], alternative: [82, 91] },
-  { label: "Europa League", value: "europa_league", range: [76, 88], alternative: [76, 86] },
-  { label: "Conference", value: "conference_league", range: [70, 82], alternative: [70, 80] },
+// Desde v0.25.98 cada club tiene una media fija ±1 (src/europe/europeanOpponents.ts). Antes se
+// sorteaba en el rango de la competición: 82-94, 76-88 y 70-82 (INFORME_RIVALES_EUROPEOS_v0_25_97).
+const COMPETITIONS: { label: string; value: EuropeanCompetition }[] = [
+  { label: "Champions", value: "champions_league" },
+  { label: "Europa League", value: "europa_league" },
+  { label: "Conference", value: "conference_league" },
 ];
 const USER_RATINGS = [84, 86, 88];
 
@@ -69,22 +68,14 @@ for (const completed of [0, 3, 6, 9]) {
   console.log(`| ${completed} | +${getRivalDifficultyBonus(completed)} | ${ratings[0]} | ${ratings[2]} | ${mean(ratings).toFixed(1)} | ${ratings.at(-1)} |`);
 }
 
-// 3. Probabilidad de pasar la fase de liga, sin decidir (equilibrado), hoy y con la escala alternativa.
-function rescale(tournament: EuropeanTournamentState, from: [number, number], to: [number, number]): EuropeanTournamentState {
-  const map = (rating: number) => Math.round(to[0] + ((rating - from[0]) / (from[1] - from[0])) * (to[1] - to[0]));
-  return {
-    ...tournament,
-    matches: tournament.matches.map((match) => ({ ...match, opponent: { ...match.opponent, rating: map(match.opponent.rating) } })),
-  };
-}
-
+// 3. Probabilidad de pasar la fase de liga, sin decidir (equilibrado).
 console.log(`\n### Probabilidad de pasar la fase de liga sin decidir (${TOURNAMENTS} torneos por casilla)\n`);
-console.log("| Competición | Tu rating europeo | Hoy | Escala alternativa |");
+console.log("| Competición | Tu rating europeo | Probabilidad | Rival medio |");
 console.log("| --- | --- | --- | --- |");
-for (const { label, value, range, alternative } of COMPETITIONS) {
+for (const { label, value } of COMPETITIONS) {
   for (const userTeamRating of USER_RATINGS) {
-    const today: number[] = [];
-    const scaled: number[] = [];
+    const chances: number[] = [];
+    const rivals: number[] = [];
     for (let index = 0; index < TOURNAMENTS; index += 1) {
       const tournament = createEuropeanTournamentForQualification({
         seasonNumber: index + 1,
@@ -92,9 +83,9 @@ for (const { label, value, range, alternative } of COMPETITIONS) {
         seed: `audit_${index}_${value}`,
       });
       if (!tournament) throw new Error("No se creó el torneo.");
-      today.push(estimateEuropeanSemifinalChance({ tournament, userTeamRating, samples: SAMPLES_PER_TOURNAMENT })!.chance);
-      scaled.push(estimateEuropeanSemifinalChance({ tournament: rescale(tournament, range, alternative), userTeamRating, samples: SAMPLES_PER_TOURNAMENT })!.chance);
+      rivals.push(...tournament.matches.map((match) => match.opponent.rating));
+      chances.push(estimateEuropeanSemifinalChance({ tournament, userTeamRating, samples: SAMPLES_PER_TOURNAMENT })!.chance);
     }
-    console.log(`| ${label} ${range[0]}-${range[1]} → ${alternative[0]}-${alternative[1]} | ${userTeamRating} | ${pct(mean(today))} | ${pct(mean(scaled))} |`);
+    console.log(`| ${label} | ${userTeamRating} | ${pct(mean(chances))} | ${mean(rivals).toFixed(1)} |`);
   }
 }

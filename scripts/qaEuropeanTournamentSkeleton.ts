@@ -67,10 +67,10 @@ function testChampionsLeagueCreatesSixMatches(): void {
   assert(tournament.phase === "league_phase", "El torneo debe empezar en fase inicial.");
 
   for (const match of tournament.matches) {
-    assert(match.opponent.rating >= 82 && match.opponent.rating <= 94, `Rival de Champions fuera de rango: ${match.opponent.rating}.`);
+    assert(match.opponent.rating >= 85 && match.opponent.rating <= 91, `Rival de Champions fuera de rango: ${match.opponent.rating}.`);
   }
 
-  logOk("Champions League crea torneo con 6 partidos y rivales 82-94");
+  logOk("Champions League crea torneo con 6 partidos y rivales 85-91 (v0.25.98: techo en el nivel de Barça y Madrid)");
 }
 
 function testEuropaLeagueOpponentRatingRange(): void {
@@ -83,10 +83,10 @@ function testEuropaLeagueOpponentRatingRange(): void {
   assert(tournament !== null, "Europa League debe crear torneo.");
 
   for (const match of tournament.matches) {
-    assert(match.opponent.rating >= 76 && match.opponent.rating <= 88, `Rival de Europa League fuera de rango: ${match.opponent.rating}.`);
+    assert(match.opponent.rating >= 77 && match.opponent.rating <= 87, `Rival de Europa League fuera de rango: ${match.opponent.rating}.`);
   }
 
-  logOk("Europa League crea torneo con rivales de rating 76-88");
+  logOk("Europa League crea torneo con rivales de rating 77-87");
 }
 
 function testConferenceLeagueOpponentRatingRange(): void {
@@ -99,10 +99,10 @@ function testConferenceLeagueOpponentRatingRange(): void {
   assert(tournament !== null, "Conference League debe crear torneo.");
 
   for (const match of tournament.matches) {
-    assert(match.opponent.rating >= 70 && match.opponent.rating <= 82, `Rival de Conference fuera de rango: ${match.opponent.rating}.`);
+    assert(match.opponent.rating >= 72 && match.opponent.rating <= 80, `Rival de Conference fuera de rango: ${match.opponent.rating}.`);
   }
 
-  logOk("Conference League crea torneo con rivales de rating 70-82 (más accesibles)");
+  logOk("Conference League crea torneo con rivales de rating 72-80 (más accesibles)");
 }
 
 function testMatchIdsAreUniqueAndMixHomeAway(): void {
