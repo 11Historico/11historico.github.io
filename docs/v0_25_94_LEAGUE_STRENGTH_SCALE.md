@@ -16,15 +16,30 @@ Son las fases 3 y 4 del roadmap `docs/ROADMAP_MEJORAS_v0_25_91.md`. El usuario v
 
 Se ha repetido `npm run audit:rating` con el juego ya cambiado: 200 carreras por casilla, con el jugador que decide bien en Copa y Europa.
 
-| Dificultad y draft | Antes (v0.25.90, entero) | Ahora (décima) |
-| --- | --- | --- |
-| Normal, mejor media: temporadas superadas | 2,31 | 2,37 ± 0,27 |
-| Normal, mejor media: posición en la 1.ª | 4,8 | 4,91 ± 0,45 |
-| Normal, mejor media: puntuación | 27,6 | 28,89 ± 3,44 |
-| Normal, al azar: temporadas superadas | 0,94 | 0,88 ± 0,16 |
-| Normal, al azar: puntuación | 11,0 | 10,21 ± 1,91 |
+Temporadas superadas, posición en la 1.ª y puntuación del ranking. Las mismas semillas que en v0.25.90:
 
-Todas las diferencias quedan dentro del margen, como ya mostró `INFORME_RATING_SIMULACION_v0_25_90.md` («Comprimido sin redondeo»). El equilibrio no cambia.
+| Dificultad y draft | Antes (entero) | Ahora (décima) |
+| --- | --- | --- |
+| Normal, mejor media | 2,31 ± 0,27 · 4,79.º · 27,6 | 2,37 ± 0,27 · 4,91.º · 28,9 |
+| Normal, al azar | 0,94 ± 0,16 · 7,67.º · 11,0 | 0,88 ± 0,16 · 7,67.º · 10,2 |
+| Fácil, mejor media | 3,73 ± 0,43 · 3,46.º · 47,7 | 3,73 ± 0,44 · 3,52.º · 47,1 |
+| **Fácil, al azar** | **1,66 ± 0,21 · 5,72.º · 19,8** | **2,06 ± 0,28 · 5,54.º · 24,6** |
+
+- **Normal, en las dos casillas, y Fácil con el mejor draft:** sin cambios, todo dentro del margen.
+- **Fácil con draft al azar: +0,40 temporadas y +24 % de puntuación, en el límite del margen.** Por eso se repitió la medición con más carreras.
+
+### Confirmación con 600 carreras por casilla
+
+`npm run audit:rating -- --careers=600 --only=2` compara en la misma ejecución el juego nuevo (décima) con la variante «Entero (antes de v0.25.94)», el redondeo anterior:
+
+| Dificultad y draft | Entero (antes) | Décima (ahora) |
+| --- | --- | --- |
+| Normal, mejor media | 2,25 ± 0,15 · 4,78.º · 27,1 | 2,24 ± 0,15 · 4,87.º · 27,1 |
+| Normal, al azar | 0,97 ± 0,10 · 7,70.º · 11,3 | 0,91 ± 0,10 · 7,82.º · 10,7 |
+| Fácil, mejor media | 3,94 ± 0,27 · 3,57.º · 49,7 | 3,69 ± 0,27 · 3,69.º · 46,4 |
+| Fácil, al azar | 1,70 ± 0,12 · 5,54.º · 20,3 | 1,79 ± 0,14 · 5,43.º · 21,5 |
+
+**Conclusión:** las diferencias van en las dos direcciones y todas quedan dentro del margen. El +24 % de la primera medición era ruido. El equilibrio no cambia. Son 4.800 carreras, ninguna rechazada por la regla de plausibilidad.
 
 ## Fase 4 — Tu fuerza en LaLiga (`src/components/TeamSummary.tsx`)
 
@@ -44,6 +59,13 @@ En carrera, el resumen del equipo añade la tarjeta **«Tu fuerza en LaLiga»**:
 La partida rápida no cambia. La tarjeta solo sale en carrera.
 
 Los rivales salen de App (`careerLeagueRivals` con `applyCareerRivalProgression`), los mismos que usa la simulación de la Liga.
+
+## Auditoría
+
+`scripts/auditSimulationRating.ts`:
+- La primera variante pasa a llamarse «Hoy: comprimido a una décima».
+- Se añade la variante «Entero (antes de v0.25.94)».
+- Se añade la opción `--only=N`, que mide solo las N primeras variantes. Las propuestas sin compresión son las lentas.
 
 ## Comprobación
 
