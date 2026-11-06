@@ -41,7 +41,7 @@ function createRow(teamId: string, teamName: string, isUser: boolean): EuropeanL
   };
 }
 
-function recordResult(
+export function recordResult(
   rows: Map<string, EuropeanLeagueTableRow>,
   homeId: string,
   awayId: string,
@@ -73,13 +73,31 @@ function recordResult(
   }
 }
 
-function compareRows(a: EuropeanLeagueTableRow, b: EuropeanLeagueTableRow): number {
+export function compareRows(a: EuropeanLeagueTableRow, b: EuropeanLeagueTableRow): number {
   return (
     b.points - a.points ||
     b.goalDifference - a.goalDifference ||
     b.goalsFor - a.goalsFor ||
     a.teamName.localeCompare(b.teamName, "es")
   );
+}
+
+/**
+ * Partidos entre rivales: todos contra todos una vez, repartidos en las jornadas del usuario.
+ * `round` es la jornada del usuario tras la que cuenta el partido.
+ */
+export function getEuropeanRivalPairs(
+  opponents: EuropeanOpponent[],
+): { home: EuropeanOpponent; away: EuropeanOpponent; round: number }[] {
+  const pairs: { home: EuropeanOpponent; away: EuropeanOpponent; round: number }[] = [];
+
+  for (let i = 0; i < opponents.length; i += 1) {
+    for (let j = i + 1; j < opponents.length; j += 1) {
+      pairs.push({ home: opponents[i], away: opponents[j], round: (pairs.length % opponents.length) + 1 });
+    }
+  }
+
+  return pairs;
 }
 
 /**
@@ -106,24 +124,17 @@ export function buildEuropeanLeaguePhaseTable(
     recordResult(rows, USER_ROW_ID, match.opponent.id, match.userGoals ?? 0, match.opponentGoals ?? 0);
   }
 
-  let pairIndex = 0;
-  for (let i = 0; i < opponents.length; i += 1) {
-    for (let j = i + 1; j < opponents.length; j += 1) {
-      const round = (pairIndex % leagueMatches.length) + 1;
-      pairIndex += 1;
-      if (round > playedUserMatches.length) continue;
+  for (const { home, away, round } of getEuropeanRivalPairs(opponents)) {
+    if (round > playedUserMatches.length) continue;
 
-      const home = opponents[i];
-      const away = opponents[j];
-      const outcome = simulateEuropeanMatch({
-        userTeamRating: home.rating,
-        opponentRating: away.rating,
-        isHome: true,
-        competition: tournament.competition,
-        seed: `${tournament.seasonNumber}_${tournament.competition}_${home.id}_${away.id}`,
-      });
-      recordResult(rows, home.id, away.id, outcome.userGoals, outcome.opponentGoals);
-    }
+    const outcome = simulateEuropeanMatch({
+      userTeamRating: home.rating,
+      opponentRating: away.rating,
+      isHome: true,
+      competition: tournament.competition,
+      seed: `${tournament.seasonNumber}_${tournament.competition}_${home.id}_${away.id}`,
+    });
+    recordResult(rows, home.id, away.id, outcome.userGoals, outcome.opponentGoals);
   }
 
   return [...rows.values()].sort(compareRows);

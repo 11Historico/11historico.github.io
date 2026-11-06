@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.95 — Probabilidad de pasar en Europa
+
+- **Sabes cómo vas:** mientras dura la fase de liga europea, la previa del partido y la clasificación europea dicen tu probabilidad de pasar a semifinales. Por ejemplo, «36 %», que sube a «57 %» tras ganar el primer partido.
+- **Y qué necesitas:** «Con 8 puntos en los 5 partidos que faltan pasas casi seguro».
+- **La zona de semifinales, más visible:** los 2 primeros en verde y una línea de corte tras el 2.º.
+- **No cambia nada del juego:** el cálculo usa sus propias simulaciones, sin gastar azar de la partida ni adelantar resultados.
+
 ## v0.25.94 — Tu fuerza en la escala de LaLiga
 
 - **Tu fuerza en LaLiga:** el resumen del equipo muestra con qué fuerza juega tu once la Liga y la Copa, junto a los tres rivales más fuertes. Por ejemplo, «88.1 · FC Barcelona 92.5 · Real Madrid 92.5 · Atlético de Madrid 88.5».
