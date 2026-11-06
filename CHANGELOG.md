@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.93 — Aviso para seguir la Liga tras Copa o Europa
+
+- **Sabes que el juego te espera:** al terminar un partido de Copa o Europa, la tarjeta de acciones dice «Sigue la Liga» y «La Liga no sigue sola: pulsa «Simular» para jugar la jornada 19».
+- **El botón que toca, destacado:** «Simular» pasa a ser el botón principal hasta que juegas la siguiente jornada.
+- **No cambian las reglas:** un partido pendiente de Copa o Europa sigue bloqueando la Liga.
+
 ## v0.25.92 — Textos de fin de temporada más claros
 
 - **La Liga se nombra:** si ganas la Liga, la tarjeta dice «Campeón · 68 puntos» y la línea de objetivo, «campeón de Liga y clasificación a Champions League».
