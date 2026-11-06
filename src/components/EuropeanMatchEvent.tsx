@@ -34,6 +34,7 @@ import { getMatchPlaybackMultiplier, useMatchPlaybackSpeed } from "./matchPlayba
 import { MatchDominanceBar } from "./MatchDominanceBar";
 import { MatchIcon } from "./MatchIcon";
 import { MatchHalfTimeControl } from "./MatchHalfTimeControl";
+import { MatchTimeline } from "./MatchTimeline";
 import { getEuropeanVerdict, type MatchVerdict } from "./matchVerdict";
 import { MatchVerdictBanner } from "./MatchVerdictBanner";
 import TacticalPitch from "./TacticalPitch";
@@ -196,7 +197,10 @@ function EuropeanMatchSequence({
     return () => window.clearInterval(intervalId);
   }, [isAtHalfTime, isFinal, playbackMultiplier, stopMs]);
 
-  const progressPercent = Math.min(100, (elapsedMs / durationMs) * 100);
+  // Línea de tiempo (v0.25.99): la escala de 120' solo aparece cuando ya se juega la prórroga.
+  const timelineMinute = frame.stage === "preview" ? 0 : frame.stage === "regular" ? (frame.minute ?? 0) : 120;
+  const timelineExtraTime = frame.stage === "extra_time" || frame.stage === "penalties"
+    || (isFinal && (match.decidedBy === "extra_time" || match.decidedBy === "penalties"));
   const liveText = isAtHalfTime
     ? "Descanso"
     : frame.stage === "preview"
@@ -262,9 +266,17 @@ function EuropeanMatchSequence({
         </>
       )}
 
-      <div className="european-match-sequence-progress" aria-hidden="true">
-        <span style={{ width: `${progressPercent}%` }} />
-      </div>
+      <MatchTimeline
+        goals={visibleGoals.map((goal) => ({ minute: goal.minute, isTop: goal.isUserGoal }))}
+        minute={timelineMinute}
+        extraTime={timelineExtraTime}
+        halfTimeEffect={match.halfTimeEffect}
+        halfTimePending={isAtHalfTime}
+        trackClassName="european-match-sequence-progress"
+        topLabel="Tus goles"
+        bottomLabel="Goles del rival"
+        legend="Arriba, tus goles · abajo, los del rival"
+      />
 
       {match.expectedGoals && <MatchDominanceBar expectedGoals={match.expectedGoals} started={frame.stage !== "preview"} />}
 

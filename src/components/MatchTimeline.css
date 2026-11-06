@@ -1,0 +1,96 @@
+/* Línea de tiempo del partido (v0.25.99, fase 17). La barra conserva el color de cada
+   competición con su clase de siempre; aquí solo se coloca y se le añaden las marcas.
+   Arriba van tus goles (círculo lleno) y abajo los del rival (círculo hueco): la
+   posición y la forma los distinguen, no solo el color. */
+.match-timeline {
+  position: relative;
+  /* La leyenda va en su propia fila: en móvil chocaba con la etiqueta del descanso. */
+  height: 74px;
+  margin: 0 0 12px;
+}
+
+.match-timeline .match-timeline-track {
+  position: absolute;
+  top: 18px;
+  right: 0;
+  left: 0;
+  margin: 0;
+}
+
+.match-timeline-goal {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+}
+
+.match-timeline-goal-top {
+  top: 4px;
+  background: #ffe08a;
+}
+
+.match-timeline-goal-bottom {
+  top: 26px;
+  box-sizing: border-box;
+  border: 2px solid rgba(255, 255, 255, 0.75);
+}
+
+.match-timeline-tick {
+  position: absolute;
+  top: 12px;
+  width: 2px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.45);
+  transform: translateX(-50%);
+}
+
+.match-timeline-tick small {
+  position: absolute;
+  top: 26px;
+  left: 50%;
+  color: #f2d2d7;
+  font-size: 0.7rem;
+  font-weight: 800;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.match-timeline-half-decided,
+.match-timeline-half-pending {
+  background: #ffe08a;
+}
+
+.match-timeline-half-decided small,
+.match-timeline-half-pending small {
+  color: #ffe08a;
+}
+
+.match-timeline-half-pending {
+  animation: match-timeline-pulse 1s ease-in-out infinite alternate;
+}
+
+.match-timeline-legend {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  color: #f2d2d7;
+  font-size: 0.68rem;
+  opacity: 0.8;
+}
+
+@keyframes match-timeline-pulse {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .match-timeline-half-pending {
+    animation: none;
+  }
+}

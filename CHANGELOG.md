@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.99 — Línea de tiempo del partido
+
+- **Ves dónde cambió el partido:** la barra de progreso de cada partido pasa a ser una línea de tiempo. Tus goles aparecen arriba en su minuto y los del rival abajo, a medida que se marcan.
+- **El descanso, marcado:** a los 45' hay una marca. Mientras decides, parpadea; si arriesgaste o cerraste el partido, lo pone, y se ve qué goles llegaron después.
+- **Con prórroga:** cuando el partido pasa de los 90', la línea se alarga hasta 120' y marca dónde acabó el tiempo reglamentario. Antes no se alarga, para no adelantar el resultado.
+- Funciona en Liga, Copa, Supercopa y Europa. No cambia ningún resultado.
+
 ## v0.25.98 — Rivales europeos con su nivel
 
 - **Cada club, su nivel:** los rivales europeos tienen una media fija según su club, con solo ±1 de una temporada a otra. El Bayern o el City salen siempre con 89-91; el Celtic o el Salzburgo, con 85-87; el Lech Poznań, con 77-79. Antes la media se sorteaba en cada torneo y el Celtic podía ser más fuerte que el Bayern.

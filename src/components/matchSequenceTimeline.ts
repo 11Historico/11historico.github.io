@@ -262,3 +262,46 @@ export function getHalfTimeEffectText(effect: MatchHalfTimeEffect | undefined): 
 export function isExtraTimeFactor(factor: MatchKeyFactor | undefined): boolean {
   return factor === "extra_time_win" || factor === "extra_time_loss";
 }
+
+/** Gol en la línea de tiempo (v0.25.99): arriba los de tu equipo, o los del local si no juegas. */
+export interface MatchTimelineGoal {
+  minute: number;
+  isTop: boolean;
+}
+
+/** Posición de un minuto en la línea de tiempo, en %: hasta 90', o 120' cuando ya hay prórroga. */
+export function getTimelinePercent(minute: number, extraTime: boolean): number {
+  const end = extraTime ? 120 : MATCH_MINUTES;
+  return Math.min(100, Math.max(0, (minute / end) * 100));
+}
+
+/** Etiqueta del descanso. Seguir igual no deja rastro en el resultado, así que se queda en «Descanso». */
+export function getTimelineHalfTimeLabel(effect: MatchHalfTimeEffect | undefined): string {
+  if (!effect) return "Descanso";
+  return effect.choice === "push" ? "Arriesgaste" : "Cerraste";
+}
+
+/** La línea de tiempo en texto, para lectores de pantalla. */
+export function getMatchTimelineLabel(params: {
+  goals: MatchTimelineGoal[];
+  minute: number;
+  extraTime: boolean;
+  halfTimeEffect?: MatchHalfTimeEffect;
+  /** Por ejemplo «Tus goles» o «Goles de Sevilla». */
+  topLabel: string;
+  bottomLabel: string;
+}): string {
+  const { goals, minute, extraTime, halfTimeEffect, topLabel, bottomLabel } = params;
+  const end = extraTime ? 120 : MATCH_MINUTES;
+  const minutes = (isTop: boolean) =>
+    goals.filter((goal) => goal.isTop === isTop).map((goal) => `${goal.minute}'`).join(", ") || "ninguno";
+  const parts = [
+    `Línea de tiempo, minuto ${Math.min(minute, end)} de ${end}`,
+    `${topLabel}: ${minutes(true)}`,
+    `${bottomLabel}: ${minutes(false)}`,
+  ];
+
+  if (halfTimeEffect) parts.push(`En el descanso ${halfTimeEffect.choice === "push" ? "arriesgaste" : "cerraste el partido"}`);
+
+  return `${parts.join(". ")}.`;
+}
