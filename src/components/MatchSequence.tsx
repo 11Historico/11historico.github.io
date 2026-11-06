@@ -3,11 +3,13 @@
 
 import { useEffect, useLayoutEffect, useState } from "react";
 
+import { USER_TEAM_NAME } from "../simulation/leagueTable";
 import type { Formation, HalfTimeChoice, MatchResult, SelectedPlayer } from "../types/game";
 import { CompetitionIcon } from "./CompetitionIcon";
 import { MatchDominanceBar } from "./MatchDominanceBar";
 import { MatchHalfTimeControl } from "./MatchHalfTimeControl";
 import { MatchIcon } from "./MatchIcon";
+import { MatchTimeline } from "./MatchTimeline";
 import { getCupVerdict } from "./matchVerdict";
 import { MatchVerdictBanner } from "./MatchVerdictBanner";
 import TacticalPitch from "./TacticalPitch";
@@ -73,6 +75,11 @@ export function MatchSequence({
   const showPitch = pitch && result.userTeamPlayed !== false;
   const lineDuelText = isFinal ? getLineDuelText(result) : undefined;
   const cupVerdict = getCupVerdict(result);
+  // Línea de tiempo (v0.25.99): arriba tu equipo; entre rivales, el local.
+  const userPlayed = result.userTeamPlayed !== false;
+  const topTeamName = userPlayed && result.awayTeamName === USER_TEAM_NAME ? result.awayTeamName : result.homeTeamName;
+  const bottomTeamName = topTeamName === result.homeTeamName ? result.awayTeamName : result.homeTeamName;
+  const timelineExtraTime = frame.minute > 90 || (isFinal && isExtraTimeFactor(result.keyFactor));
 
   // En layout: la vista retiene la clasificación antes del primer pintado del partido.
   useLayoutEffect(() => {
@@ -125,9 +132,17 @@ export function MatchSequence({
         <ScoreTeam teamName={result.awayTeamName} goals={awayGoals} />
       </div>
 
-      <div className="match-sequence-progress" aria-hidden="true">
-        <span style={{ width: `${(elapsedMs / durationMs) * 100}%` }} />
-      </div>
+      <MatchTimeline
+        goals={frame.visibleGoals.map((goal) => ({ minute: goal.minute, isTop: goal.teamName === topTeamName }))}
+        minute={isFinal ? 120 : frame.minute}
+        extraTime={timelineExtraTime}
+        halfTimeEffect={result.halfTimeEffect}
+        halfTimePending={isAtHalfTime}
+        trackClassName="match-sequence-progress"
+        topLabel={userPlayed ? "Tus goles" : `Goles de ${topTeamName}`}
+        bottomLabel={userPlayed ? "Goles del rival" : `Goles de ${bottomTeamName}`}
+        legend={userPlayed ? "Arriba, tus goles · abajo, los del rival" : `Arriba, ${topTeamName} · abajo, ${bottomTeamName}`}
+      />
 
       {result.expectedGoals && <MatchDominanceBar expectedGoals={result.expectedGoals} started={frame.stage !== "preview"} />}
 
