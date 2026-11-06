@@ -561,6 +561,11 @@ export interface FinalGameSummary {
   formationName: string;
   coachName: string;
   difficulty?: GameDifficulty;
+  /**
+   * Probabilidad de pasar la fase de liga europea antes de jugarla, con el equipo del final
+   * de la temporada (v0.25.97). Solo para el balance europeo; sin Europa no existe.
+   */
+  europeanSemifinalChanceAtStart?: number;
 
   leaguePosition: number;
   points: number;
