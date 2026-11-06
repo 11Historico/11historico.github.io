@@ -323,6 +323,15 @@ export function LeagueSimulatorView({
     [approach, coachSkills, effectiveTeamRating, europeanUserRating, pendingEuropeanMatch, selectedPlayers]
   );
   const nextEuropeanMatch = getNextEuropeanMatch(europeanTournament);
+  // v0.25.93: tras un partido de Copa o Europa la Liga no sigue sola; se avisa hasta la siguiente jornada.
+  const returnedToLeagueFrom =
+    hideNextMatch || pendingHalfTime || pendingCupFixture || pendingEuropeanMatch || pendingWheelOffer || context.state.completed
+      ? undefined
+      : lastResult?.competition === "cup"
+        ? "Copa"
+        : europeanTournament?.matches.some((match) => match.status === "played" && match.matchday === leagueMatchesPlayed + 1)
+          ? getEuropeanCompetitionLabel(europeanTournament.competition)
+          : undefined;
   // Con shownContext: la ronda siguiente no debe delatar el resultado mientras se juega.
   const currentCupFixture = shownContext.cupState.status === "active" ? shownContext.cupState.fixtures[shownContext.cupState.currentRoundIndex] : undefined;
   const upcomingCupFixture = currentCupFixture && !currentCupFixture.played ? currentCupFixture : undefined;
@@ -845,8 +854,14 @@ export function LeagueSimulatorView({
         <main className="league-main-panel">
           <div className={`league-actions-card ${isAutoSimulating ? "league-actions-card-running" : ""}`}>
             <div>
-              <h2>{hideNextMatch ? "Partido en juego" : pendingCupFixture ? "Toca Copa del Rey" : pendingEuropeanMatch ? "Noche europea" : context.state.completed ? "Liga terminada" : "Próximo paso"}</h2>
-              <p>{isAutoSimulating ? `${leagueProgressLabel} · Simulación automática en marcha.` : diagnosis}</p>
+              <h2>{hideNextMatch ? "Partido en juego" : pendingCupFixture ? "Toca Copa del Rey" : pendingEuropeanMatch ? "Noche europea" : context.state.completed ? "Liga terminada" : returnedToLeagueFrom ? "Sigue la Liga" : "Próximo paso"}</h2>
+              <p>
+                {isAutoSimulating
+                  ? `${leagueProgressLabel} · Simulación automática en marcha.`
+                  : returnedToLeagueFrom
+                    ? `Partido de ${returnedToLeagueFrom} terminado. La Liga no sigue sola: pulsa «Simular» para jugar la jornada ${leagueMatchesPlayed + 1}.`
+                    : diagnosis}
+              </p>
               {!hideNextMatch && matchPreview && (pendingCupFixture || !pendingEuropeanMatch) && (
                 <section className="next-match-preview" aria-label="Previa del próximo partido">
                   <span>
@@ -922,7 +937,7 @@ export function LeagueSimulatorView({
 
                 <button
                   type="button"
-                  className={isAutoSimulating ? "stop-league-button" : "secondary-league-button"}
+                  className={isAutoSimulating ? "stop-league-button" : returnedToLeagueFrom ? undefined : "secondary-league-button"}
                   onClick={handleToggleAutoSimulation}
                   disabled={context.state.completed || Boolean(pendingWheelOffer) || Boolean(pendingEuropeanMatch) || Boolean(pendingHalfTime)}
                 >

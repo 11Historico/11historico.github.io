@@ -194,6 +194,10 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   await expect(page.getByRole("region", { name: "Evento europeo" }).locator(".match-sequence-pitch")).toBeVisible();
   expect(await seasonGoals.allTextContents()).toEqual(seasonGoalsBefore);
 
+  // v0.25.93: la Liga no sigue sola tras el partido europeo, y la tarjeta de acciones lo dice.
+  await expect(page.getByRole("heading", { name: "Sigue la Liga" })).toBeVisible();
+  await expect(page.locator(".league-actions-card")).toContainText("La Liga no sigue sola: pulsa «Simular»");
+
   // v0.25.69: al seguir con la Liga, el resultado europeo deja paso al partido de Liga
   // y la Conference pasa a una tarjeta de próximo partido.
   await page.getByRole("button", { name: /^Simular$/ }).click();
