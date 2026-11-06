@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.92 — Textos de fin de temporada más claros
+
+- **La Liga se nombra:** si ganas la Liga, la tarjeta dice «Campeón · 68 puntos» y la línea de objetivo, «campeón de Liga y clasificación a Champions League».
+- **La Copa ya no suena a fracaso:** si el objetivo ya está cumplido por la Liga, la tarjeta de Copa dice «Objetivo ya cumplido por la Liga» en vez de «No salva la temporada». En el Game Over sigue igual.
+- **Prestigio europeo con tu puesto:** «Eliminado en la fase inicial de Europa League (4.º de 7)».
+- **Dos puntuaciones que no se confunden:** «pts de palmarés» entre temporadas y «puntos de ranking» en el reto.
+- **Sin notas de desarrollo:** «Europa mantiene viva la carrera, pero no da premio extra».
+
 ## v0.25.91 — Premio seguro en el centro perfecto de la ruleta
 
 - **Aciertas el centro, tienes premio:** si paras la flecha de la ruleta de temporada en el centro perfecto, siempre sale premio. Antes podía salir «Sin efecto» (30 %) o incluso castigo (5 %).
