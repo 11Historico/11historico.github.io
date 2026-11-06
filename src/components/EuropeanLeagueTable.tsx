@@ -7,15 +7,17 @@ import { EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS } from "../europe/europeanTo
 import type { EuropeanTournamentState } from "../europe/europeanTypes";
 import { USER_TEAM_NAME } from "../simulation/leagueTable";
 
-export function EuropeanLeagueTable({ tournament }: { tournament: EuropeanTournamentState }) {
+export function EuropeanLeagueTable({ tournament, chanceText }: { tournament: EuropeanTournamentState; chanceText?: string }) {
   const rows = useMemo(() => buildEuropeanLeaguePhaseTable(tournament, USER_TEAM_NAME), [tournament]);
 
   return (
     <section className="table-card european-league-table" aria-label="Clasificación de la competición europea">
       <h2>Clasificación europea · fase de liga</h2>
       <p className="european-league-table-note">
-        Pasan a semifinales los {EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS} primeros.
+        Pasan a semifinales los {EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS} primeros, marcados en verde.
       </p>
+      {/* v0.25.95: la probabilidad solo existe mientras queda fase de liga por jugar. */}
+      {chanceText && <p className="european-semifinal-chance">{chanceText}</p>}
 
       <div className="league-table">
         <div className="league-table-head">

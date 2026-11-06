@@ -88,8 +88,11 @@ test("la liga permite consultar la clasificación europea y el palmarés", async
   await page.getByRole("tab", { name: "Clasificación europea" }).click();
   const table = page.getByRole("region", { name: "Clasificación de la competición europea" });
   await expect(table.getByRole("heading", { name: "Clasificación europea · fase de liga" })).toBeVisible();
-  await expect(table.getByText("Pasan a semifinales los 2 primeros.")).toBeVisible();
+  await expect(table.getByText("Pasan a semifinales los 2 primeros, marcados en verde.")).toBeVisible();
   await expect(table.locator(".league-table-row")).toHaveCount(7);
+  await expect(table.locator(".league-table-row-qualify")).toHaveCount(2);
+  // v0.25.95: probabilidad de pasar mientras queda fase de liga.
+  await expect(table.locator(".european-semifinal-chance")).toHaveText(/^Probabilidad de pasar a semifinales: (menos del 1|más del 99|\d+) %\./);
 
   await page.getByRole("tab", { name: "Palmarés" }).click();
   await expect(page.getByRole("heading", { name: "Vitrina histórica" })).toBeVisible();

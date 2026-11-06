@@ -778,6 +778,22 @@
 
 .european-league-table .league-table-row-qualify {
   box-shadow: inset 4px 0 0 #3ddc84;
+  background-color: rgba(61, 220, 132, 0.1);
+}
+
+/* v0.25.95: el corte de semifinales, tras el 2.º. */
+.european-league-table .league-table-row-qualify + .league-table-row:not(.league-table-row-qualify) {
+  border-top: 2px dashed rgba(61, 220, 132, 0.6);
+}
+
+/* v0.25.95: probabilidad de pasar a semifinales. */
+.european-semifinal-chance {
+  display: block;
+  margin: 8px 0 10px;
+  color: #ffe08a;
+  font-size: 0.84rem;
+  font-weight: 800;
+  line-height: 1.35;
 }
 
 /* Pestañas de consulta bajo las acciones de la jornada (v0.25.57). */

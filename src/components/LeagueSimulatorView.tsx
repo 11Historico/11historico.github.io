@@ -63,6 +63,11 @@ import {
   isEuropeanKnockoutMatch,
 } from "../europe/europeanTournament";
 import { getEuropeanCompetitionIconKind, getEuropeanCompetitionLabel } from "../europe/europeanQualification";
+import {
+  estimateEuropeanSemifinalChance,
+  getEuropeanSemifinalChanceText,
+  type EuropeanSemifinalChance,
+} from "../europe/europeanSemifinalChance";
 import type { EuropeanTournamentMatch, EuropeanTournamentState } from "../europe/europeanTypes";
 import EuropeanMatchEvent from "./EuropeanMatchEvent";
 import { CompetitionIcon } from "./CompetitionIcon";
@@ -322,6 +327,20 @@ export function LeagueSimulatorView({
     }),
     [approach, coachSkills, effectiveTeamRating, europeanUserRating, pendingEuropeanMatch, selectedPlayers]
   );
+  // v0.25.95: probabilidad de pasar a semifinales. Con el torneo que se ve, para no delatar
+  // el partido en juego, y después de pintar, como el rango esperado de Liga.
+  const [semifinalChance, setSemifinalChance] = useState<EuropeanSemifinalChance | null>(null);
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setSemifinalChance(
+        shownEuropeanTournament
+          ? estimateEuropeanSemifinalChance({ tournament: shownEuropeanTournament, userTeamRating: europeanUserRating, userProfile: effectiveTeamRating })
+          : null
+      );
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [shownEuropeanTournament, europeanUserRating, effectiveTeamRating]);
+  const semifinalChanceText = semifinalChance ? getEuropeanSemifinalChanceText(semifinalChance) : undefined;
   const nextEuropeanMatch = getNextEuropeanMatch(europeanTournament);
   // v0.25.93: tras un partido de Copa o Europa la Liga no sigue sola; se avisa hasta la siguiente jornada.
   const returnedToLeagueFrom =
@@ -907,6 +926,9 @@ export function LeagueSimulatorView({
                     odds={europeanOdds}
                     note={isEuropeanKnockoutMatch(pendingEuropeanMatch) ? "en 90 minutos; si hay empate, prórroga y penaltis" : undefined}
                   />
+                  {pendingEuropeanMatch.phase === "league_phase" && semifinalChanceText && (
+                    <small className="european-semifinal-chance">{semifinalChanceText}</small>
+                  )}
                 </section>
               )}
               <PlaybackSpeedControl />
@@ -1010,7 +1032,7 @@ export function LeagueSimulatorView({
 
           {consultTab === "europa" && shownEuropeanTournament && (
             <div role="tabpanel" aria-label="Clasificación europea">
-              <EuropeanLeagueTable tournament={shownEuropeanTournament} />
+              <EuropeanLeagueTable tournament={shownEuropeanTournament} chanceText={semifinalChanceText} />
             </div>
           )}
 
