@@ -10,7 +10,7 @@ import type { CoachSkills, Formation, MatchApproach, SelectedPlayer } from "../t
 import { MatchApproachControl } from "./MatchApproachControl";
 import { MatchOddsBar } from "./MatchOddsBar";
 import { MatchSequence } from "./MatchSequence";
-import { getLineDuelSummary } from "./matchSequenceTimeline";
+import { MatchLineDuelBars } from "./MatchLineDuelBars";
 import { CupMirrorBracket } from "./SeasonBrackets";
 
 import "./CareerSupercopa.css";
@@ -44,7 +44,7 @@ function MatchPreview({ label, preview, approach, coachSkills, onApproachChange 
           <p>
             {label === "Previa de la final" ? "Tu final" : "Tu semifinal"}: {preview.venue === "home" ? "en casa contra" : "fuera contra"} <strong>{preview.rivalName}</strong>
           </p>
-          <small>{getLineDuelSummary(preview.lineDuel)}</small>
+          <MatchLineDuelBars duel={preview.lineDuel} />
           <MatchOddsBar odds={preview.odds} note="en 90 minutos; si hay empate, prórroga" />
         </>
       )}

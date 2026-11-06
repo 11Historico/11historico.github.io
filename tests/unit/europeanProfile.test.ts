@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import strong from "../e2e/fixtures/career-strong.json";
 import { getEuropeanVisibleGoals } from "../../src/components/europeanMatchSequenceTimeline";
-import { getLineDuelSummary, getLineDuelText } from "../../src/components/matchSequenceTimeline";
+import { getLineDuelRows, getLineDuelText } from "../../src/components/matchSequenceTimeline";
 import { getEuropeanLineDuel, simulateEuropeanMatch } from "../../src/europe/europeanMatchEngine";
 import type { SelectedPlayer, TeamRating } from "../../src/types/game";
 
@@ -101,7 +101,10 @@ describe("textos con un rival de un solo número", () => {
   const duel = { userAttack: 90, userDefense: 70, rivalAttack: 80, rivalDefense: 80, rivalHasOnlyOverall: true };
 
   it("no hablan de líneas que el rival no tiene", () => {
-    expect(getLineDuelSummary(duel)).toBe("Tu ataque 90 · Tu defensa 70 · Nivel del rival 80");
+    expect(getLineDuelRows(duel).map((row) => row.text)).toEqual([
+      "Tu ataque 90 contra el nivel del rival 80: 10 a tu favor",
+      "Tu defensa 70 contra el nivel del rival 80: 10 a favor del rival",
+    ]);
     expect(getLineDuelText({ lineDuel: duel, homeGoals: 3, awayGoals: 1, userTeamWon: true, userTeamLost: false })).toBe("Tu ataque (90) superó al rival (80).");
     expect(getLineDuelText({ lineDuel: duel, homeGoals: 1, awayGoals: 3, userTeamWon: false, userTeamLost: true })).toBe("El rival (80) superó a tu defensa (70).");
   });
