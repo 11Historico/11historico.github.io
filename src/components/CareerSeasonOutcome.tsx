@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FinalGameSummary, MatchResult, SelectedPlayer, TeamRating } from "../types/game";
 import { getDecisionBalance, getDecisionBalanceText } from "../simulation/decisionBalance";
+import { getEuropeanSeasonBalanceText } from "../europe/europeanSemifinalChance";
 import type { CareerAchievement } from "../career/shareRetention";
 import type { CareerLocalRankingEntry, CareerObjectiveResult, CareerSeasonResult, CareerTrophyCounts } from "../types/career";
 import type { EuropeanCareerState, EuropeanQualificationResult, EuropeanTournamentState } from "../europe/europeanTypes";
@@ -302,6 +303,10 @@ export function CareerSeasonOutcome({
     ...(summary.cupResults ?? []),
     ...(europeanTournament?.matches.filter((match) => match.status === "played") ?? []),
   ]));
+  // v0.25.97: qué pasó en Europa frente a lo normal con tu equipo.
+  const europeanBalanceText = europeanTournament
+    ? getEuropeanSeasonBalanceText(europeanTournament, summary.europeanSemifinalChanceAtStart)
+    : undefined;
   const survived = objectiveResult.survives;
   const [showPalmares, setShowPalmares] = useState(false);
   const xiAverage = getSelectedPlayersAverage(selectedPlayers);
@@ -388,6 +393,7 @@ export function CareerSeasonOutcome({
           {getCareerOutcomeNote(seasonResult, objectiveResult)}
         </p>
 
+        {europeanBalanceText && <p className="career-outcome-team-rating-note">{europeanBalanceText}</p>}
         {decisionBalanceText && <p className="career-outcome-team-rating-note">{decisionBalanceText}</p>}
 
         {!survived && (

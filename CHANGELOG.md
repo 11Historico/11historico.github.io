@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.97 — Balance europeo al cerrar la temporada
+
+- **Lo que pasó y lo que era normal:** al cerrar una temporada con Europa, una línea lo resume. Por ejemplo, «Europa: caíste en la fase inicial (4.º de 7). Con tu equipo, lo normal era pasar 1 de cada 3 veces».
+- **Caer por azar no se siente igual que caer sin saber por qué:** la probabilidad es la de antes del primer partido, con los mismos rivales.
+- **No cambia nada del juego.**
+
 ## v0.25.96 — Balance de tus decisiones
 
 - **Tu influencia, sumada:** junto a la clasificación de Liga y al cerrar la temporada, una línea cuenta lo que han cambiado tus decisiones en Copa, Europa y Supercopa. Por ejemplo, «decidiste en 5 partidos y cambiaste 3 resultados: 2 a favor y 1 en contra».

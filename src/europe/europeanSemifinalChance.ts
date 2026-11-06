@@ -8,7 +8,7 @@
 
 import { buildEuropeanLeaguePhaseTable, compareRows, getEuropeanRivalPairs, recordResult } from "./europeanLeagueTable";
 import { simulateEuropeanMatch } from "./europeanMatchEngine";
-import { EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS } from "./europeanTournament";
+import { EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS, getEuropeanLeaguePhaseUserPosition } from "./europeanTournament";
 import type { EuropeanTournamentState } from "./europeanTypes";
 import type { TeamRating } from "../types/game";
 
@@ -102,6 +102,49 @@ function getSafePoints(byPoints: Map<number, { qualified: number; total: number 
   }
 
   return safe;
+}
+
+/**
+ * La probabilidad que había antes del primer partido de la fase de liga (v0.25.97): el mismo
+ * torneo con los mismos rivales, sin ningún resultado.
+ */
+export function estimateEuropeanSemifinalChanceAtStart(params: {
+  tournament: EuropeanTournamentState;
+  userTeamRating: number;
+  userProfile?: TeamRating;
+}): number | undefined {
+  const leagueMatches = params.tournament.matches.filter((match) => match.phase === "league_phase");
+  if (leagueMatches.length === 0) return undefined;
+
+  const fresh: EuropeanTournamentState = {
+    ...params.tournament,
+    matches: leagueMatches.map(({ id, seasonNumber, competition, matchday, phase, opponent, isHome }) => ({
+      id, seasonNumber, competition, matchday, phase, opponent, isHome, status: "scheduled",
+    })),
+  };
+
+  return estimateEuropeanSemifinalChance({ ...params, tournament: fresh })?.chance;
+}
+
+/** «1 de cada 3», «6 de cada 10»: más fácil de leer que un porcentaje al cerrar la temporada. */
+function getChanceInWords(chance: number): string {
+  if (chance < 0.05) return "casi nunca";
+  if (chance >= 0.95) return "casi siempre";
+  if (chance <= 0.5) return `1 de cada ${Math.round(1 / chance)} veces`;
+  return `${Math.round(chance * 10)} de cada 10 veces`;
+}
+
+/** Balance europeo al cerrar la temporada (v0.25.97): qué pasó y qué era lo normal con tu equipo. */
+export function getEuropeanSeasonBalanceText(tournament: EuropeanTournamentState, chanceAtStart: number | undefined): string | undefined {
+  if (chanceAtStart === undefined) return undefined;
+  const leaguePhase = tournament.matches.filter((match) => match.phase === "league_phase");
+  if (leaguePhase.some((match) => match.status !== "played")) return undefined;
+
+  const expected = `Con tu equipo, lo normal era pasar ${getChanceInWords(chanceAtStart)}.`;
+  if (tournament.qualifiedForSemifinal) return `Europa: pasaste a semifinales. ${expected}`;
+
+  const position = getEuropeanLeaguePhaseUserPosition(tournament);
+  return `Europa: caíste en la fase inicial (${position}.º de ${leaguePhase.length + 1}). ${expected}`;
 }
 
 export function getEuropeanSemifinalChanceText(result: EuropeanSemifinalChance): string {

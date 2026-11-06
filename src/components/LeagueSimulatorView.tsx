@@ -66,6 +66,7 @@ import { getEuropeanCompetitionIconKind, getEuropeanCompetitionLabel } from "../
 import { getDecisionBalance, getDecisionBalanceText } from "../simulation/decisionBalance";
 import {
   estimateEuropeanSemifinalChance,
+  estimateEuropeanSemifinalChanceAtStart,
   getEuropeanSemifinalChanceText,
   type EuropeanSemifinalChance,
 } from "../europe/europeanSemifinalChance";
@@ -490,10 +491,18 @@ export function LeagueSimulatorView({
     });
 
     summary.difficulty = difficulty;
+    // v0.25.97: para el balance europeo al cerrar la temporada. Unas décimas de segundo, una vez.
+    if (europeanTournament) {
+      summary.europeanSemifinalChanceAtStart = estimateEuropeanSemifinalChanceAtStart({
+        tournament: europeanTournament,
+        userTeamRating: europeanUserRating,
+        userProfile: effectiveTeamRating,
+      });
+    }
     onFinishLeague?.(summary);
 
     return true;
-  }, [difficulty, formation.name, gameId, onFinishLeague, selectedCoach.coachSeason.name]);
+  }, [difficulty, effectiveTeamRating, europeanTournament, europeanUserRating, formation.name, gameId, onFinishLeague, selectedCoach.coachSeason.name]);
 
   function handleSimulateEuropeanMatch() {
     if (!europeanTournament || !pendingEuropeanMatch) return;

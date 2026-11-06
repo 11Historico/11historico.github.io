@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { estimateEuropeanSemifinalChance, getEuropeanSemifinalChanceText } from "../../src/europe/europeanSemifinalChance";
+import {
+  estimateEuropeanSemifinalChance,
+  estimateEuropeanSemifinalChanceAtStart,
+  getEuropeanSeasonBalanceText,
+  getEuropeanSemifinalChanceText,
+} from "../../src/europe/europeanSemifinalChance";
 import { applyEuropeanMatchResult, createEuropeanTournamentForQualification } from "../../src/europe/europeanTournament";
 import type { EuropeanQualificationResult, EuropeanTournamentState } from "../../src/europe/europeanTypes";
 
@@ -58,6 +63,27 @@ describe("probabilidad de pasar a semifinales europeas (v0.25.95)", () => {
     const start = performance.now();
     estimateEuropeanSemifinalChance({ tournament: newTournament(), userTeamRating: 84 });
     expect(performance.now() - start).toBeLessThan(1500);
+  });
+
+  it("la probabilidad al empezar no depende de lo que pasó después (v0.25.97)", () => {
+    const tournament = newTournament();
+    const atStart = estimateEuropeanSemifinalChance({ tournament, userTeamRating: 84 })!.chance;
+    expect(estimateEuropeanSemifinalChanceAtStart({ tournament: play(tournament, 6, 0, 3), userTeamRating: 84 })).toBe(atStart);
+    expect(estimateEuropeanSemifinalChanceAtStart({ tournament: play(tournament, 6, 3, 0), userTeamRating: 84 })).toBe(atStart);
+  });
+
+  it("al cerrar la temporada cuenta qué pasó y qué era lo normal (v0.25.97)", () => {
+    const lost = play(newTournament(), 6, 0, 3);
+    expect(getEuropeanSeasonBalanceText(lost, 0.36)).toMatch(
+      /^Europa: caíste en la fase inicial \(\d\.º de 7\)\. Con tu equipo, lo normal era pasar 1 de cada 3 veces\.$/,
+    );
+    expect(getEuropeanSeasonBalanceText(play(newTournament(), 6, 3, 0), 0.57)).toBe(
+      "Europa: pasaste a semifinales. Con tu equipo, lo normal era pasar 6 de cada 10 veces.",
+    );
+    expect(getEuropeanSeasonBalanceText(lost, 0.02)).toMatch(/lo normal era pasar casi nunca\.$/);
+    // Sin la probabilidad (partidas guardadas antes) o con la fase sin acabar, no dice nada.
+    expect(getEuropeanSeasonBalanceText(lost, undefined)).toBeUndefined();
+    expect(getEuropeanSeasonBalanceText(play(newTournament(), 3, 1, 0), 0.5)).toBeUndefined();
   });
 
   it("dice la probabilidad y, si los hay, los puntos con los que pasas casi seguro", () => {
