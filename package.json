@@ -16,6 +16,7 @@
     "audit:linecap": "vite build --ssr scripts/auditLineCap.ts --config scripts/auditLineCap.vite.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditLineCap.js",
     "audit:league": "vite build --ssr scripts/auditLeagueDecisions.ts --config scripts/auditLeagueDecisions.vite.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditLeagueDecisions.js",
     "audit:rating": "vite build --ssr scripts/auditSimulationRating.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditSimulationRating.js",
+    "audit:european-opponents": "vite build --ssr scripts/auditEuropeanOpponents.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditEuropeanOpponents.js",
     "audit:europe": "vite build --ssr scripts/auditEuropePhase.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditEuropePhase.js",
     "audit:approach": "vite build --ssr scripts/auditMatchApproach.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditMatchApproach.js",
     "qa:formation-reward": "vite build --ssr scripts/qaFormationReward.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaFormationReward.js",
