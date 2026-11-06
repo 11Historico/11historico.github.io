@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.94 — Tu fuerza en la escala de LaLiga
+
+- **Tu fuerza en LaLiga:** el resumen del equipo muestra con qué fuerza juega tu once la Liga y la Copa, junto a los tres rivales más fuertes. Por ejemplo, «88.1 · FC Barcelona 92.5 · Real Madrid 92.5 · Atlético de Madrid 88.5».
+- **Tus líneas frente a los rivales:** ataque, defensa, control, portería y mentalidad, comparados con el rival más fuerte y con la media de LaLiga, y la línea donde más te sacan.
+- **Ya no parece siempre 84:** el rating de simulación de carrera conserva una décima. 87 y 88 visibles dan 83.9 y 84.4, no 84 los dos. Medido sin efecto en el equilibrio.
+- **La media del once, en su sitio:** el rating de temporada se presenta como la media histórica del once, no como la fuerza con la que juegas.
+
 ## v0.25.93 — Aviso para seguir la Liga tras Copa o Europa
 
 - **Sabes que el juego te espera:** al terminar un partido de Copa o Europa, la tarjeta de acciones dice «Sigue la Liga» y «La Liga no sigue sola: pulsa «Simular» para jugar la jornada 19».

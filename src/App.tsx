@@ -94,6 +94,7 @@ import {
 
 import {
   CAREER_INITIAL_SEASON_LABEL,
+  applyCareerRivalProgression,
   CAREER_RELEGATION_POSITION,
   evaluateCareerObjective,
   getEuropeanQualification,
@@ -1571,6 +1572,7 @@ export default function App() {
             difficulty={difficulty}
             isCareerMode={isCareerMode}
             seasonLabel={shownSeasonLabel}
+            leagueRivals={isCareerMode ? applyCareerRivalProgression(careerLeagueRivals, careerCompletedSeasons) : undefined}
           />
         )}
 

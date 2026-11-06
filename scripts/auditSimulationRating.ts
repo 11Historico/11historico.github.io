@@ -1,7 +1,7 @@
 // scripts/auditSimulationRating.ts
 //
 // Mide alternativas al rating que usa la simulación en carrera (petición del 2026-11-05).
-// Hoy se comprime: 80 + (rating − 80) × 0,55, redondeado (88 visible → 84). La propuesta es
+// Se comprime: 80 + (rating − 80) × 0,55, a una décima desde v0.25.94 (88 visible → 84,4). La propuesta era
 // usar un rating entre el del once sin entrenador y el de la temporada con entrenador.
 // No cambia el juego: el rating alternativo solo existe dentro de esta auditoría.
 // Reproducible: npm run audit:rating (o node .audit-dist/auditSimulationRating.js --careers=N)
@@ -28,14 +28,19 @@ interface Variant {
 
 const perField = (fn: (field: Field) => number) => Object.fromEntries(FIELDS.map((field) => [field, fn(field)])) as Record<Field, number>;
 
-const VARIANTS: Variant[] = [
-  { label: "Hoy: comprimido y redondeado" },
+const ALL_VARIANTS: Variant[] = [
+  { label: "Hoy: comprimido a una décima" },
+  // v0.25.94: el juego pasó a redondear a una décima; esta es la versión anterior, a entero.
+  { label: "Entero (antes de v0.25.94)", build: (season, _coach, modifier) => perField((field) => Math.round(compressCareerRating(season[field])) + modifier) },
   { label: "Comprimido sin redondeo", build: (season, _coach, modifier) => perField((field) => compressCareerRating(season[field]) + modifier) },
   { label: "Once sin entrenador", build: (season, coach, modifier) => perField((field) => season[field] - coach[field] + modifier) },
   // La propuesta varía partido a partido entre el once y la temporada; aquí, su media.
   { label: "Entre los dos (media)", build: (season, coach, modifier) => perField((field) => season[field] - coach[field] / 2 + modifier) },
   { label: "Temporada con entrenador", build: (season, _coach, modifier) => perField((field) => season[field] + modifier) },
 ];
+// --only=2 deja las 2 primeras variantes (hoy y entero): las propuestas sin compresión son las lentas.
+const ONLY = Number(process.argv.find((arg) => arg.startsWith("--only="))?.split("=")[1] ?? ALL_VARIANTS.length);
+const VARIANTS = ALL_VARIANTS.slice(0, ONLY);
 
 const DIFFICULTIES: { label: string; value: GameDifficulty }[] = [
   { label: "Normal", value: "dificil" },
@@ -94,8 +99,8 @@ for (const { label: difficultyLabel, value: difficulty } of DIFFICULTIES) {
       const leagues = careers.reduce((sum, career) => sum + career.trophies.liga, 0);
       played += careers.length;
       rejected += careers.filter((career) => !career.plausible).length;
-      // Hoy: la media de simulación es la compresión redondeada de la visible.
-      const todayOverall = mean(visibleOveralls.map((value) => Math.round(compressCareerRating(value)) + modifier));
+      // Hoy: la media de simulación es la compresión de la visible, a una décima (v0.25.94).
+      const todayOverall = mean(visibleOveralls.map((value) => Math.round(compressCareerRating(value) * 10) / 10 + modifier));
 
       console.log(`| ${[
         variant.label,
