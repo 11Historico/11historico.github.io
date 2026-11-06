@@ -80,7 +80,8 @@ import { MatchApproachControl } from "./MatchApproachControl";
 import { MatchOddsBar } from "./MatchOddsBar";
 import { MatchSequence } from "./MatchSequence";
 import { TeamWithKit } from "./TeamKitIcon";
-import { getLineDuelSummary, getResultBadge, getResultClass } from "./matchSequenceTimeline";
+import { MatchLineDuelBars } from "./MatchLineDuelBars";
+import { getResultBadge, getResultClass } from "./matchSequenceTimeline";
 import { getLeagueEventSlots, type LeagueEventKind } from "./leagueEventOrder";
 import {
   MATCH_PLAYBACK_SPEED_OPTIONS,
@@ -911,7 +912,7 @@ export function LeagueSimulatorView({
                       ? `${USER_TEAM_NAME} (${matchPreview.userOverall}) vs ${matchPreview.rivalName} (${matchPreview.rivalOverall})`
                       : `${matchPreview.rivalName} (${matchPreview.rivalOverall}) vs ${USER_TEAM_NAME} (${matchPreview.userOverall})`}
                   </strong>
-                  <small className="next-match-lines">{getLineDuelSummary(matchPreview.lineDuel)}</small>
+                  <MatchLineDuelBars duel={matchPreview.lineDuel} />
                   {matchPreview.competition === "cup" && (
                     <MatchApproachControl value={approach} onChange={setApproach} competition="cup" coachSkills={coachSkills} />
                   )}
@@ -932,14 +933,14 @@ export function LeagueSimulatorView({
                       ? `${USER_TEAM_NAME} (${Math.round(europeanUserRating)}) vs ${pendingEuropeanMatch.opponent.name} (${pendingEuropeanMatch.opponent.rating})`
                       : `${pendingEuropeanMatch.opponent.name} (${pendingEuropeanMatch.opponent.rating}) vs ${USER_TEAM_NAME} (${Math.round(europeanUserRating)})`}
                   </strong>
-                  <small className="next-match-lines">
-                    {getLineDuelSummary(getEuropeanLineDuel({
+                  <MatchLineDuelBars
+                    duel={getEuropeanLineDuel({
                       userTeamRating: europeanUserRating,
                       opponentRating: pendingEuropeanMatch.opponent.rating,
                       competition: pendingEuropeanMatch.competition,
                       userProfile: effectiveTeamRating,
-                    }))}
-                  </small>
+                    })}
+                  />
                   <MatchApproachControl value={approach} onChange={setApproach} competition="europe" coachSkills={coachSkills} />
                   <MatchOddsBar
                     odds={europeanOdds}

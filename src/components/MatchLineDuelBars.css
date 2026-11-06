@@ -1,0 +1,80 @@
+/* Duelo de líneas en la previa (v0.25.100). Cada fila: arriba los nombres y la
+   ventaja; abajo dos barras que se encuentran en el centro, la tuya hacia la
+   izquierda y la del rival hacia la derecha. Los colores son los de la barra de
+   dominio, y los números van siempre en texto. */
+.line-duel {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 2px;
+}
+
+.line-duel-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 8px;
+  color: #f2d2d7;
+  font-size: 0.8rem;
+}
+
+.line-duel-label strong {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.line-duel-label-rival {
+  text-align: right;
+}
+
+.line-duel-edge {
+  min-width: 2.4em;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.line-duel-edge-user {
+  background: #ffe08a;
+  color: #2a1a12;
+}
+
+.line-duel-edge-rival {
+  background: rgba(255, 255, 255, 0.38);
+  color: #1c1012;
+}
+
+/* Las dos barras ocupan la fila entera, mitad y mitad: se encuentran bajo la ventaja. */
+.line-duel-bars {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+
+.line-duel-track {
+  display: flex;
+  height: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Tu barra crece desde el centro hacia la izquierda. */
+.line-duel-track-user {
+  justify-content: flex-end;
+  border-radius: 999px 0 0 999px;
+}
+
+.line-duel-track-rival {
+  border-radius: 0 999px 999px 0;
+}
+
+.line-duel-track-user span {
+  background: #ffe08a;
+}
+
+.line-duel-track-rival span {
+  background: rgba(255, 255, 255, 0.38);
+}

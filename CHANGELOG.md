@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.100 — Duelo de líneas en la previa
+
+- **Tus líneas contra las suyas, de un vistazo:** en la previa de Liga, Copa, Supercopa y Europa, la línea de texto con las medias pasa a ser dos barras enfrentadas. Tu ataque se mide con su defensa y tu defensa con su ataque, con la ventaja en el centro, por ejemplo «+5».
+- **Para decidir el planteamiento:** se ve dónde le sacas ventaja y dónde te la saca él antes de elegir ofensivo, equilibrado o defensivo.
+- **En Europa** el rival solo tiene una media, así que su lado muestra el mismo «Nivel del rival» en las dos filas.
+- No cambia ningún resultado.
+
 ## v0.25.99 — Línea de tiempo del partido
 
 - **Ves dónde cambió el partido:** la barra de progreso de cada partido pasa a ser una línea de tiempo. Tus goles aparecen arriba en su minuto y los del rival abajo, a medida que se marcan.

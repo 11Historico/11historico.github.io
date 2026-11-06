@@ -134,13 +134,64 @@ export function getMatchKeyFactorIcon(factor: MatchKeyFactor): MatchIconKind {
   return KEY_FACTOR_ICON[factor];
 }
 
-/** Línea de la previa: las mismas líneas que usa el motor (v0.25.76). */
-export function getLineDuelSummary(duel: MatchLineDuel): string {
+/** Una fila del duelo de líneas de la previa (v0.25.100): tu línea contra la suya. */
+export interface LineDuelRow {
+  userLabel: string;
+  userValue: number;
+  rivalLabel: string;
+  rivalValue: number;
+  /** Tu ventaja: positiva a tu favor. */
+  edge: number;
+  /** La fila en texto, para lectores de pantalla. */
+  text: string;
+}
+
+function getLineDuelRow(userLabel: string, userValue: number, rivalLabel: string, rivalValue: number, rivalPhrase: string): LineDuelRow {
+  const edge = userValue - rivalValue;
+  const verdict = edge > 0 ? `${edge} a tu favor` : edge < 0 ? `${-edge} a favor del rival` : "igualados";
+
+  return {
+    userLabel,
+    userValue,
+    rivalLabel,
+    rivalValue,
+    edge,
+    text: `${userLabel} ${userValue} contra ${rivalPhrase} ${rivalValue}: ${verdict}`,
+  };
+}
+
+/**
+ * Duelo de líneas de la previa, con las mismas líneas que usa el motor (v0.25.76).
+ * Desde la v0.25.100 se pinta en barras enfrentadas. Un rival europeo solo tiene
+ * una media, así que su lado es el mismo número en las dos filas.
+ */
+export function getLineDuelRows(duel: MatchLineDuel): LineDuelRow[] {
   if (duel.rivalHasOnlyOverall) {
-    return `Tu ataque ${duel.userAttack} · Tu defensa ${duel.userDefense} · Nivel del rival ${duel.rivalAttack}`;
+    return [
+      getLineDuelRow("Tu ataque", duel.userAttack, "Nivel del rival", duel.rivalDefense, "el nivel del rival"),
+      getLineDuelRow("Tu defensa", duel.userDefense, "Nivel del rival", duel.rivalAttack, "el nivel del rival"),
+    ];
   }
 
-  return `Tu ataque ${duel.userAttack} contra su defensa ${duel.rivalDefense} · Tu defensa ${duel.userDefense} contra su ataque ${duel.rivalAttack}`;
+  return [
+    getLineDuelRow("Tu ataque", duel.userAttack, "Su defensa", duel.rivalDefense, "su defensa"),
+    getLineDuelRow("Tu defensa", duel.userDefense, "Su ataque", duel.rivalAttack, "su ataque"),
+  ];
+}
+
+/** Ventaja en corto, para el centro de la fila. */
+export function getLineDuelEdgeLabel(edge: number): string {
+  if (edge > 0) return `+${edge}`;
+  if (edge < 0) return `−${-edge}`;
+  return "=";
+}
+
+/**
+ * Largo de la barra, en %. La escala empieza en 60 para que se vean las diferencias
+ * entre medias que casi siempre están entre 70 y 92.
+ */
+export function getLineDuelBarPercent(value: number): number {
+  return Math.min(100, Math.max(4, ((value - 60) / (99 - 60)) * 100));
 }
 
 /**

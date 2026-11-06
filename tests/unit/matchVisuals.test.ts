@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import strong from "../e2e/fixtures/career-strong.json";
 import {
   getGoalContributions,
-  getLineDuelSummary,
+  getLineDuelBarPercent,
+  getLineDuelEdgeLabel,
+  getLineDuelRows,
   getLineDuelText,
   getMatchDominance,
   getMatchKeyFactorIcon,
@@ -92,9 +94,26 @@ describe("crónica de las líneas", () => {
     expect(getLineDuelText({ ...resultWith({ userWon: true, high: 3, low: 1, duel: [90, 80, 80, 80] }), lineDuel: undefined })).toBeUndefined();
   });
 
-  it("la previa resume las dos líneas", () => {
-    expect(getLineDuelSummary({ userAttack: 90, userDefense: 85, rivalAttack: 80, rivalDefense: 75 }))
-      .toBe("Tu ataque 90 contra su defensa 75 · Tu defensa 85 contra su ataque 80");
+  it("la previa enfrenta tu ataque a su defensa y tu defensa a su ataque (v0.25.100)", () => {
+    const rows = getLineDuelRows({ userAttack: 90, userDefense: 78, rivalAttack: 80, rivalDefense: 75 });
+
+    expect(rows.map((row) => [row.userLabel, row.userValue, row.rivalLabel, row.rivalValue, row.edge])).toEqual([
+      ["Tu ataque", 90, "Su defensa", 75, 15],
+      ["Tu defensa", 78, "Su ataque", 80, -2],
+    ]);
+    expect(rows.map((row) => row.text)).toEqual([
+      "Tu ataque 90 contra su defensa 75: 15 a tu favor",
+      "Tu defensa 78 contra su ataque 80: 2 a favor del rival",
+    ]);
+  });
+
+  it("la ventaja en corto y el largo de las barras", () => {
+    expect([getLineDuelEdgeLabel(15), getLineDuelEdgeLabel(-2), getLineDuelEdgeLabel(0)]).toEqual(["+15", "−2", "="]);
+    expect(getLineDuelBarPercent(99)).toBe(100);
+    expect(getLineDuelBarPercent(79.5)).toBe(50);
+    // Nunca desaparece del todo, y no se sale.
+    expect(getLineDuelBarPercent(50)).toBe(4);
+    expect(getLineDuelBarPercent(105)).toBe(100);
   });
 });
 
