@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.96 — Balance de tus decisiones
+
+- **Tu influencia, sumada:** junto a la clasificación de Liga y al cerrar la temporada, una línea cuenta lo que han cambiado tus decisiones en Copa, Europa y Supercopa. Por ejemplo, «decidiste en 5 partidos y cambiaste 3 resultados: 2 a favor y 1 en contra».
+- **Sin inventar nada:** sale de la comparación que cada partido ya hacía con no tocar nada (planteamiento equilibrado y seguir igual en el descanso), a los 90 minutos.
+- **No cambia nada del juego.**
+
 ## v0.25.95 — Probabilidad de pasar en Europa
 
 - **Sabes cómo vas:** mientras dura la fase de liga europea, la previa del partido y la clasificación europea dicen tu probabilidad de pasar a semifinales. Por ejemplo, «36 %», que sube a «57 %» tras ganar el primer partido.

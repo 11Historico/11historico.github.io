@@ -63,6 +63,7 @@ import {
   isEuropeanKnockoutMatch,
 } from "../europe/europeanTournament";
 import { getEuropeanCompetitionIconKind, getEuropeanCompetitionLabel } from "../europe/europeanQualification";
+import { getDecisionBalance, getDecisionBalanceText } from "../simulation/decisionBalance";
 import {
   estimateEuropeanSemifinalChance,
   getEuropeanSemifinalChanceText,
@@ -118,6 +119,8 @@ interface LeagueSimulatorViewProps {
    */
   initialPendingSeasonLuckWheelOffer?: SeasonLuckWheelOffer;
   onPendingSeasonLuckWheelOfferChange?: (offer: SeasonLuckWheelOffer | undefined) => void;
+  /** Partidos de la Supercopa de esta temporada, para el balance de decisiones (v0.25.96). */
+  supercopaResults?: MatchResult[];
 }
 
 const AUTO_SIMULATION_DELAY_MS = 1300;
@@ -199,6 +202,7 @@ export function LeagueSimulatorView({
   onEuropeanTournamentChange,
   initialPendingSeasonLuckWheelOffer,
   onPendingSeasonLuckWheelOfferChange,
+  supercopaResults,
 }: LeagueSimulatorViewProps) {
   const [context, setContext] = useState<UserLeagueSimulationContext>(
     () => normalizeLeagueContext(initialContext, selectedCoach, leagueRivals && applyCareerRivalProgression(leagueRivals, careerCompletedSeasons))
@@ -341,6 +345,12 @@ export function LeagueSimulatorView({
     return () => window.clearTimeout(timeoutId);
   }, [shownEuropeanTournament, europeanUserRating, effectiveTeamRating]);
   const semifinalChanceText = semifinalChance ? getEuropeanSemifinalChanceText(semifinalChance) : undefined;
+  // v0.25.96: lo que han cambiado tus decisiones esta temporada. Con lo que se ve, para no delatar el partido en juego.
+  const decisionBalanceText = getDecisionBalanceText(getDecisionBalance([
+    ...(supercopaResults ?? []),
+    ...shownContext.cupState.results,
+    ...(shownEuropeanTournament?.matches.filter((match) => match.status === "played") ?? []),
+  ]));
   const nextEuropeanMatch = getNextEuropeanMatch(europeanTournament);
   // v0.25.93: tras un partido de Copa o Europa la Liga no sigue sola; se avisa hasta la siguiente jornada.
   const returnedToLeagueFrom =
@@ -1114,6 +1124,7 @@ export function LeagueSimulatorView({
                 {getExpectedLeagueRangeText(expectedRange, shownMatchesPlayed >= EXPECTED_RANGE_COMPARE_FROM ? shownUserSummary.position : undefined)}
               </p>
             )}
+            {decisionBalanceText && <p className="expected-range-note decision-balance-note">{decisionBalanceText}</p>}
 
             <div className="league-table">
               <div className="league-table-head">

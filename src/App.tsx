@@ -1623,6 +1623,7 @@ export default function App() {
             teamRating={teamRating}
             isCareerMode={isCareerMode}
             leagueRivals={isCareerMode ? careerLeagueRivals : undefined}
+            supercopaResults={isCareerMode ? careerCurrentSupercopaResult?.results : undefined}
             careerCompletedSeasons={careerCompletedSeasons}
             careerTrophyCounts={isCareerMode ? careerTrophyCounts : undefined}
             seasonLabel={shownSeasonLabel}
@@ -1659,6 +1660,7 @@ export default function App() {
             europeanCareerState={europeanCareerState}
             europeanTournament={europeanCareerState.currentTournament}
             bestLeaguePosition={careerBestLeaguePosition}
+            supercopaResults={careerCurrentSupercopaResult?.results}
           />
         )}
 
