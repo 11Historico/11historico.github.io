@@ -1,5 +1,6 @@
 import { useState } from "react";
-import type { FinalGameSummary, SelectedPlayer, TeamRating } from "../types/game";
+import type { FinalGameSummary, MatchResult, SelectedPlayer, TeamRating } from "../types/game";
+import { getDecisionBalance, getDecisionBalanceText } from "../simulation/decisionBalance";
 import type { CareerAchievement } from "../career/shareRetention";
 import type { CareerLocalRankingEntry, CareerObjectiveResult, CareerSeasonResult, CareerTrophyCounts } from "../types/career";
 import type { EuropeanCareerState, EuropeanQualificationResult, EuropeanTournamentState } from "../europe/europeanTypes";
@@ -42,6 +43,8 @@ interface CareerSeasonOutcomeProps {
   /** Torneo europeo de la temporada que acaba de cerrarse (para integrar un título pendiente en el palmarés mostrado aquí). */
   europeanTournament?: EuropeanTournamentState | null;
   bestLeaguePosition?: number;
+  /** Partidos de la Supercopa de la temporada, para el balance de decisiones (v0.25.96). */
+  supercopaResults?: MatchResult[];
 }
 
 function getSelectedPlayersAverage(selectedPlayers: SelectedPlayer[] = []): number | undefined {
@@ -291,7 +294,14 @@ export function CareerSeasonOutcome({
   europeanCareerState,
   europeanTournament,
   bestLeaguePosition,
+  supercopaResults,
 }: CareerSeasonOutcomeProps) {
+  // v0.25.96: lo que cambiaron tus decisiones en Copa, Europa y Supercopa esta temporada.
+  const decisionBalanceText = getDecisionBalanceText(getDecisionBalance([
+    ...(supercopaResults ?? []),
+    ...(summary.cupResults ?? []),
+    ...(europeanTournament?.matches.filter((match) => match.status === "played") ?? []),
+  ]));
   const survived = objectiveResult.survives;
   const [showPalmares, setShowPalmares] = useState(false);
   const xiAverage = getSelectedPlayersAverage(selectedPlayers);
@@ -377,6 +387,8 @@ export function CareerSeasonOutcome({
         <p className="career-outcome-note">
           {getCareerOutcomeNote(seasonResult, objectiveResult)}
         </p>
+
+        {decisionBalanceText && <p className="career-outcome-team-rating-note">{decisionBalanceText}</p>}
 
         {!survived && (
           <>

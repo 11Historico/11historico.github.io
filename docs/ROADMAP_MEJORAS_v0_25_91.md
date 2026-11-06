@@ -108,12 +108,10 @@ Son seis textos, todos apuntados durante la partida:
   - se calcula en un `setTimeout`.
 - **Riesgo:** medio. Que el cálculo consuma azar de la partida. Lo cubre un test, como en el rango esperado.
 
-### Fase 6 · v0.25.97 — «Tu decisión» tras cada partido
-- **Qué:** tras cada partido de Copa, Europa o Supercopa, una línea con el efecto de la decisión. Por ejemplo, «El planteamiento defensivo subió tu probabilidad de puntuar del 48 % al 57 %», o «Arriesgar en el descanso te dio un gol».
-- **Cómo:**
-  - El partido ya guarda `approachEffect` y `halfTimeEffect`.
-  - La comparación con la alternativa se hace con la misma semilla, como en el descanso.
-- **Riesgo:** medio. El texto tiene que ser honesto: nunca atribuir un gol a la decisión si no fue así.
+### Fase 6 · v0.25.96 — Balance de decisiones de la temporada
+- **Corrección:** la línea por partido que proponía esta fase ya existía desde la v0.25.75 (planteamiento) y la v0.25.78 (descanso). Por ejemplo, «Tu planteamiento ofensivo cambió el partido: con uno equilibrado habrías perdido 1-2». El usuario eligió sustituirla por el balance de la temporada.
+- **Qué:** sumar esos efectos: «Tus decisiones esta temporada: decidiste en 5 partidos y cambiaste 3 resultados: 2 a favor y 1 en contra». Se ve junto a la clasificación de Liga y en «Temporada superada» o «Game Over».
+- **Cómo:** `src/simulation/decisionBalance.ts` lee el `approachEffect` y el `halfTimeEffect` que ya guarda cada partido de Copa, Europa y Supercopa.
 
 ### Fase 7 · v0.25.98 — Balance europeo al cerrar la temporada
 - **Qué:** en el resumen de la temporada, una línea del tipo «Con tu equipo, lo normal era pasar 1 de cada 3 veces».
