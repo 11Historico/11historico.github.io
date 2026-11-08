@@ -6,9 +6,13 @@ import { buildEuropeanLeaguePhaseTable } from "../europe/europeanLeagueTable";
 import { EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS } from "../europe/europeanTournament";
 import type { EuropeanTournamentState } from "../europe/europeanTypes";
 import { USER_TEAM_NAME } from "../simulation/leagueTable";
+import { EuropeanCrest } from "./EuropeanCrest";
+import { TeamKitIcon } from "./TeamKitIcon";
 
 export function EuropeanLeagueTable({ tournament, chanceText }: { tournament: EuropeanTournamentState; chanceText?: string }) {
   const rows = useMemo(() => buildEuropeanLeaguePhaseTable(tournament, USER_TEAM_NAME), [tournament]);
+  // Las filas solo traen el id: el país para el escudo sale de los rivales del torneo.
+  const opponents = new Map(tournament.matches.map((match) => [match.opponent.id, match.opponent]));
 
   return (
     <section className="table-card european-league-table" aria-label="Clasificación de la competición europea">
@@ -35,7 +39,10 @@ export function EuropeanLeagueTable({ tournament, chanceText }: { tournament: Eu
             }`}
           >
             <span>{index + 1}</span>
-            <span>{row.teamName}</span>
+            <span className="team-with-kit">
+              {row.isUser ? <TeamKitIcon teamName={row.teamName} compact /> : opponents.has(row.teamId) && <EuropeanCrest opponent={opponents.get(row.teamId)!} compact />}
+              <span>{row.teamName}</span>
+            </span>
             <strong>{row.points}</strong>
             <span>{row.goalDifference > 0 ? `+${row.goalDifference}` : row.goalDifference}</span>
           </div>

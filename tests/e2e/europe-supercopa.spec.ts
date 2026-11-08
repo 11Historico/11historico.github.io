@@ -91,6 +91,10 @@ test("la liga permite consultar la clasificación europea y el palmarés", async
   await expect(table.getByText("Pasan a semifinales los 2 primeros, marcados en verde.")).toBeVisible();
   await expect(table.locator(".league-table-row")).toHaveCount(7);
   await expect(table.locator(".league-table-row-qualify")).toHaveCount(2);
+  // v0.25.102: los seis rivales llevan escudo genérico, con su país como nombre accesible.
+  await expect(table.locator(".european-crest")).toHaveCount(6);
+  await expect(table.locator(".european-crest").first()).toHaveAttribute("role", "img");
+  await expect(table.locator(".european-crest").first()).toHaveAttribute("aria-label", /\S/);
   // v0.25.95: probabilidad de pasar mientras queda fase de liga.
   await expect(table.locator(".european-semifinal-chance")).toHaveText(/^Probabilidad de pasar a semifinales: (menos del 1|más del 99|\d+) %\./);
 
@@ -154,6 +158,8 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   const teams = page.locator(".european-match-event-team");
   await expect(teams.first()).toContainText("Local");
   await expect(teams.last()).toContainText("Visitante");
+  // v0.25.102: el escudo genérico solo en la tarjeta del rival.
+  await expect(teams.locator(".european-crest")).toHaveCount(1);
   const preview = page.getByRole("region", { name: "Previa del próximo partido" });
   await expect(preview.locator(".match-odds")).toContainText(/Victoria \d+\s%/);
 

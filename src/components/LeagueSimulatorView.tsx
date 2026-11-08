@@ -73,6 +73,7 @@ import {
 import type { EuropeanTournamentMatch, EuropeanTournamentState } from "../europe/europeanTypes";
 import EuropeanMatchEvent from "./EuropeanMatchEvent";
 import { CompetitionIcon } from "./CompetitionIcon";
+import { EuropeanCrest } from "./EuropeanCrest";
 import EuropeanLeagueTable from "./EuropeanLeagueTable";
 import { estimateExpectedLeagueRange, getExpectedLeagueRangeText, type ExpectedLeagueRange } from "../simulation/expectedLeagueRange";
 import { CupMirrorBracket } from "./SeasonBrackets";
@@ -926,12 +927,17 @@ export function LeagueSimulatorView({
                 <section className="next-match-preview" aria-label="Previa del próximo partido">
                   <span>
                     Próximo partido · {getEuropeanCompetitionLabel(pendingEuropeanMatch.competition)} ·{" "}
-                    {getEuropeanTournamentPhaseLabel(pendingEuropeanMatch.phase)} · {pendingEuropeanMatch.isHome ? "En San Mamés" : "Fuera de casa"}
+                    {getEuropeanTournamentPhaseLabel(pendingEuropeanMatch.phase)} · {pendingEuropeanMatch.isHome ? "En San Mamés" : "Fuera de casa"} ·
+                    Rival de {pendingEuropeanMatch.opponent.country}
                   </span>
-                  <strong>
-                    {pendingEuropeanMatch.isHome
-                      ? `${USER_TEAM_NAME} (${Math.round(europeanUserRating)}) vs ${pendingEuropeanMatch.opponent.name} (${pendingEuropeanMatch.opponent.rating})`
-                      : `${pendingEuropeanMatch.opponent.name} (${pendingEuropeanMatch.opponent.rating}) vs ${USER_TEAM_NAME} (${Math.round(europeanUserRating)})`}
+                  {/* v0.25.102: el escudo genérico va pegado al nombre del rival, a la izquierda o a la derecha. */}
+                  <strong className="next-match-preview-crest">
+                    {pendingEuropeanMatch.isHome && `${USER_TEAM_NAME} (${Math.round(europeanUserRating)}) vs `}
+                    <span className="next-match-preview-rival">
+                      <EuropeanCrest opponent={pendingEuropeanMatch.opponent} compact />
+                      {`${pendingEuropeanMatch.opponent.name} (${pendingEuropeanMatch.opponent.rating})`}
+                    </span>
+                    {!pendingEuropeanMatch.isHome && ` vs ${USER_TEAM_NAME} (${Math.round(europeanUserRating)})`}
                   </strong>
                   <MatchLineDuelBars
                     duel={getEuropeanLineDuel({

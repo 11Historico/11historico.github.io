@@ -251,6 +251,14 @@
   overflow-wrap: anywhere;
 }
 
+/* Previa europea (v0.25.102): el escudo genérico del rival, siempre en la misma línea que su nombre. */
+.next-match-preview-rival {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: middle;
+}
+
 /* Factor que decidió el partido (v0.25.74) y efecto del planteamiento (v0.25.75). */
 .match-key-factor,
 .match-approach-effect {
