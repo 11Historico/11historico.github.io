@@ -103,6 +103,29 @@ export function applyDifficultyToTeamRating(
   };
 }
 
+/**
+ * Supercopa (v0.25.101): la media visible con la dificultad, sin la compresión de carrera.
+ * Hasta ahora la Supercopa ignoraba la dificultad: en Leyenda se jugaba como en Fácil
+ * (INFORME_MEDIA_SUPERCOPA_v0_25_100, opción B elegida por el usuario). En Normal no cambia.
+ */
+export function applyDifficultyModifier(teamRating: TeamRating, difficulty: GameDifficulty): TeamRating {
+  const modifier = getDifficultyRatingModifier(difficulty);
+  if (modifier === 0) return teamRating;
+
+  const clamp = (value: number) => Math.max(40, Math.min(99, roundToOne(value + modifier)));
+
+  return {
+    ...teamRating,
+    attack: clamp(teamRating.attack),
+    defense: clamp(teamRating.defense),
+    control: clamp(teamRating.control),
+    physical: clamp(teamRating.physical),
+    mentality: clamp(teamRating.mentality),
+    goalkeeping: clamp(teamRating.goalkeeping),
+    overall: clamp(teamRating.overall),
+  };
+}
+
 export function buildCareerTeamPowerPreview(params: {
   teamRating: TeamRating;
   bonus?: number;

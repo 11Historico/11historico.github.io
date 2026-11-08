@@ -2,10 +2,13 @@
 //
 // Fase 11 del roadmap: auditoría de la media con la que juegas la Supercopa. Sin cambiar el juego.
 // La Liga, la Copa y Europa juegan con applyDifficultyToTeamRating (compresión de carrera más la
-// dificultad) y con los rivales de LaLiga subidos por la progresión de carrera. La Supercopa
-// (App.tsx → supercopaRules.ts) recibe el teamRating visible y los rivales sin progresión.
+// dificultad) y con los rivales de LaLiga subidos por la progresión de carrera. Hasta la v0.25.100,
+// la Supercopa (App.tsx → supercopaRules.ts) recibía el teamRating visible y los rivales sin
+// progresión. Desde la v0.25.101 suma la dificultad.
 // Compara, con las mismas semillas:
-//  - Hoy: media visible y rivales sin progresión.
+//  - Hoy: media visible y rivales sin progresión. Era el juego hasta la v0.25.100.
+//  - Solo la dificultad: la media visible con la dificultad. Es el juego desde la v0.25.101
+//    (opción B, applyDifficultyModifier).
 //  - Solo la media como la Liga: compresión y dificultad, rivales sin progresión.
 //  - Todo como la Liga: compresión, dificultad y rivales con progresión.
 // Reproducible: npm run audit:supercopa (o node .audit-dist/auditSupercopaRating.js --cups=N)
@@ -13,7 +16,7 @@
 import strong from "../tests/e2e/fixtures/career-strong.json";
 import { applyCareerRivalProgression, getRivalDifficultyBonus } from "../src/career/careerRules";
 import { simulateCareerSupercopa } from "../src/career/supercopaRules";
-import { applyDifficultyToTeamRating } from "../src/career/teamPower";
+import { applyDifficultyModifier, applyDifficultyToTeamRating } from "../src/career/teamPower";
 import { USER_TEAM_ID } from "../src/data/laliga2526Teams";
 import { getInitialCareerLeagueRivals } from "../src/simulation/leagueSimulator";
 import { USER_TEAM_NAME } from "../src/simulation/leagueTable";
@@ -113,13 +116,13 @@ for (const seasons of COMPLETED_SEASONS) {
 
 for (const { label, value } of DIFFICULTIES) {
   console.log(`\n## ${label}: probabilidad de ganar la Supercopa (de llegar a la final)\n`);
-  console.log("| Media visible | Temporadas superadas | Hoy | Solo la dificultad | Solo la media como la Liga | Todo como la Liga |");
+  console.log("| Media visible | Temporadas superadas | Antes (v0.25.100) | Solo la dificultad (v0.25.101) | Solo la media como la Liga | Todo como la Liga |");
   console.log("| --- | --- | --- | --- | --- | --- |");
 
   for (const visible of VISIBLE_OVERALLS) {
     const rating = withVisibleOverall(visible);
-    // Sin compresión (isCareerMode false): solo suma o resta la dificultad a la media visible.
-    const difficultyOnly = applyDifficultyToTeamRating(rating, value, false);
+    // Solo suma o resta la dificultad a la media visible: lo que hace el juego desde la v0.25.101.
+    const difficultyOnly = applyDifficultyModifier(rating, value);
     const leagueRating = applyDifficultyToTeamRating(rating, value, true);
     // Las tres primeras no dependen de las temporadas: los rivales no suben.
     const cell = (m: { titles: number; finals: number }) => `${pct(m.titles)} (${pct(m.finals)})`;
