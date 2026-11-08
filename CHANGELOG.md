@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.101 — La dificultad cuenta en la Supercopa
+
+- **La Supercopa respeta la dificultad:** hasta ahora se jugaba igual en Fácil que en Leyenda. Ahora tu media visible suma +2 en Fácil y resta 4 en Leyenda, como en la Liga y la Copa.
+- **En Normal no cambia nada.** Con 88 de media se sigue ganando el 22 % de las veces. En Fácil sube al 29 % y en Leyenda baja al 16 %.
+- La Supercopa sigue partiendo de tu media visible, sin la compresión de la Liga. La previa ya muestra la media con la dificultad, la misma con la que se juega el partido.
+
 ## v0.25.100 — Duelo de líneas en la previa
 
 - **Tus líneas contra las suyas, de un vistazo:** en la previa de Liga, Copa, Supercopa y Europa, la línea de texto con las medias pasa a ser dos barras enfrentadas. Tu ataque se mide con su defensa y tu defensa con su ataque, con la ventaja en el centro, por ejemplo «+5».

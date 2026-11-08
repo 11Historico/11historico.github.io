@@ -371,7 +371,7 @@ export function TeamSummary({
             <h2>Ratings que influyen en la temporada</h2>
             <p className="team-summary-rating-note">
               {isCareerMode
-                ? "Valores históricos del once: jugadores, formación, entrenador y premios activos. La Supercopa los usa tal cual; Liga y Copa, en la escala de LaLiga."
+                ? "Valores históricos del once: jugadores, formación, entrenador y premios activos. La Supercopa los usa con la dificultad; Liga y Copa, en la escala de LaLiga."
                 : "Estos valores salen de jugadores, formación, entrenador y premios activos. Son los que alimentan Liga, Copa y Supercopa."}
             </p>
             <RatingBar label="Ataque" value={displayedRating.attack ?? 0} />

@@ -14,7 +14,7 @@ import { applyCareerRivalProgression, CAREER_RELEGATION_POSITION, evaluateCareer
 import { awardEuropeanPrestigeToCareer } from "../src/career/europeanPrestige";
 import { awardEuropeanTrophyToCareer } from "../src/career/europeanTrophies";
 import { createCareerSupercopaQualification, getSupercopaSemifinalPreview, simulateCareerSupercopa } from "../src/career/supercopaRules";
-import { applyCareerRatingBonus, applyDifficultyToTeamRating } from "../src/career/teamPower";
+import { applyCareerRatingBonus, applyDifficultyModifier, applyDifficultyToTeamRating } from "../src/career/teamPower";
 import { ATHLETIC_SEASONS } from "../src/data/athletic/seasons";
 import { getAvailableSlotsForPlayer, isPlayerAlreadySelected, resolvePlayerSlotPlacement } from "../src/domain/positionRules";
 import { EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS, shouldPlayEuropeanMatchAtLeagueMatchday } from "../src/europe/europeanCalendar";
@@ -316,12 +316,14 @@ export function playCareer(params: {
 
     if (pendingSupercopa) {
       const qualification = pendingSupercopa;
+      // Como el juego desde v0.25.101: la media visible con la dificultad.
+      const supercopaRating = applyDifficultyModifier(seasonRating, difficulty);
       const approach = pickApproach(
         policy.approach,
-        (option) => getSupercopaSemifinalPreview({ qualification, teamRating: seasonRating, selectedPlayers: team.selectedPlayers, rivals, approach: option, coachSkills: team.selectedCoach.coachSeason.skills })?.odds,
+        (option) => getSupercopaSemifinalPreview({ qualification, teamRating: supercopaRating, selectedPlayers: team.selectedPlayers, rivals, approach: option, coachSkills: team.selectedCoach.coachSeason.skills })?.odds,
         advanceValue,
       );
-      wonSupercopa = simulateCareerSupercopa({ qualification, teamRating: seasonRating, selectedPlayers: team.selectedPlayers, rivals, approach, coachSkills: team.selectedCoach.coachSeason.skills }).won;
+      wonSupercopa = simulateCareerSupercopa({ qualification, teamRating: supercopaRating, selectedPlayers: team.selectedPlayers, rivals, approach, coachSkills: team.selectedCoach.coachSeason.skills }).won;
     }
 
     const { summary, tournament } = playSeason({

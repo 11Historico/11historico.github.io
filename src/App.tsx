@@ -33,7 +33,7 @@ import {
   type CareerRewardFlowPatch,
 } from "./app/careerRewardFlow";
 import { calculateTeamRating } from "./simulation/teamRating";
-import { applyCareerRatingBonus } from "./career/teamPower";
+import { applyCareerRatingBonus, applyDifficultyModifier } from "./career/teamPower";
 import {
   createNextCareerLeagueTransition,
   getInitialCareerLeagueRivals,
@@ -302,6 +302,8 @@ export default function App() {
   const [selectedPlayers, setSelectedPlayers] = useState<SelectedPlayer[]>(() => savedGame?.selectedPlayers ?? []);
   const [selectedCoach, setSelectedCoach] = useState<SelectedCoach | undefined>(() => savedGame?.selectedCoach);
   const [teamRating, setTeamRating] = useState<TeamRating | undefined>(() => savedGame?.teamRating);
+  // La Supercopa juega con la media visible más la dificultad, sin la compresión de la Liga (v0.25.101).
+  const supercopaTeamRating = teamRating && applyDifficultyModifier(teamRating, difficulty);
   const [leagueContext, setLeagueContext] = useState<UserLeagueSimulationContext | undefined>(() => savedGame?.leagueContext);
   const [pendingSeasonLuckWheelOffer, setPendingSeasonLuckWheelOffer] = useState<SeasonLuckWheelOffer | undefined>(
     () => savedGame?.pendingSeasonLuckWheelOffer
@@ -750,12 +752,12 @@ export default function App() {
   }
 
   function handleSimulateCareerSupercopa(approach: MatchApproach) {
-    if (!careerPendingSupercopa || !teamRating) return;
+    if (!careerPendingSupercopa || !supercopaTeamRating) return;
 
     // v0.25.90: primero las semifinales; si pasas, la final se juega aparte.
     const result = simulateSupercopaSemifinals({
       qualification: careerPendingSupercopa,
-      teamRating,
+      teamRating: supercopaTeamRating,
       selectedPlayers,
       rivals: careerLeagueRivals,
       approach,
@@ -766,11 +768,11 @@ export default function App() {
   }
 
   function handleSimulateCareerSupercopaFinal(approach: MatchApproach) {
-    if (!careerCurrentSupercopaResult?.awaitingFinal || !teamRating) return;
+    if (!careerCurrentSupercopaResult?.awaitingFinal || !supercopaTeamRating) return;
 
     setCareerCurrentSupercopaResult(simulateSupercopaFinal({
       semifinals: careerCurrentSupercopaResult,
-      teamRating,
+      teamRating: supercopaTeamRating,
       selectedPlayers,
       rivals: careerLeagueRivals,
       approach,
@@ -1584,10 +1586,10 @@ export default function App() {
             coachSkills={selectedCoach?.coachSeason.skills}
             pitch={selectedFormation && { formation: selectedFormation, selectedPlayers }}
             getSemifinalPreview={(approach) =>
-              teamRating &&
+              supercopaTeamRating &&
               getSupercopaSemifinalPreview({
                 qualification: careerPendingSupercopa,
-                teamRating,
+                teamRating: supercopaTeamRating,
                 selectedPlayers,
                 rivals: careerLeagueRivals,
                 approach,
@@ -1595,11 +1597,11 @@ export default function App() {
               })
             }
             getFinalPreview={(approach) =>
-              teamRating &&
+              supercopaTeamRating &&
               careerCurrentSupercopaResult &&
               getSupercopaFinalPreview({
                 semifinals: careerCurrentSupercopaResult,
-                teamRating,
+                teamRating: supercopaTeamRating,
                 selectedPlayers,
                 rivals: careerLeagueRivals,
                 approach,
