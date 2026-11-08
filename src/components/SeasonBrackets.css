@@ -98,6 +98,13 @@
   font-size: 0.8rem;
 }
 
+/* v0.25.102: el escudo genérico del rival europeo delante del cruce. */
+.season-bracket-versus {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .season-bracket-score {
   font-size: 1.3rem;
   font-variant-numeric: tabular-nums;

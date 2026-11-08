@@ -17,8 +17,9 @@ import { getEuropeanMatchDecisionText } from "../europe/europeanTournament";
 import type { EuropeanTournamentMatch } from "../europe/europeanTypes";
 import type { CupBracketRound, CupBracketTie } from "../simulation/leagueSimulator";
 import type { MatchResult } from "../types/game";
-// Solo en Copa: los rivales europeos van sin equipaciones (ver europeanOpponents.ts).
+import { EuropeanCrest } from "./EuropeanCrest";
 import { isExtraTimeFactor } from "./matchSequenceTimeline";
+// Camisetas solo en Copa: los rivales europeos llevan un escudo genérico (v0.25.102).
 import { TeamKitIcon } from "./TeamKitIcon";
 
 import "./SeasonBrackets.css";
@@ -134,7 +135,10 @@ function EuropeanMatchCard({ match }: { match: EuropeanTournamentMatch }) {
   return (
     <div className="season-bracket-match">
       <p className="season-bracket-versus">
-        {match.isHome ? "Local" : "Visitante"} · vs {match.opponent.name}
+        <EuropeanCrest opponent={match.opponent} compact />
+        <span>
+          {match.isHome ? "Local" : "Visitante"} · vs {match.opponent.name}
+        </span>
       </p>
       {match.status === "played" ? (
         <>

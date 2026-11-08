@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.102 — Escudos y noche europea
+
+- **Cada rival europeo con su escudo:** en la previa, el partido, la clasificación europea y el cuadro de fin de temporada, el rival lleva un escudo con la bandera de su país y las iniciales del club. Son genéricos: no copian los escudos reales.
+- **El país también en texto:** la previa lo dice («Rival de Alemania»), el partido lo pone bajo el nombre y el escudo lo anuncia a los lectores de pantalla.
+- **Noche europea:** la pantalla del partido europeo es azul noche en las tres competiciones, con focos en las esquinas y un cielo de estrellas. El color de cada competición sigue en el resplandor y el borde.
+- No cambia ningún resultado.
+
 ## v0.25.101 — La dificultad cuenta en la Supercopa
 
 - **La Supercopa respeta la dificultad:** hasta ahora se jugaba igual en Fácil que en Leyenda. Ahora tu media visible suma +2 en Fácil y resta 4 en Leyenda, como en la Liga y la Copa.

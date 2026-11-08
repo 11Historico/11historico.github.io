@@ -21,6 +21,7 @@ import {
 import type { EuropeanCompetition, EuropeanTournamentMatch, EuropeanTournamentState } from "../europe/europeanTypes";
 import EuropeanProgressPanel from "./EuropeanProgressPanel";
 import { CompetitionIcon } from "./CompetitionIcon";
+import { EuropeanCrest } from "./EuropeanCrest";
 import {
   EUROPEAN_SEQUENCE_TICK_MS,
   getEuropeanHalfTimeElapsedMs,
@@ -38,6 +39,7 @@ import { MatchTimeline } from "./MatchTimeline";
 import { getEuropeanVerdict, type MatchVerdict } from "./matchVerdict";
 import { MatchVerdictBanner } from "./MatchVerdictBanner";
 import TacticalPitch from "./TacticalPitch";
+import { TeamKitIcon } from "./TeamKitIcon";
 import {
   getGoalContributions,
   getHalfTimeEffectText,
@@ -331,6 +333,7 @@ export function EuropeanMatchEvent({
   const phaseLabel = getEuropeanTournamentPhaseLabel(match.phase);
   const userTeamCard = (
     <article className="european-match-event-team european-match-event-team-user">
+      <TeamKitIcon teamName={USER_TEAM_NAME} />
       <span>{USER_TEAM_NAME}</span>
       <strong>{Math.round(userTeamRating)}</strong>
       <small>{match.isHome ? "Local · San Mamés" : "Visitante"}</small>
@@ -338,6 +341,7 @@ export function EuropeanMatchEvent({
   );
   const rivalTeamCard = (
     <article className="european-match-event-team european-match-event-team-rival">
+      <EuropeanCrest opponent={match.opponent} />
       <span>{match.opponent.name}</span>
       <strong>{match.opponent.rating}</strong>
       <small>{match.isHome ? `Visitante · ${match.opponent.country}` : `Local · ${match.opponent.country}`}</small>

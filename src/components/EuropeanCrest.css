@@ -1,0 +1,38 @@
+/* src/components/EuropeanCrest.css
+   Escudo genérico de los rivales europeos (v0.25.102): forma de escudo, la bandera del país
+   de fondo y las iniciales sobre una pastilla oscura, legible sobre cualquier bandera. */
+
+.european-crest {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 34px;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  border-radius: 6px 6px 50% 50% / 6px 6px 42% 42%;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.european-crest > span {
+  padding: 1px 3px;
+  border-radius: 4px;
+  background: rgba(8, 14, 30, 0.78);
+  color: #ffffff;
+  font-size: 0.6rem;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+
+.european-crest-compact {
+  width: 22px;
+  height: 25px;
+  border-width: 1.5px;
+}
+
+.european-crest-compact > span {
+  padding: 0 2px;
+  font-size: 0.5rem;
+}
