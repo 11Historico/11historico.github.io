@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.106 — Semifinales y finales europeas sin rival fijo
+
+- **El rival de semifinal y de final ya no se repite entre jugadores:** se sorteaba solo con la temporada y la competición. En la primera temporada de Champions, por ejemplo, el 70 % de los que llegaban a semifinales se encontraba al Sporting. Ahora el sorteo depende de tu partida y puede salir cualquier club que no hayas tenido en la fase inicial.
+- **La fase inicial ya era justa** con las semillas del juego: cada club sale en el 29-32 % de los torneos (30 % esperado). El 52 % del Stuttgart de la auditoría de la v0.25.97 venía de las semillas cortas de la auditoría, no del juego.
+- **El equilibrio no cambia:** las carreras completas quedan dentro del margen. El rival de semifinal pasa a tener la media de su competición; en la Europa League baja de 83,9 a 81,8 de media.
+- Los torneos ya empezados en una partida guardada conservan el rival de antes.
+
 ## v0.25.105 — Rivales europeos con estilo
 
 - **Cada club europeo juega a su manera:** ofensivo (ataca más de lo que defiende), defensivo (al revés) o equilibrado. El estilo mueve 3 puntos el ataque y la defensa sin cambiar su media.

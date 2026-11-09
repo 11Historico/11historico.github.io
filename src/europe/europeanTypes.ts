@@ -147,6 +147,11 @@ export interface EuropeanTournamentState {
   europeanPrestigeAwarded?: boolean;
   europeanPrestigeAwardedAt?: string;
   currentMatchId?: string | null;
+  /**
+   * Semilla del sorteo del torneo (v0.25.106): con ella se sortean también la semifinal y la final.
+   * Ausente en las partidas guardadas antes: esos torneos siguen con el sorteo de antes.
+   */
+  drawSeed?: string;
 }
 
 export interface EuropeanCareerState {
