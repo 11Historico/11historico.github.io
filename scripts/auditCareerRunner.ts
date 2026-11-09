@@ -17,24 +17,17 @@ import { createCareerSupercopaQualification, getSupercopaSemifinalPreview, simul
 import { applyCareerRatingBonus, applyDifficultyModifier, applyDifficultyToTeamRating } from "../src/career/teamPower";
 import { ATHLETIC_SEASONS } from "../src/data/athletic/seasons";
 import { getAvailableSlotsForPlayer, isPlayerAlreadySelected, resolvePlayerSlotPlacement } from "../src/domain/positionRules";
-import { EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS, getEuropeanMatchdaySlots, shouldPlayEuropeanMatchAtLeagueMatchday } from "../src/europe/europeanCalendar";
+import { EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS, shouldPlayEuropeanMatchAtLeagueMatchday } from "../src/europe/europeanCalendar";
 import {
   appendEuropeanQualification,
   createEmptyEuropeanCareerState,
   getLatestEuropeanQualification,
   setEuropeanCurrentTournament,
 } from "../src/europe/europeanCareerState";
-import { buildEuropeanLeaguePhaseTable } from "../src/europe/europeanLeagueTable";
 import { estimateEuropeanMatchOdds, simulateEuropeanMatch, type SimulateEuropeanMatchInput } from "../src/europe/europeanMatchEngine";
-import { pickSingleEuropeanOpponent } from "../src/europe/europeanOpponents";
 import { resolveEuropeanQualification } from "../src/europe/europeanQualification";
-import {
-  applyEuropeanMatchResult,
-  createEuropeanTournamentForQualification,
-  EUROPEAN_LEAGUE_PHASE_MATCH_COUNT,
-  isEuropeanKnockoutMatch,
-} from "../src/europe/europeanTournament";
-import type { EuropeanOpponent, EuropeanSeasonEntry, EuropeanTournamentMatch, EuropeanTournamentState } from "../src/europe/europeanTypes";
+import { applyEuropeanMatchResult, createEuropeanTournamentForQualification, isEuropeanKnockoutMatch } from "../src/europe/europeanTournament";
+import type { EuropeanSeasonEntry, EuropeanTournamentState } from "../src/europe/europeanTypes";
 import {
   createFinalLeagueSummary,
   createNextCareerLeagueTransition,
@@ -66,73 +59,6 @@ export interface Policy {
   halfTime: HalfTimePolicy;
   /** Europa como antes de las fases 2 y 4: solo la media, sin +1 del entrenador. */
   legacyEurope?: boolean;
-  /** Eliminatoria previa de la fase 13, solo para medirla (audit:european-playoff). Sin definir: el juego de hoy. */
-  europeanPlayoff?: EuropeanPlayoffVariant;
-}
-
-/**
- * Fase 13, solo en la auditoría: el 3.º y el 4.º de la fase inicial juegan un partido único por
- * entrar en semifinales. «table»: el 3.º contra el 4.º de la tabla. «fresh»: contra un club nuevo
- * del sorteo. En los dos, el 3.º juega en casa.
- */
-export type EuropeanPlayoffVariant = "table" | "fresh";
-
-/** Jornada de Liga de la previa: entre la última de la fase inicial (24) y la semifinal (30). */
-export const EUROPEAN_PLAYOFF_MATCHDAY = 27;
-
-export interface EuropeanPlayoff {
-  id: string;
-  opponent: EuropeanOpponent;
-  isHome: boolean;
-}
-
-/** La previa si el usuario acaba de quedar 3.º o 4.º de la fase inicial; si no, null. */
-export function getEuropeanPlayoff(tournament: EuropeanTournamentState, variant: EuropeanPlayoffVariant): EuropeanPlayoff | null {
-  if (tournament.qualifiedForSemifinal || !tournament.eliminated || tournament.leaguePhasePlayed < EUROPEAN_LEAGUE_PHASE_MATCH_COUNT) return null;
-
-  const table = buildEuropeanLeaguePhaseTable(tournament, "user");
-  const position = table.findIndex((row) => row.isUser) + 1;
-  if (position !== 3 && position !== 4) return null;
-
-  const leagueOpponents = tournament.matches.filter((match) => match.phase === "league_phase").map((match) => match.opponent);
-  const opponent = variant === "table"
-    ? leagueOpponents.find((candidate) => candidate.id === table[position === 3 ? 3 : 2].teamId)
-    : pickSingleEuropeanOpponent({
-      competition: tournament.competition,
-      seed: `${tournament.drawSeed}_playoff`,
-      excludeIds: leagueOpponents.map((candidate) => candidate.id),
-    });
-  if (!opponent) throw new Error("No se encontró el rival de la previa.");
-
-  return { id: `euro_${tournament.seasonNumber}_${tournament.competition}_playoff`, opponent, isHome: position === 3 };
-}
-
-/** Tras ganar la previa: la semifinal, como la crea el juego, sin repetir el rival de la previa. */
-export function advanceAfterEuropeanPlayoff(tournament: EuropeanTournamentState, playoff: EuropeanPlayoff): EuropeanTournamentState {
-  const semifinal: EuropeanTournamentMatch = {
-    id: `euro_${tournament.seasonNumber}_${tournament.competition}_semifinal`,
-    seasonNumber: tournament.seasonNumber,
-    competition: tournament.competition,
-    matchday: getEuropeanMatchdaySlots(EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS).semifinal,
-    phase: "semifinal",
-    opponent: pickSingleEuropeanOpponent({
-      competition: tournament.competition,
-      seed: `${tournament.drawSeed}_semifinal`,
-      excludeIds: [...tournament.matches.map((match) => match.opponent.id), playoff.opponent.id],
-    }),
-    isHome: true,
-    status: "scheduled",
-  };
-
-  return {
-    ...tournament,
-    matches: [...tournament.matches, semifinal],
-    phase: "semifinal",
-    qualifiedForSemifinal: true,
-    eliminated: false,
-    completed: false,
-    currentMatchId: semifinal.id,
-  };
 }
 
 export interface CareerTeam {
@@ -296,32 +222,6 @@ function playSeason(params: {
     selectedCoach,
   };
 
-  let playoff: EuropeanPlayoff | null = null;
-
-  const playEuropeanMatch = (match: Pick<EuropeanTournamentMatch, "id" | "opponent" | "isHome" | "competition">, isKnockout: boolean) => {
-    const legacy = policy.legacyEurope;
-    const shared = {
-      userTeamRating: effectiveRating.overall + (legacy ? 0 : getCoachCompetitionBoost(context, "europe")),
-      opponentRating: match.opponent.rating,
-      isHome: match.isHome,
-      competition: match.competition,
-      coachSkills,
-      // El estilo del rival (v0.25.105) va con el juego actual, no con el «legacy».
-      ...(legacy ? {} : { userProfile: effectiveRating, selectedPlayers, opponentStyle: match.opponent.style }),
-    };
-    const approach = pickApproach(
-      policy.approach,
-      (option) => estimateEuropeanMatchOdds({ ...shared, approach: option }),
-      isKnockout ? advanceValue : pointsValue,
-    );
-    const input: SimulateEuropeanMatchInput = { ...shared, approach, isKnockout, seed: `${gameId}_${match.id}` };
-    const base = simulateEuropeanMatch(input);
-    const firstHalf = base.goalEvents.filter((goal) => goal.minute <= 45);
-    const margin = firstHalf.filter((goal) => goal.isUserGoal).length - firstHalf.filter((goal) => !goal.isUserGoal).length;
-    const choice = pickHalfTime(policy.halfTime, margin, (base.expectedGoals?.user ?? 0) < (base.expectedGoals?.rival ?? 0));
-    return choice === "keep" ? base : simulateEuropeanMatch({ ...input, halfTimeChoice: choice });
-  };
-
   for (let guard = 0; guard < 200; guard += 1) {
     const pendingCup = getPendingCupFixture(context);
 
@@ -349,17 +249,30 @@ function playSeason(params: {
     const pendingEuropean = shouldPlayEuropeanMatchAtLeagueMatchday(tournament, leaguePlayed + 1);
 
     if (pendingEuropean && tournament) {
-      const outcome = playEuropeanMatch(pendingEuropean, isEuropeanKnockoutMatch(pendingEuropean));
-      tournament = applyEuropeanMatchResult(tournament, pendingEuropean.id, outcome, EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS);
-      if (policy.europeanPlayoff) playoff = getEuropeanPlayoff(tournament, policy.europeanPlayoff);
-      continue;
-    }
+      const legacy = policy.legacyEurope;
+      const shared = {
+        userTeamRating: effectiveRating.overall + (legacy ? 0 : getCoachCompetitionBoost(context, "europe")),
+        opponentRating: pendingEuropean.opponent.rating,
+        isHome: pendingEuropean.isHome,
+        competition: pendingEuropean.competition,
+        coachSkills,
+        // El estilo del rival (v0.25.105) va con el juego actual, no con el «legacy».
+        ...(legacy ? {} : { userProfile: effectiveRating, selectedPlayers, opponentStyle: pendingEuropean.opponent.style }),
+      };
+      const isKnockout = isEuropeanKnockoutMatch(pendingEuropean);
+      const approach = pickApproach(
+        policy.approach,
+        (option) => estimateEuropeanMatchOdds({ ...shared, approach: option }),
+        isKnockout ? advanceValue : pointsValue,
+      );
+      const input: SimulateEuropeanMatchInput = { ...shared, approach, isKnockout, seed: `${gameId}_${pendingEuropean.id}` };
+      const base = simulateEuropeanMatch(input);
+      const firstHalf = base.goalEvents.filter((goal) => goal.minute <= 45);
+      const margin = firstHalf.filter((goal) => goal.isUserGoal).length - firstHalf.filter((goal) => !goal.isUserGoal).length;
+      const choice = pickHalfTime(policy.halfTime, margin, (base.expectedGoals?.user ?? 0) < (base.expectedGoals?.rival ?? 0));
+      const outcome = choice === "keep" ? base : simulateEuropeanMatch({ ...input, halfTimeChoice: choice });
 
-    if (playoff && tournament && leaguePlayed + 1 === EUROPEAN_PLAYOFF_MATCHDAY) {
-      if (playEuropeanMatch({ ...playoff, competition: tournament.competition }, true).result === "win") {
-        tournament = advanceAfterEuropeanPlayoff(tournament, playoff);
-      }
-      playoff = null;
+      tournament = applyEuropeanMatchResult(tournament, pendingEuropean.id, outcome, EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS);
       continue;
     }
 

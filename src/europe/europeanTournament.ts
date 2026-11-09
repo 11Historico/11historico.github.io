@@ -6,7 +6,9 @@
 // UEFA completo de 36 equipos ni eliminatorias ida/vuelta.
 //
 // Reglas de avance:
-// - Fase inicial (6 partidos): 10+ puntos -> semifinal. Menos de 10 -> eliminado.
+// - Fase inicial (6 partidos, tabla de 7): 1.º y 2.º -> semifinal. 3.º y 4.º -> previa
+//   (v0.25.107). Del 5.º al 7.º -> eliminado.
+// - Previa (partido único, el 3.º contra el 4.º, en casa del 3.º): gana -> semifinal. Pierde -> eliminado.
 // - Semifinal (partido único): gana -> final. Pierde -> eliminado.
 // - Final (partido único): gana -> campeón. Pierde -> finalista.
 //
@@ -38,6 +40,8 @@ import type {
 export const EUROPEAN_LEAGUE_PHASE_MATCH_COUNT = 6;
 /** Pasan a semifinales los primeros de la tabla de la fase de liga (v0.25.55; antes 10 puntos). */
 export const EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS = 2;
+/** Hasta este puesto se juega la previa (v0.25.107): el 3.º contra el 4.º. */
+export const EUROPEAN_LEAGUE_PHASE_PLAYOFF_POSITIONS = 4;
 
 /** Posición del usuario (1 = primero) en la tabla de la fase de liga. */
 export function getEuropeanLeaguePhaseUserPosition(tournament: EuropeanTournamentState): number {
@@ -165,6 +169,27 @@ function createFollowUpMatch(params: {
   };
 }
 
+/**
+ * Previa (v0.25.107): el rival es el otro club del 3.º y el 4.º de la tabla, sin sorteo. El 3.º
+ * juega en casa. Como el rival ya jugó la fase inicial, la semifinal tampoco lo repite.
+ */
+function advanceToPlayoff(state: EuropeanTournamentState, position: number, totalLeagueMatchdays?: number): EuropeanTournamentState {
+  const rivalId = buildEuropeanLeaguePhaseTable(state, "user")[position === 3 ? 3 : 2].teamId;
+  const opponent = state.matches.find((match) => match.opponent.id === rivalId)!.opponent;
+  const playoff: EuropeanTournamentMatch = {
+    id: `euro_${state.seasonNumber}_${state.competition}_playoff`,
+    seasonNumber: state.seasonNumber,
+    competition: state.competition,
+    matchday: getEuropeanMatchdaySlots(totalLeagueMatchdays).playoff,
+    phase: "playoff",
+    opponent,
+    isHome: position === 3,
+    status: "scheduled",
+  };
+
+  return { ...state, matches: [...state.matches, playoff], phase: "playoff", currentMatchId: playoff.id };
+}
+
 function advanceToSemifinal(state: EuropeanTournamentState, totalLeagueMatchdays?: number): EuropeanTournamentState {
   const alreadyExists = state.matches.some((match) => match.phase === "semifinal");
   const slots = getEuropeanMatchdaySlots(totalLeagueMatchdays);
@@ -266,11 +291,20 @@ export function applyEuropeanMatchResult(
     };
 
     if (state.leaguePhasePlayed >= EUROPEAN_LEAGUE_PHASE_MATCH_COUNT) {
-      if (getEuropeanLeaguePhaseUserPosition(state) <= EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS) {
+      const position = getEuropeanLeaguePhaseUserPosition(state);
+      if (position <= EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS) {
         state = advanceToSemifinal(state, totalLeagueMatchdays);
+      } else if (position <= EUROPEAN_LEAGUE_PHASE_PLAYOFF_POSITIONS) {
+        state = advanceToPlayoff(state, position, totalLeagueMatchdays);
       } else {
         state = { ...state, phase: "eliminated", eliminated: true, completed: true, currentMatchId: null };
       }
+    }
+  } else if (match.phase === "playoff") {
+    if (outcome.result === "win") {
+      state = advanceToSemifinal(state, totalLeagueMatchdays);
+    } else {
+      state = { ...state, phase: "eliminated", eliminated: true, completed: true, currentMatchId: null };
     }
   } else if (match.phase === "semifinal") {
     if (outcome.result === "win") {
@@ -298,6 +332,7 @@ export function applyEuropeanMatchResult(
 
 export function getEuropeanTournamentPhaseLabel(phase: EuropeanTournamentPhase): string {
   if (phase === "league_phase") return "Fase inicial";
+  if (phase === "playoff") return "Previa";
   if (phase === "semifinal") return "Semifinal";
   if (phase === "final") return "Final";
   if (phase === "completed") return "Torneo completado";
@@ -305,9 +340,9 @@ export function getEuropeanTournamentPhaseLabel(phase: EuropeanTournamentPhase):
   return "Sin empezar";
 }
 
-/** Semifinal o final a partido único (la fase del PARTIDO, no la del torneo). */
+/** Previa, semifinal o final a partido único (la fase del PARTIDO, no la del torneo). */
 export function isEuropeanKnockoutMatch(match: Pick<EuropeanTournamentMatch, "phase">): boolean {
-  return match.phase === "semifinal" || match.phase === "final";
+  return match.phase === "playoff" || match.phase === "semifinal" || match.phase === "final";
 }
 
 /**
@@ -332,7 +367,7 @@ export function getEuropeanMatchDecisionText(match: EuropeanTournamentMatch): st
 export const EUROPEAN_KNOCKOUT_TIE_RULE_TEXT = "Si hay empate a los 90 minutos: prórroga de 2×15 min y, si sigue igual, penaltis.";
 
 export function isEuropeanKnockoutPhase(phase: EuropeanTournamentPhase): boolean {
-  return phase === "semifinal" || phase === "final" || phase === "completed" || phase === "eliminated";
+  return phase === "playoff" || phase === "semifinal" || phase === "final" || phase === "completed" || phase === "eliminated";
 }
 
 export function getEuropeanKnockoutStageText(tournament: EuropeanTournamentState): string {
@@ -341,6 +376,7 @@ export function getEuropeanKnockoutStageText(tournament: EuropeanTournamentState
   if (tournament.completed) return "Finalista europeo";
   if (tournament.phase === "final") return "Final europea a partido único";
   if (tournament.phase === "semifinal") return "Semifinal europea a partido único";
+  if (tournament.phase === "playoff") return "Previa europea a partido único";
   if (tournament.phase === "league_phase" && tournament.qualifiedForSemifinal) return "Clasificado a semifinales";
   return "Fase inicial europea";
 }
@@ -353,7 +389,8 @@ export function getEuropeanKnockoutStakesText(tournament: EuropeanTournamentStat
   if (tournament.completed) return "Final disputada; el subcampeonato europeo queda registrado como estado del torneo.";
   if (tournament.phase === "final") return "Si ganas, serás campeón europeo y sumará al palmarés al cerrar la temporada; si pierdes, quedarás como finalista.";
   if (tournament.phase === "semifinal") return "Si ganas, jugarás la final europea; si pierdes, quedarás eliminado.";
-  return `Necesitas terminar entre los ${EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS} primeros de la fase de liga para alcanzar semifinales.`;
+  if (tournament.phase === "playoff") return "Si ganas, jugarás la semifinal europea; si pierdes, quedarás eliminado.";
+  return `Los ${EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS} primeros de la fase de liga van a semifinales; el 3.º y el 4.º juegan una previa por entrar.`;
 }
 
 /**
@@ -368,6 +405,7 @@ export function getEuropeanTournamentStatusText(tournament: EuropeanTournamentSt
   if (tournament.completed && !tournament.champion) return "Finalista europeo";
   if (tournament.phase === "final") return "Final europea a partido único";
   if (tournament.phase === "semifinal") return "Semifinal europea a partido único";
+  if (tournament.phase === "playoff") return "Previa europea a partido único";
   return "Fase inicial en marcha";
 }
 

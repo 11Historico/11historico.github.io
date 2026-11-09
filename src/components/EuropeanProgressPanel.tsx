@@ -45,6 +45,7 @@ function getMatchClass(match: EuropeanTournamentMatch, currentMatchId?: string |
 
   if (match.status === "played") classes.push("european-progress-match-played");
   if (match.status === "scheduled") classes.push("european-progress-match-scheduled");
+  if (match.phase === "playoff") classes.push("european-progress-match-playoff");
   if (match.phase === "semifinal") classes.push("european-progress-match-semifinal");
   if (match.phase === "final") classes.push("european-progress-match-final");
   if (match.id === currentMatchId && match.status === "scheduled") classes.push("european-progress-match-current");
@@ -81,8 +82,9 @@ function getPhaseObjectiveText(tournament: EuropeanTournamentState): string {
   }
   if (tournament.completed) return "Objetivo cerrado: final europea disputada.";
   if (tournament.phase === "league_phase") {
-    return `Objetivo fase inicial: terminar entre los ${EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS} primeros para entrar en semifinales.`;
+    return `Objetivo fase inicial: terminar entre los ${EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS} primeros para entrar en semifinales; 3.º o 4.º juegan una previa.`;
   }
+  if (tournament.phase === "playoff") return "Objetivo previa: ganar para entrar en semifinales; perder significa eliminación.";
   if (tournament.phase === "semifinal") return "Objetivo semifinal: ganar para alcanzar la final europea; perder significa eliminación.";
   if (tournament.phase === "final") return "Objetivo final: ganar para levantar el título europeo, que se sumará al palmarés al cerrar la temporada.";
   return "Objetivo europeo pendiente de comenzar.";

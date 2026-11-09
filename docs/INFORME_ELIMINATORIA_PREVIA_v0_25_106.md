@@ -14,9 +14,11 @@ Dos variantes:
 
 Lo demás no cambia: la semifinal y la final, el sorteo de sus rivales, el prestigio (+1 / +0,75 / +0,5 al campeón y +0,25 al finalista) y la puntuación del ranking.
 
-Reproducible con `npm run audit:european-playoff`. Opciones: `--tournaments=N` (2000 por defecto) y `--careers=N` (600 por defecto; 0 para medir solo los torneos). Se tarda unos 12 minutos.
+Reproducible con `npm run audit:european-playoff` en el commit 159392a. Opciones: `--tournaments=N` (2000 por defecto) y `--careers=N` (600 por defecto; 0 para medir solo los torneos). Se tarda unos 12 minutos.
 
-La previa existe solo en `scripts/auditCareerRunner.ts`: `getEuropeanPlayoff`, `advanceAfterEuropeanPlayoff` y `Policy.europeanPlayoff`. Sin esa opción, las carreras dan exactamente los números de `audit:rating`. Comprobado: 2,25 / 0,91 / 3,50 / 1,82 temporadas y 27,56 / 10,76 / 44,38 / 22,07 puntos.
+La previa existía solo en `scripts/auditCareerRunner.ts`: `getEuropeanPlayoff`, `advanceAfterEuropeanPlayoff` y `Policy.europeanPlayoff`. Sin esa opción, las carreras daban exactamente los números de `audit:rating`. Comprobado: 2,25 / 0,91 / 3,50 / 1,82 temporadas y 27,56 / 10,76 / 44,38 / 22,07 puntos.
+
+**Desde la v0.25.107** el juego juega la previa 3.º contra 4.º (opción B), así que esta auditoría y su código en el runner se retiraron. `audit:rating` mide ya el formato nuevo (`docs/v0_25_107_EUROPEAN_PLAYOFF.md`).
 
 ## Torneos sueltos (2000 por fila, semillas como las del juego)
 

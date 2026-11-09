@@ -792,7 +792,7 @@ export function FinalSummary({
           {europeanTournament && europeanTournament.matches.length > 0 && (
             <FinalAccordion
               title="Torneo europeo"
-              eyebrow="Fase inicial, semifinal y final"
+              eyebrow="Fase inicial, previa, semifinal y final"
               competition={getEuropeanCompetitionIconKind(europeanTournament.competition)}
               defaultOpen
             >

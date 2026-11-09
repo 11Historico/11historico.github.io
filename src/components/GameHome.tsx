@@ -256,7 +256,7 @@ export function GameHome({
               </article>
               <article>
                 <strong>Europa</strong>
-                <p>Champions, Europa League y Conference tienen calendario, semifinal, final y títulos propios. Si el campeón de Copa queda entre los 5 primeros de Liga, su plaza pasa al 6.º (Europa League) y el 7.º va a Conference. Si queda 6.º, conserva su plaza y el 7.º va a Conference.</p>
+                <p>Champions, Europa League y Conference tienen calendario, semifinal, final y títulos propios. De la fase inicial pasan a semifinales los 2 primeros, y el 3.º y el 4.º juegan una previa por entrar. Si el campeón de Copa queda entre los 5 primeros de Liga, su plaza pasa al 6.º (Europa League) y el 7.º va a Conference. Si queda 6.º, conserva su plaza y el 7.º va a Conference.</p>
                 <div className="game-home-competition-icons" aria-hidden="true">
                   <CompetitionIcon kind="champions" />
                   <CompetitionIcon kind="europa" />

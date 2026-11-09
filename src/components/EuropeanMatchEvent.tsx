@@ -16,6 +16,7 @@ import {
   getEuropeanMatchDecisionText,
   getEuropeanTournamentPhaseLabel,
   getEuropeanTournamentSummary,
+  isEuropeanKnockoutMatch,
   isEuropeanKnockoutPhase,
 } from "../europe/europeanTournament";
 import type { EuropeanCompetition, EuropeanTournamentMatch, EuropeanTournamentState } from "../europe/europeanTypes";
@@ -117,6 +118,7 @@ function getPhaseNarrative(tournament: EuropeanTournamentState, match: EuropeanT
   }
   if (match.phase === "final") return "Final europea a partido único: ganar significa ser campeón y sumar el título al palmarés al cerrar la temporada; perder deja al Athletic como finalista.";
   if (match.phase === "semifinal") return "Semifinal europea a partido único: ganar abre la final; perder cierra la aventura europea.";
+  if (match.phase === "playoff") return "Previa europea a partido único contra un rival de tu fase inicial: ganar abre la semifinal; perder cierra la aventura europea.";
   if (match.isHome) return "Noche grande en San Mamés: Europa vuelve a Bilbao.";
   return "Salida europea exigente: toca competir lejos de San Mamés.";
 }
@@ -128,13 +130,14 @@ function getProgressPercent(tournament: EuropeanTournamentState): number {
 }
 
 function getKnockoutWinText(match: EuropeanTournamentMatch): string {
+  if (match.phase === "playoff") return "Victoria: tu equipo pasa a la semifinal europea";
   if (match.phase === "semifinal") return "Victoria: tu equipo pasa a la final europea";
   if (match.phase === "final") return "Victoria: campeón europeo, se suma al palmarés al cerrar la temporada";
   return "Victoria: suma puntos en fase inicial";
 }
 
 function getKnockoutLossText(match: EuropeanTournamentMatch): string {
-  if (match.phase === "semifinal") return "Derrota: eliminación europea";
+  if (match.phase === "playoff" || match.phase === "semifinal") return "Derrota: eliminación europea";
   if (match.phase === "final") return "Derrota: finalista europeo";
   return "Derrota: sin puntos en fase inicial";
 }
@@ -325,7 +328,7 @@ export function EuropeanMatchEvent({
 }: EuropeanMatchEventProps) {
   const summary = getEuropeanTournamentSummary(tournament);
   const isPlayed = match.status === "played";
-  const isKnockoutMatch = match.phase === "semifinal" || match.phase === "final";
+  const isKnockoutMatch = isEuropeanKnockoutMatch(match);
   const homeAwayText = match.isHome
     ? "Tu equipo jugará como local"
     : "Tu equipo jugará como visitante";

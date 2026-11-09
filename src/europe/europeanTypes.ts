@@ -54,6 +54,8 @@ export interface EuropeanSeasonEntry {
 export type EuropeanTournamentPhase =
   | "not_started"
   | "league_phase"
+  /** Eliminatoria previa (v0.25.107): el 3.º contra el 4.º de la fase inicial, a partido único. */
+  | "playoff"
   | "semifinal"
   | "final"
   | "completed"

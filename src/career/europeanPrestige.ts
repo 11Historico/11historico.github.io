@@ -13,8 +13,8 @@
 // - Campeón: bonus según competición, sin superar +1.0 (Champions), +0.75
 //   (Europa League) o +0.5 (Conference).
 // - Final perdida: bonus menor fijo +0.25, con texto de prestigio.
-// - Semifinal perdida o eliminación en fase inicial: sin bonus, solo texto
-//   narrativo de prestigio.
+// - Semifinal o previa perdidas, o eliminación en fase inicial: sin bonus,
+//   solo texto narrativo de prestigio.
 // - Idempotente: una vez otorgado (europeanPrestigeAwarded), no vuelve a
 //   concederse aunque se recalcule sobre el mismo torneo.
 
@@ -22,7 +22,7 @@ import { getEuropeanCareerTrophyLabel } from "./europeanTrophies";
 import { getEuropeanLeaguePhaseUserPosition } from "../europe/europeanTournament";
 import type { EuropeanTournamentState } from "../europe/europeanTypes";
 
-export type EuropeanPrestigeTier = "champion" | "runner_up" | "semifinal" | "league_phase";
+export type EuropeanPrestigeTier = "champion" | "runner_up" | "semifinal" | "playoff" | "league_phase";
 
 export interface EuropeanPrestigeReward {
   tier: EuropeanPrestigeTier;
@@ -39,7 +39,7 @@ const CHAMPION_RATING_BONUS: Record<EuropeanTournamentState["competition"], numb
 
 const RUNNER_UP_RATING_BONUS = 0.25;
 
-function reachedPhase(tournament: EuropeanTournamentState, phase: "semifinal" | "final"): boolean {
+function reachedPhase(tournament: EuropeanTournamentState, phase: "playoff" | "semifinal" | "final"): boolean {
   return tournament.matches.some((match) => match.phase === phase);
 }
 
@@ -61,6 +61,7 @@ export function getEuropeanPrestigeTier(tournament: EuropeanTournamentState): Eu
   // completed/champion.
   if (reachedPhase(tournament, "final")) return "runner_up";
   if (reachedPhase(tournament, "semifinal")) return "semifinal";
+  if (reachedPhase(tournament, "playoff")) return "playoff";
   return "league_phase";
 }
 
@@ -92,6 +93,15 @@ export function buildEuropeanPrestigeReward(tournament: EuropeanTournamentState)
       competitionLabel,
       ratingBonus: 0,
       narrative: `Semifinalista de ${competitionLabel}: la eliminatoria europea queda en el recuerdo, pero no deja un bonus de forma medible.`,
+    };
+  }
+
+  if (tier === "playoff") {
+    return {
+      tier,
+      competitionLabel,
+      ratingBonus: 0,
+      narrative: `Eliminado en la previa de ${competitionLabel}: a un partido de semifinales, sin prestigio adicional para la próxima temporada.`,
     };
   }
 
