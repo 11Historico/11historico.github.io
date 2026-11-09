@@ -318,6 +318,50 @@
   to { transform: rotate(360deg); }
 }
 
+/* Centro perfecto (v0.25.103, fase 18): un destello dorado que sale del centro de la barra y
+   un brillo en la tarjeta del resultado. Una sola vez; sin animación, queda el borde dorado. */
+.season-wheel-precision-bar-perfect {
+  border-color: #ffe08a;
+}
+
+.season-wheel-precision-bar-perfect::after {
+  content: "";
+  position: absolute;
+  inset: -40% auto -40% 50%;
+  width: 60%;
+  transform: translateX(-50%) scaleX(0.2);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(255, 246, 200, 0.95) 0%, rgba(255, 224, 138, 0.6) 35%, transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+  animation: seasonWheelPerfectFlash 1100ms ease-out;
+}
+
+.season-wheel-result-perfect {
+  outline: 2px solid #ffe08a;
+  outline-offset: 2px;
+  animation: seasonWheelPerfectGlow 1400ms ease-out;
+}
+
+@keyframes seasonWheelPerfectFlash {
+  0% { opacity: 0; transform: translateX(-50%) scaleX(0.2); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) scaleX(1.6); }
+}
+
+@keyframes seasonWheelPerfectGlow {
+  0% { box-shadow: 0 0 0 0 rgba(255, 224, 138, 0.85); }
+  40% { box-shadow: 0 0 34px 8px rgba(255, 224, 138, 0.55); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 224, 138, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .season-wheel-precision-bar-perfect::after,
+  .season-wheel-result-perfect {
+    animation: none;
+  }
+}
+
 @media (max-width: 780px) {
   .season-wheel-content {
     grid-template-columns: 1fr;

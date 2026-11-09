@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.103 — Destello del centro perfecto
+
+- **Aciertas el centro, lo ves:** al parar la flecha de la ruleta en el centro perfecto, un destello dorado sale del centro de la barra y la tarjeta del premio se ilumina.
+- El resultado sigue diciendo «Centro perfecto» en texto. Si tienes activado reducir animaciones, no hay destello: la barra y la tarjeta quedan con un borde dorado.
+- No cambia ningún premio ni ninguna probabilidad.
+
 ## v0.25.102 — Escudos y noche europea
 
 - **Cada rival europeo con su escudo:** en la previa, el partido, la clasificación europea y el cuadro de fin de temporada, el rival lleva un escudo con la bandera de su país y las iniciales del club. Son genéricos: no copian los escudos reales.

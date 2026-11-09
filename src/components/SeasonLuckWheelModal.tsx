@@ -219,6 +219,8 @@ export default function SeasonLuckWheelModal({
     };
   }, [stage]);
 
+  const isPerfect = result?.precisionZone.id === "perfect_center";
+
   function handleDecline() {
     onDecline(declineSeasonLuckWheel({
       seasonId: offer.seasonId,
@@ -313,7 +315,8 @@ export default function SeasonLuckWheelModal({
               <span>Malo</span>
             </div>
 
-            <div className="season-wheel-precision-bar">
+            {/* v0.25.103: destello al acertar el centro perfecto. El resultado ya lo dice en texto. */}
+            <div className={isPerfect ? "season-wheel-precision-bar season-wheel-precision-bar-perfect" : "season-wheel-precision-bar"}>
               <span className="season-wheel-precision-center" />
               <span className="season-wheel-precision-marker" style={{ left: `${position * 100}%` }}>
                 ↓
@@ -359,7 +362,7 @@ export default function SeasonLuckWheelModal({
         )}
 
         {stage === "resolved" && result && (
-          <article className={`season-wheel-result ${getPrizeClass(result.resultGroup)}`}>
+          <article className={`season-wheel-result ${getPrizeClass(result.resultGroup)} ${isPerfect ? "season-wheel-result-perfect" : ""}`}>
             <span>{getResultGroupLabel(result.resultGroup)} · {result.precisionZone.label}</span>
             <h3>{getResultTitle(result)}</h3>
             <p>{result.resultText}</p>
