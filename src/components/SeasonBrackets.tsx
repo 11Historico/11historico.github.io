@@ -181,6 +181,7 @@ export function EuropeanBracket({ columns }: { columns: EuropeanBracketColumns }
           <EuropeanMatchCard key={match.id} match={match} />
         ))}
       </section>
+      {columns.playoff && <EuropeanKnockoutColumn title="Previa" slot={columns.playoff} emptyText="" />}
       <EuropeanKnockoutColumn title="Semifinal" slot={columns.semifinal} emptyText="No llegó a semifinal." />
       <EuropeanKnockoutColumn title="Final" slot={columns.final} emptyText="No llegó a la final." />
     </div>

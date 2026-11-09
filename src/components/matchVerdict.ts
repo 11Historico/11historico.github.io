@@ -35,7 +35,7 @@ export function getCupVerdict(result: MatchResult): MatchVerdict | undefined {
 }
 
 /**
- * Europa: en la fase inicial solo decide el último partido; en semifinal y final, cada partido.
+ * Europa: en la fase inicial solo decide el último partido; en la previa, la semifinal y la final, cada partido.
  * `tournament` es el estado después del partido.
  */
 export function getEuropeanVerdict(
@@ -50,9 +50,18 @@ export function getEuropeanVerdict(
     if (tournament.qualifiedForSemifinal) {
       return { kind: "through", title: "Has clasificado", detail: `Pasas a semifinales de la ${competition}.` };
     }
+    if (tournament.phase === "playoff") {
+      return { kind: "through", title: "Juegas la previa", detail: `Un partido más por entrar en las semifinales de la ${competition}.` };
+    }
     if (tournament.eliminated) {
       return { kind: "out", title: "Has sido eliminado", detail: `Fuera de la ${competition} en la fase inicial.` };
     }
+    return undefined;
+  }
+
+  if (match.phase === "playoff") {
+    if (match.result === "win") return { kind: "through", title: "Has clasificado", detail: `Pasas a semifinales de la ${competition}.` };
+    if (match.result === "loss") return { kind: "out", title: "Has sido eliminado", detail: `Fuera de la ${competition} en la previa.` };
     return undefined;
   }
 

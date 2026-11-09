@@ -1,7 +1,7 @@
 {
   "name": "futbol11",
   "private": true,
-  "version": "0.25.106",
+  "version": "0.25.107",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -20,7 +20,6 @@
     "audit:europe": "vite build --ssr scripts/auditEuropePhase.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditEuropePhase.js",
     "audit:supercopa": "vite build --ssr scripts/auditSupercopaRating.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditSupercopaRating.js",
     "audit:european-styles": "vite build --ssr scripts/auditEuropeanRivalStyles.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditEuropeanRivalStyles.js",
-    "audit:european-playoff": "vite build --ssr scripts/auditEuropeanPlayoff.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditEuropeanPlayoff.js",
     "audit:approach": "vite build --ssr scripts/auditMatchApproach.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditMatchApproach.js",
     "qa:formation-reward": "vite build --ssr scripts/qaFormationReward.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaFormationReward.js",
     "qa:career-ranking": "vite build --ssr scripts/qaCareerLocalRanking.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaCareerLocalRanking.js",

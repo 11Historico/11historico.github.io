@@ -8,7 +8,11 @@
 
 import { buildEuropeanLeaguePhaseTable, compareRows, getEuropeanRivalPairs, recordResult } from "./europeanLeagueTable";
 import { simulateEuropeanMatch } from "./europeanMatchEngine";
-import { EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS, getEuropeanLeaguePhaseUserPosition } from "./europeanTournament";
+import {
+  EUROPEAN_LEAGUE_PHASE_PLAYOFF_POSITIONS,
+  EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS,
+  getEuropeanLeaguePhaseUserPosition,
+} from "./europeanTournament";
 import type { EuropeanTournamentState } from "./europeanTypes";
 import type { TeamRating } from "../types/game";
 
@@ -18,7 +22,7 @@ const USER_ROW_ID = "user";
 const SAFE_CHANCE = 0.9;
 
 export interface EuropeanSemifinalChance {
-  /** Probabilidad de acabar entre los 2 primeros, de 0 a 1. */
+  /** Probabilidad de llegar a semifinales, de 0 a 1: entre los 2 primeros, o 3.º o 4.º y ganando la previa (v0.25.107). */
   chance: number;
   /** Partidos de la fase de liga que te quedan. */
   remaining: number;
@@ -73,8 +77,24 @@ export function estimateEuropeanSemifinalChance(params: {
       recordResult(rows, home.id, away.id, outcome.userGoals, outcome.opponentGoals);
     }
 
-    const position = [...rows.values()].sort(compareRows).findIndex((row) => row.isUser) + 1;
-    const passed = position <= EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS;
+    const table = [...rows.values()].sort(compareRows);
+    const position = table.findIndex((row) => row.isUser) + 1;
+    let passed = position <= EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS;
+
+    // v0.25.107: el 3.º y el 4.º juegan la previa contra el otro de esos dos puestos.
+    if (!passed && position <= EUROPEAN_LEAGUE_PHASE_PLAYOFF_POSITIONS) {
+      const rival = leagueMatches.find((match) => match.opponent.id === table[position === 3 ? 3 : 2].teamId)!.opponent;
+      passed = simulateEuropeanMatch({
+        userTeamRating,
+        opponentRating: rival.rating,
+        opponentStyle: rival.style,
+        isHome: position === 3,
+        competition: tournament.competition,
+        userProfile,
+        isKnockout: true,
+        seed: `chance_${sample}_playoff`,
+      }).result === "win";
+    }
     if (passed) qualified += 1;
 
     const bucket = byPoints.get(gained) ?? { qualified: 0, total: 0 };
@@ -145,7 +165,8 @@ export function getEuropeanSeasonBalanceText(tournament: EuropeanTournamentState
   if (tournament.qualifiedForSemifinal) return `Europa: pasaste a semifinales. ${expected}`;
 
   const position = getEuropeanLeaguePhaseUserPosition(tournament);
-  return `Europa: caíste en la fase inicial (${position}.º de ${leaguePhase.length + 1}). ${expected}`;
+  const round = tournament.matches.some((match) => match.phase === "playoff") ? "la previa" : "la fase inicial";
+  return `Europa: caíste en ${round} (${position}.º de ${leaguePhase.length + 1}). ${expected}`;
 }
 
 export function getEuropeanSemifinalChanceText(result: EuropeanSemifinalChance): string {

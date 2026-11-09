@@ -25,6 +25,8 @@ export interface EuropeanBracketSlot {
 
 export interface EuropeanBracketColumns {
   leagueMatches: EuropeanTournamentMatch[];
+  /** Solo si se jugó la previa (v0.25.107). */
+  playoff?: EuropeanBracketSlot;
   semifinal: EuropeanBracketSlot;
   final: EuropeanBracketSlot;
 }
@@ -59,7 +61,7 @@ export function isUserTeamName(teamName: string): boolean {
 }
 
 export function buildEuropeanBracketColumns(tournament: EuropeanTournamentState): EuropeanBracketColumns {
-  const slotFor = (phase: "semifinal" | "final"): EuropeanBracketSlot => {
+  const slotFor = (phase: "playoff" | "semifinal" | "final"): EuropeanBracketSlot => {
     const match = tournament.matches.find((candidate) => candidate.phase === phase);
     if (!match) return { status: "pending" };
 
@@ -68,6 +70,7 @@ export function buildEuropeanBracketColumns(tournament: EuropeanTournamentState)
 
   return {
     leagueMatches: tournament.matches.filter((match) => match.phase === "league_phase"),
+    ...(tournament.matches.some((match) => match.phase === "playoff") ? { playoff: slotFor("playoff") } : {}),
     semifinal: slotFor("semifinal"),
     final: slotFor("final"),
   };

@@ -206,6 +206,7 @@
   background: rgba(255, 224, 138, 0.1);
 }
 
+.european-progress-match-playoff,
 .european-progress-match-semifinal,
 .european-progress-match-final {
   border-color: rgba(255, 224, 138, 0.24);

@@ -11,15 +11,19 @@ export const EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS = 38;
 export const EUROPEAN_LEAGUE_PHASE_MATCH_COUNT = 6;
 
 const DEFAULT_LEAGUE_PHASE_MATCHDAYS = [4, 8, 12, 16, 20, 24];
+const DEFAULT_PLAYOFF_MATCHDAY = 27;
 const DEFAULT_SEMIFINAL_MATCHDAY = 30;
 const DEFAULT_FINAL_MATCHDAY = 36;
 
 const LEAGUE_PHASE_RATIOS = [0.15, 0.25, 0.35, 0.45, 0.55, 0.65];
+const PLAYOFF_RATIO = 0.72;
 const SEMIFINAL_RATIO = 0.8;
 const FINAL_RATIO = 0.95;
 
 export interface EuropeanMatchdaySlots {
   leaguePhase: number[];
+  /** Eliminatoria previa del 3.º y el 4.º (v0.25.107). */
+  playoff: number;
   semifinal: number;
   final: number;
 }
@@ -33,15 +37,16 @@ function clampMatchday(value: number, totalLeagueMatchdays: number): number {
 
 /**
  * Devuelve las jornadas de Liga objetivo para la fase inicial (6 partidos),
- * la semifinal y la final europeas. Usa los huecos recomendados (4, 8, 12,
- * 16, 20, 24 / 30 / 36) para una Liga estándar de 38 jornadas, y recalcula
- * por porcentaje (15/25/35/45/55/65/80/95%) para cualquier otro tamaño de
- * Liga, evitando la primera y la última jornada.
+ * la previa (v0.25.107), la semifinal y la final europeas. Usa los huecos
+ * recomendados (4, 8, 12, 16, 20, 24 / 27 / 30 / 36) para una Liga estándar
+ * de 38 jornadas, y recalcula por porcentaje (15/25/35/45/55/65/72/80/95%)
+ * para cualquier otro tamaño de Liga, evitando la primera y la última jornada.
  */
 export function getEuropeanMatchdaySlots(totalLeagueMatchdays: number = EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS): EuropeanMatchdaySlots {
   if (totalLeagueMatchdays === EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS) {
     return {
       leaguePhase: [...DEFAULT_LEAGUE_PHASE_MATCHDAYS],
+      playoff: DEFAULT_PLAYOFF_MATCHDAY,
       semifinal: DEFAULT_SEMIFINAL_MATCHDAY,
       final: DEFAULT_FINAL_MATCHDAY,
     };
@@ -65,6 +70,7 @@ export function getEuropeanMatchdaySlots(totalLeagueMatchdays: number = EUROPEAN
 
   return {
     leaguePhase,
+    playoff: nextSlot(PLAYOFF_RATIO),
     semifinal: nextSlot(SEMIFINAL_RATIO),
     final: nextSlot(FINAL_RATIO),
   };
@@ -113,6 +119,10 @@ export function markEuropeanMatchScheduledMatchday(
       const matchday = slots.leaguePhase[leaguePhaseIndex] ?? slots.leaguePhase[slots.leaguePhase.length - 1];
       leaguePhaseIndex += 1;
       return { ...match, matchday };
+    }
+
+    if (match.phase === "playoff") {
+      return { ...match, matchday: slots.playoff };
     }
 
     if (match.phase === "semifinal") {

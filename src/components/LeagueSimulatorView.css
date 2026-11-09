@@ -794,6 +794,16 @@
   border-top: 2px dashed rgba(61, 220, 132, 0.6);
 }
 
+/* v0.25.107: el 3.º y el 4.º juegan la previa. */
+.european-league-table .league-table-row-playoff {
+  box-shadow: inset 4px 0 0 #f5a623;
+  background-color: rgba(245, 166, 35, 0.1);
+}
+
+.european-league-table .league-table-row-playoff + .league-table-row:not(.league-table-row-playoff) {
+  border-top: 2px dashed rgba(245, 166, 35, 0.6);
+}
+
 /* v0.25.95: probabilidad de pasar a semifinales. */
 .european-semifinal-chance {
   display: block;

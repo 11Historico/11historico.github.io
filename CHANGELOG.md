@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.107 — Previa europea del 3.º contra el 4.º
+
+- **Quedar 3.º o 4.º en la fase inicial ya no elimina:** el 3.º y el 4.º juegan una previa a partido único por entrar en semifinales, en casa del 3.º y en la jornada 27. Si hay empate, prórroga y penaltis, como en la semifinal. Los 2 primeros siguen pasando directos.
+- **El rival es el otro de esos dos puestos de tu tabla**, sin sorteo nuevo. La semifinal se sortea como antes, sin repetir ningún rival del torneo.
+- **La tabla europea lo marca:** el 3.º y el 4.º en ámbar, y el corte tras el 4.º. La probabilidad de pasar a semifinales ya cuenta la previa. La previa sale en el partido europeo, el panel, el cuadro de la temporada y el cierre de temporada.
+- **Más Europa, mismo ranking:** llegar a semifinales sube entre 5 y 18 puntos y los títulos europeos, alrededor de un tercio. Las temporadas superadas no cambian y la puntuación de las carreras queda dentro del margen.
+- Las partidas guardadas siguen funcionando. Un torneo europeo ya terminado no cambia; uno a mitad de fase inicial juega ya con la previa.
+
 ## v0.25.106 — Semifinales y finales europeas sin rival fijo
 
 - **El rival de semifinal y de final ya no se repite entre jugadores:** se sorteaba solo con la temporada y la competición. En la primera temporada de Champions, por ejemplo, el 70 % de los que llegaban a semifinales se encontraba al Sporting. Ahora el sorteo depende de tu partida y puede salir cualquier club que no hayas tenido en la fase inicial.

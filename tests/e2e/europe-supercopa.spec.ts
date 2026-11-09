@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { USER_TEAM_ID } from "../../src/data/laliga2526Teams";
-import { createEuropeanTournamentForQualification } from "../../src/europe/europeanTournament";
+import { applyEuropeanMatchResult, createEuropeanTournamentForQualification } from "../../src/europe/europeanTournament";
 import type { EuropeanQualificationResult } from "../../src/europe/europeanTypes";
 import { getInitialCareerLeagueRivals } from "../../src/simulation/leagueSimulator";
 import { seedRandomness } from "./seedRandomness";
@@ -12,7 +12,7 @@ const SAVE_KEY = "once_historico_zurigorri_saved_game_v1";
 const base = JSON.parse(readFileSync(new URL("./fixtures/career-strong.json", import.meta.url), "utf8"));
 const rivals = getInitialCareerLeagueRivals();
 
-function europeanSave() {
+function europeanSave(seed = "e2e_europa") {
   const tournament = createEuropeanTournamentForQualification({
     seasonNumber: base.careerCompletedSeasons + 1,
     qualification: {
@@ -24,7 +24,7 @@ function europeanSave() {
       explanation: "",
       priority: 3,
     } as unknown as EuropeanQualificationResult,
-    seed: "e2e_europa",
+    seed,
     totalLeagueMatchdays: 38,
   });
 
@@ -35,6 +35,23 @@ function europeanSave() {
     europeanCareer: { ...base.europeanCareer, currentTournament: tournament },
     savedAt: "2026-10-27T00:00:00.000Z",
   };
+}
+
+// v0.25.107: fase inicial ya jugada y acabada 3.º, con la previa pendiente en la jornada 27.
+function playoffSave() {
+  const scores = [[2, 0], [2, 0], [2, 0], [0, 2], [0, 2], [0, 2]] as const;
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    const save = europeanSave(`e2e_previa_${attempt}`);
+    let tournament = save.europeanCareer.currentTournament!;
+    tournament.matches.forEach((match, index) => {
+      const [userGoals, opponentGoals] = scores[index];
+      tournament = applyEuropeanMatchResult(tournament, match.id, { userGoals, opponentGoals, result: userGoals > opponentGoals ? "win" : "loss" }, 38);
+    });
+    if (tournament.phase === "playoff" && tournament.matches.at(-1)!.isHome) {
+      return { ...save, europeanCareer: { ...save.europeanCareer, currentTournament: tournament } };
+    }
+  }
+  throw new Error("No se encontró una fase inicial que acabe 3.º.");
 }
 
 function supercopaSave() {
@@ -91,6 +108,9 @@ test("la liga permite consultar la clasificación europea y el palmarés", async
   await expect(table.getByText("Pasan a semifinales los 2 primeros, marcados en verde.")).toBeVisible();
   await expect(table.locator(".league-table-row")).toHaveCount(7);
   await expect(table.locator(".league-table-row-qualify")).toHaveCount(2);
+  // v0.25.107: el 3.º y el 4.º juegan la previa.
+  await expect(table.locator(".league-table-row-playoff")).toHaveCount(2);
+  await expect(table).toContainText("El 3.º y el 4.º, en ámbar, juegan una previa a partido único por entrar, en casa del 3.º.");
   // v0.25.102: los seis rivales llevan escudo genérico, con su país como nombre accesible.
   await expect(table.locator(".european-crest")).toHaveCount(6);
   await expect(table.locator(".european-crest").first()).toHaveAttribute("role", "img");
@@ -379,5 +399,44 @@ test("la Supercopa se reproduce partido a partido y el veredicto llega al final"
   await expect(page.locator(".match-sequence-pitch").first()).toBeVisible();
   await expect(page.locator(".match-sequence-pitch")).toHaveCount(await page.locator(".match-sequence .match-dominance").count());
   await expect(page.getByRole("button", { name: /^Jugar Liga/ })).toBeVisible();
+  expect(pageErrors).toEqual([]);
+});
+
+test("el 3.º de la fase inicial juega la previa a partido único por las semifinales (v0.25.107)", async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await loadSave(page, playoffSave());
+
+  await page.getByRole("tab", { name: "Clasificación europea" }).click();
+  const table = page.getByRole("region", { name: "Clasificación de la competición europea" });
+  await expect(table.locator(".league-table-row-playoff.league-table-row-user")).toHaveCount(1);
+  // Con la fase inicial acabada ya no hay probabilidad que calcular.
+  await expect(table.locator(".european-semifinal-chance")).toHaveCount(0);
+
+  const simulateEuropean = page.getByRole("button", { name: "Simular partido europeo" });
+  for (let step = 0; step < 30 && !(await simulateEuropean.isVisible()); step += 1) {
+    const cup = page.getByRole("button", { name: "Simular partido de Copa" });
+    const declineWheel = page.getByRole("button", { name: "No jugar" });
+    const keepPlaying = page.getByRole("button", { name: "Seguir igual" });
+    const skip = page.getByRole("button", { name: "Saltar hasta próximo evento" });
+
+    if (await declineWheel.isVisible()) await declineWheel.click();
+    else if (await keepPlaying.isVisible()) await keepPlaying.click();
+    else if (await cup.isVisible() && (await cup.isEnabled())) await cup.click();
+    else if (await skip.isVisible() && (await skip.isEnabled())) await skip.click();
+    await page.waitForTimeout(300);
+  }
+  await expect(page.locator(".match-sequence-skip")).toHaveCount(0, { timeout: 15_000 });
+
+  const preview = page.getByRole("region", { name: "Previa del próximo partido" });
+  await expect(preview).toContainText("Previa · En San Mamés");
+  await expect(preview).toContainText("si hay empate, prórroga y penaltis");
+  await expect(page.getByLabel("Contexto de eliminatoria europea")).toContainText("Si ganas, jugarás la semifinal europea");
+
+  await simulateEuropean.click();
+  await page.getByRole("button", { name: "Seguir igual" }).click({ timeout: 15_000 });
+  await expect(page.getByText("Resultado europeo")).toBeVisible({ timeout: 15_000 });
+  // Partido único: o pasas a semifinales o te vas fuera en la previa, nunca empate.
+  await expect(page.locator(".match-verdict")).toContainText(/Pasas a semifinales de la Conference League\.|Fuera de la Conference League en la previa\./);
   expect(pageErrors).toEqual([]);
 });
