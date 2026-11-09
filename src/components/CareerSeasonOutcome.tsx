@@ -375,7 +375,16 @@ export function CareerSeasonOutcome({
             <span>Supercopa</span>
             {/* Las partidas guardadas antes de la v0.25.85 no saben si se jugó: siguen con «Sin título». */}
             <strong>{seasonResult.wonSupercopa ? "Campeón" : seasonResult.playedSupercopa === false ? "No jugada" : "Sin título"}</strong>
-            <small>{seasonResult.wonSupercopa ? "+2 palmarés" : seasonResult.playedSupercopa === false ? "No clasificado" : "No salva la temporada"}</small>
+            {/* v0.25.104: como la Copa en v0.25.92, «No salva la temporada» solo si la temporada no se ha salvado. */}
+            <small>
+              {seasonResult.wonSupercopa
+                ? "+2 palmarés"
+                : seasonResult.playedSupercopa === false
+                  ? "No clasificado"
+                  : survived
+                    ? "Objetivo ya cumplido"
+                    : "No salva la temporada"}
+            </small>
           </article>
         </div>
 
