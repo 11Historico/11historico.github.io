@@ -16,6 +16,7 @@ import type { EuropeanCompetition, EuropeanQualificationResult } from "../src/eu
 import type { HalfTimeChoice, MatchApproach } from "../src/types/game";
 
 import { pickHalfTime, pointsValue } from "./auditCareerRunner";
+import { auditGameId } from "./auditSeeds";
 
 const TOURNAMENTS = Number(process.argv.find((arg) => arg.startsWith("--tournaments="))?.split("=")[1] ?? 600);
 const ODDS_SAMPLES = 60;
@@ -67,7 +68,7 @@ for (const { label: competitionLabel, value: competition } of COMPETITIONS) {
           seasonNumber: index + 1,
           // Solo cuentan `qualified` y `competition`; el resto del resultado no se usa al crear el torneo.
           qualification: { qualified: true, competition } as Pick<EuropeanQualificationResult, "qualified" | "competition"> as EuropeanQualificationResult,
-          seed: `audit_${index}_${competition}`,
+          seed: `${auditGameId(index)}_${index + 1}`,
         });
         if (!tournament) throw new Error("No se creó el torneo.");
 
@@ -76,7 +77,7 @@ for (const { label: competitionLabel, value: competition } of COMPETITIONS) {
           rivalCount += 1;
           const shared = { userTeamRating: rating, opponentRating: match.opponent.rating, isHome: match.isHome, competition };
           const approach = pickApproach(policy, shared);
-          const input: SimulateEuropeanMatchInput = { ...shared, approach, seed: `audit_${index}_${match.id}` };
+          const input: SimulateEuropeanMatchInput = { ...shared, approach, seed: `${auditGameId(index)}_${match.id}` };
           const base = simulateEuropeanMatch(input);
           const firstHalf = base.goalEvents.filter((goal) => goal.minute <= 45);
           const margin = firstHalf.filter((goal) => goal.isUserGoal).length - firstHalf.filter((goal) => !goal.isUserGoal).length;

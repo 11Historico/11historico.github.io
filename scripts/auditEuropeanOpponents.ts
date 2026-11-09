@@ -13,6 +13,7 @@ import { estimateEuropeanSemifinalChance } from "../src/europe/europeanSemifinal
 import { createEuropeanTournamentForQualification } from "../src/europe/europeanTournament";
 import type { EuropeanCompetition, EuropeanQualificationResult } from "../src/europe/europeanTypes";
 import { getInitialCareerLeagueRivals } from "../src/simulation/leagueSimulator";
+import { auditGameId } from "./auditSeeds";
 
 const TOURNAMENTS = Number(process.argv.find((arg) => arg.startsWith("--tournaments="))?.split("=")[1] ?? 300);
 const DRAWS = 2000;
@@ -37,7 +38,7 @@ const laLigaTop = laLiga[0];
 for (const { label, value } of COMPETITIONS) {
   const byClub = new Map<string, number[]>();
   for (let draw = 0; draw < DRAWS; draw += 1) {
-    for (const opponent of pickEuropeanOpponents({ competition: value, count: 8, seed: `audit_${draw}_${value}` })) {
+    for (const opponent of pickEuropeanOpponents({ competition: value, count: 8, seed: `${auditGameId(draw)}_1` })) {
       byClub.set(opponent.name, [...(byClub.get(opponent.name) ?? []), opponent.rating]);
     }
   }
@@ -80,7 +81,7 @@ for (const { label, value } of COMPETITIONS) {
       const tournament = createEuropeanTournamentForQualification({
         seasonNumber: index + 1,
         qualification: { qualified: true, competition: value } as EuropeanQualificationResult,
-        seed: `audit_${index}_${value}`,
+        seed: `${auditGameId(index)}_${index + 1}`,
       });
       if (!tournament) throw new Error("No se creó el torneo.");
       rivals.push(...tournament.matches.map((match) => match.opponent.rating));
