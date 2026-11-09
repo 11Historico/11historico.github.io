@@ -78,13 +78,13 @@ function getCareerRewardProfile(
       description:
         objectiveResult.qualifiedForEurope
           ? "Has cumplido el objetivo europeo y además has ganado la Supercopa. Puedes elegir jugador + alineación, o entrenador +0.5 de media."
-          : "Has ganado la Supercopa, pero sin objetivo europeo la Supercopa no salva la temporada ni aumenta recompensa.",
+          : "Has ganado la Supercopa: suma palmarés, pero sin objetivo europeo no mejora la recompensa.",
       playerActionLabel: objectiveResult.qualifiedForEurope ? "Jugador + alineación" : "Cambiar 1 jugador",
       coachActionLabel: objectiveResult.qualifiedForEurope ? "Entrenador +0.5 media" : "Cambiar entrenador",
       formationActionLabel: objectiveResult.qualifiedForEurope ? "Jugador + alineación" : undefined,
       extraNote: objectiveResult.qualifiedForEurope
         ? "Supercopa + Europa desbloquea premio táctico."
-        : "La Supercopa no salva la temporada: el objetivo sigue siendo Europa o Copa.",
+        : "La Supercopa sola no da premio táctico: hace falta además el objetivo europeo, o ganar la Copa.",
     };
   }
 

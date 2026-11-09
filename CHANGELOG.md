@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.104 — La Supercopa ya no «hunde» una temporada superada
+
+- **Resultado de la temporada:** si perdías la Supercopa pero superabas la temporada, su tarjeta decía «No salva la temporada», como si hubieras fracasado. Ahora dice «Objetivo ya cumplido», como ya hacía la Copa desde la v0.25.92. Con la temporada perdida sigue diciendo «No salva la temporada».
+- **Recompensa entre temporadas:** con la Supercopa ganada y sin objetivo europeo, el texto ya no habla de salvar la temporada, porque ya está superada. Ahora explica que la Supercopa suma palmarés, pero que el premio táctico necesita además el objetivo europeo o ganar la Copa.
+- No cambia ninguna regla ni recompensa.
+
 ## v0.25.103 — Destello del centro perfecto
 
 - **Aciertas el centro, lo ves:** al parar la flecha de la ruleta en el centro perfecto, un destello dorado sale del centro de la barra y la tarjeta del premio se ilumina.

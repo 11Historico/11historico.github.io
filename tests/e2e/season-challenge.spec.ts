@@ -68,6 +68,8 @@ test("una temporada superada ofrece el reto con la marca actual", async ({ page 
   }
 
   await expect(survived).toBeVisible();
+  // v0.25.92 (Copa) y v0.25.104 (Supercopa): con la temporada superada no sale «No salva la temporada».
+  await expect(page.getByText("No salva la temporada")).toHaveCount(0);
 
   const challenge = page.getByRole("region", { name: "Retar a otros jugadores" });
   await expect(challenge).toBeVisible();
