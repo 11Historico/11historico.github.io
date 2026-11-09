@@ -67,10 +67,11 @@ export function createEuropeanTournamentForQualification(
   }
 
   const competition = qualification.competition;
+  const drawSeed = String(seed ?? `${seasonNumber}_${competition}`);
   const opponents = pickEuropeanOpponents({
     competition,
     count: EUROPEAN_LEAGUE_PHASE_MATCH_COUNT,
-    seed: seed ?? `${seasonNumber}_${competition}`,
+    seed: drawSeed,
   });
 
   const slots = getEuropeanMatchdaySlots(totalLeagueMatchdays);
@@ -103,6 +104,7 @@ export function createEuropeanTournamentForQualification(
     completed: false,
     champion: false,
     currentMatchId: matches[0]?.id ?? null,
+    drawSeed,
   };
 }
 
@@ -142,9 +144,12 @@ function createFollowUpMatch(params: {
 }): EuropeanTournamentMatch {
   const { state, phase, matchday, isHome } = params;
 
+  // v0.25.106: antes la semilla era solo temporada y competición, y el 70 % de los jugadores se
+  // encontraba al mismo rival en la semifinal de cada temporada. Con la del sorteo, cambia con la
+  // partida. Los torneos guardados sin drawSeed siguen con la de antes.
   const opponent = pickSingleEuropeanOpponent({
     competition: state.competition,
-    seed: `${state.seasonNumber}_${state.competition}_${phase}`,
+    seed: state.drawSeed ? `${state.drawSeed}_${phase}` : `${state.seasonNumber}_${state.competition}_${phase}`,
     excludeIds: state.matches.map((match) => match.opponent.id),
   });
 
