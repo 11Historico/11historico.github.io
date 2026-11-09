@@ -255,7 +255,8 @@ function playSeason(params: {
         isHome: pendingEuropean.isHome,
         competition: pendingEuropean.competition,
         coachSkills,
-        ...(legacy ? {} : { userProfile: effectiveRating, selectedPlayers }),
+        // El estilo del rival (v0.25.105) va con el juego actual, no con el «legacy».
+        ...(legacy ? {} : { userProfile: effectiveRating, selectedPlayers, opponentStyle: pendingEuropean.opponent.style }),
       };
       const isKnockout = isEuropeanKnockoutMatch(pendingEuropean);
       const approach = pickApproach(

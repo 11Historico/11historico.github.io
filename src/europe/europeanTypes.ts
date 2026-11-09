@@ -63,12 +63,17 @@ export type EuropeanMatchStatus = "scheduled" | "played";
 
 export type EuropeanMatchOutcome = "win" | "draw" | "loss";
 
+/** Estilo del club (v0.25.105, fase 10): ofensivo ataca más de lo que defiende; defensivo, al revés. */
+export type EuropeanOpponentStyle = "attacking" | "balanced" | "defensive";
+
 export interface EuropeanOpponent {
   id: string;
   name: string;
   country: string;
   rating: number;
   tier: EuropeanCompetition;
+  /** Ausente en las partidas guardadas antes de la v0.25.105: el rival juega como antes, con una sola media. */
+  style?: EuropeanOpponentStyle;
 }
 
 /** Cómo se decidió una eliminatoria a partido único (semifinal o final). */

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.25.105 — Rivales europeos con estilo
+
+- **Cada club europeo juega a su manera:** ofensivo (ataca más de lo que defiende), defensivo (al revés) o equilibrado. El estilo mueve 3 puntos el ataque y la defensa sin cambiar su media.
+- **La previa lo enseña:** «Rival de Alemania, de estilo ofensivo», y el duelo de líneas compara tu ataque con su defensa y tu defensa con su ataque, en vez de un solo «Nivel del rival».
+- **Los partidos cambian de carácter:** contra un rival ofensivo hay más goles en las dos porterías y contra uno defensivo, menos.
+- **El equilibrio no cambia:** pasar a semifinales queda a 2 puntos o menos de antes, y las carreras completas, dentro del margen.
+- Las partidas guardadas con un torneo europeo ya empezado siguen como estaban: esos rivales no tienen estilo.
+
 ## v0.25.104 — La Supercopa ya no «hunde» una temporada superada
 
 - **Resultado de la temporada:** si perdías la Supercopa pero superabas la temporada, su tarjeta decía «No salva la temporada», como si hubieras fracasado. Ahora dice «Objetivo ya cumplido», como ya hacía la Copa desde la v0.25.92. Con la temporada perdida sigue diciendo «No salva la temporada».

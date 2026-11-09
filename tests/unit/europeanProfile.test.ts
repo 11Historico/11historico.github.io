@@ -3,6 +3,7 @@ import strong from "../e2e/fixtures/career-strong.json";
 import { getEuropeanVisibleGoals } from "../../src/components/europeanMatchSequenceTimeline";
 import { getLineDuelRows, getLineDuelText } from "../../src/components/matchSequenceTimeline";
 import { getEuropeanLineDuel, simulateEuropeanMatch } from "../../src/europe/europeanMatchEngine";
+import { pickEuropeanOpponents } from "../../src/europe/europeanOpponents";
 import type { SelectedPlayer, TeamRating } from "../../src/types/game";
 
 const realProfile = strong.teamRating as unknown as TeamRating;
@@ -94,6 +95,35 @@ describe("perfil real en Europa", () => {
 
     expect(duel).toEqual({ userAttack: 88, userDefense: 80, rivalAttack: 80, rivalDefense: 80, rivalHasOnlyOverall: true });
     expect(simulateEuropeanMatch({ ...base, seed: "x", userProfile: realProfile }).lineDuel?.rivalHasOnlyOverall).toBe(true);
+  });
+});
+
+describe("estilo del rival europeo (v0.25.105)", () => {
+  const profile = { ...flatProfile(96), attack: 100, defense: 92 };
+
+  it("ofensivo: +3 en ataque y −3 en defensa; defensivo, al revés; con líneas en la previa", () => {
+    expect(getEuropeanLineDuel({ ...base, userProfile: profile, opponentStyle: "attacking" })).toEqual({
+      userAttack: 88, userDefense: 80, rivalAttack: 83, rivalDefense: 77, rivalHasOnlyOverall: false,
+    });
+    expect(getEuropeanLineDuel({ ...base, userProfile: profile, opponentStyle: "defensive" })).toMatchObject({ rivalAttack: 77, rivalDefense: 83 });
+    expect(simulateEuropeanMatch({ ...base, seed: "x", userProfile: realProfile, opponentStyle: "defensive" }).lineDuel?.rivalHasOnlyOverall).toBe(false);
+  });
+
+  it("equilibrado juega igual que el rival de antes, pero ya enseña sus líneas", () => {
+    for (let seed = 1; seed <= 200; seed += 1) {
+      const before = simulateEuropeanMatch({ ...base, seed, userProfile: realProfile });
+      const balanced = simulateEuropeanMatch({ ...base, seed, userProfile: realProfile, opponentStyle: "balanced" });
+      expect(score(balanced)).toEqual(score(before));
+    }
+    expect(getEuropeanLineDuel({ ...base, userProfile: profile, opponentStyle: "balanced" }).rivalHasOnlyOverall).toBe(false);
+  });
+
+  it("cada club de los tres bombos tiene estilo, y hay de los tres tipos", () => {
+    const styles = (["champions_league", "europa_league", "conference_league"] as const).flatMap((competition) =>
+      pickEuropeanOpponents({ competition, count: 50, seed: "styles" }).map((opponent) => opponent.style),
+    );
+    expect(styles).toHaveLength(50);
+    expect(new Set(styles)).toEqual(new Set(["attacking", "balanced", "defensive"]));
   });
 });
 

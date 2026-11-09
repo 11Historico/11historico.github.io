@@ -6,6 +6,7 @@
 //
 // Como `EuropeanOpponent` solo tiene un rating global (no desglose por
 // línea como `RivalTeam`), el rival es un `RivalTeam` con reparto uniforme.
+// Desde v0.25.105 el estilo del club mueve el ataque y la defensa ±3.
 // El usuario juega con sus líneas reales si se pasa `userProfile` (v0.25.77),
 // y si no, con reparto uniforme a partir del rating recibido.
 // Esto reutiliza fielmente las fórmulas de expected-goals, ventaja de
@@ -35,6 +36,7 @@ import type {
   EuropeanGoalEvent,
   EuropeanKnockoutDecision,
   EuropeanMatchOutcome,
+  EuropeanOpponentStyle,
   EuropeanPenaltyShootout,
 } from "./europeanTypes";
 
@@ -43,6 +45,8 @@ export interface SimulateEuropeanMatchInput {
   userTeamRating: number;
   /** Rating global del rival europeo (`EuropeanOpponent.rating`). */
   opponentRating: number;
+  /** Estilo del rival (v0.25.105). Sin él, todas sus líneas valen su media, como antes. */
+  opponentStyle?: EuropeanOpponentStyle;
   isHome: boolean;
   competition: EuropeanCompetition;
   seed?: string | number;
@@ -232,12 +236,20 @@ function buildUserTeamRating(overall: number, profile?: TeamRating): TeamRating 
   return profile ? buildProfileTeamRating(profile, overall) : buildUniformTeamRating(overall);
 }
 
-function buildUniformRivalTeam(rating: number, competition: EuropeanCompetition): RivalTeam {
+/**
+ * Diferencia entre el ataque y la media, y entre la media y la defensa, de un rival con estilo
+ * (v0.25.105, fase 10). El ataque y la defensa pesan lo mismo en la media del motor, así que la
+ * media no cambia. Medido en docs/INFORME_ESTILOS_EUROPEOS_v0_25_104.md (opción B).
+ */
+export const EUROPEAN_STYLE_SHIFT = 3;
+
+function buildEuropeanRivalTeam(rating: number, competition: EuropeanCompetition, style?: EuropeanOpponentStyle): RivalTeam {
   const clamped = clampRating(rating);
+  const shift = style === "attacking" ? EUROPEAN_STYLE_SHIFT : style === "defensive" ? -EUROPEAN_STYLE_SHIFT : 0;
   const ratings: RivalTeamRatings = {
-    attack: clamped,
+    attack: clampRating(clamped + shift),
     midfield: clamped,
-    defense: clamped,
+    defense: clampRating(clamped - shift),
     goalkeeping: clamped,
     mentality: clamped,
     overall: clamped,
@@ -283,14 +295,17 @@ export function estimateEuropeanMatchOdds(
   return { win: win / samples, draw: draw / samples, loss: (samples - win - draw) / samples };
 }
 
-/** Tus líneas contra el nivel del rival, para la previa europea (v0.25.77). */
+/**
+ * Tus líneas contra las del rival, para la previa europea (v0.25.77). Sin estilo (partidas
+ * anteriores a la v0.25.105) el rival solo tiene su nivel.
+ */
 export function getEuropeanLineDuel(
-  input: Pick<SimulateEuropeanMatchInput, "userTeamRating" | "opponentRating" | "competition"> & { userProfile: TeamRating },
+  input: Pick<SimulateEuropeanMatchInput, "userTeamRating" | "opponentRating" | "competition" | "opponentStyle"> & { userProfile: TeamRating },
 ): MatchLineDuel {
   const teamRating = buildUserTeamRating(input.userTeamRating, input.userProfile);
-  const rival = buildUniformRivalTeam(input.opponentRating, input.competition);
+  const rival = buildEuropeanRivalTeam(input.opponentRating, input.competition, input.opponentStyle);
 
-  return { ...getMatchLineDuel(teamRating, rival), rivalHasOnlyOverall: true };
+  return { ...getMatchLineDuel(teamRating, rival), rivalHasOnlyOverall: !input.opponentStyle };
 }
 
 /**
@@ -300,10 +315,10 @@ export function getEuropeanLineDuel(
  * goleador y asistente, que solo se muestran en el partido (v0.25.77).
  */
 export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): SimulateEuropeanMatchOutput {
-  const { userTeamRating, opponentRating, isHome, competition, seed, isKnockout = false, approach, coachSkills, userProfile, selectedPlayers = [], halfTimeChoice } = input;
+  const { userTeamRating, opponentRating, opponentStyle, isHome, competition, seed, isKnockout = false, approach, coachSkills, userProfile, selectedPlayers = [], halfTimeChoice } = input;
 
   const teamRating = buildUserTeamRating(userTeamRating, userProfile);
-  const rival = buildUniformRivalTeam(opponentRating, competition);
+  const rival = buildEuropeanRivalTeam(opponentRating, competition, opponentStyle);
 
   const fullMatch = simulateMatch({
     fixtureId: `european_${competition}`,
@@ -336,7 +351,7 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
       : "loss";
   const goalEvents = toEuropeanGoalEvents(matchResult, isHome);
   const { keyFactor, approachEffect, halfTimeEffect, expectedGoals } = matchResult;
-  const lineDuel = userProfile && matchResult.lineDuel ? { ...matchResult.lineDuel, rivalHasOnlyOverall: true } : undefined;
+  const lineDuel = userProfile && matchResult.lineDuel ? { ...matchResult.lineDuel, rivalHasOnlyOverall: !opponentStyle } : undefined;
 
   if (!isKnockout) {
     return { userGoals, opponentGoals, result, goalEvents, keyFactor, approachEffect, halfTimeEffect, expectedGoals, lineDuel };
