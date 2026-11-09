@@ -19,6 +19,7 @@
     "audit:european-opponents": "vite build --ssr scripts/auditEuropeanOpponents.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditEuropeanOpponents.js",
     "audit:europe": "vite build --ssr scripts/auditEuropePhase.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditEuropePhase.js",
     "audit:supercopa": "vite build --ssr scripts/auditSupercopaRating.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditSupercopaRating.js",
+    "audit:european-styles": "vite build --ssr scripts/auditEuropeanRivalStyles.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditEuropeanRivalStyles.js",
     "audit:approach": "vite build --ssr scripts/auditMatchApproach.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditMatchApproach.js",
     "qa:formation-reward": "vite build --ssr scripts/qaFormationReward.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaFormationReward.js",
     "qa:career-ranking": "vite build --ssr scripts/qaCareerLocalRanking.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaCareerLocalRanking.js",
