@@ -52,6 +52,7 @@ export function estimateEuropeanSemifinalChance(params: {
       const outcome = simulateEuropeanMatch({
         userTeamRating,
         opponentRating: match.opponent.rating,
+        opponentStyle: match.opponent.style,
         isHome: match.isHome,
         competition: tournament.competition,
         userProfile,

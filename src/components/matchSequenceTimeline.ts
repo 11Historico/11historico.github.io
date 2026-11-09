@@ -162,8 +162,8 @@ function getLineDuelRow(userLabel: string, userValue: number, rivalLabel: string
 
 /**
  * Duelo de líneas de la previa, con las mismas líneas que usa el motor (v0.25.76).
- * Desde la v0.25.100 se pinta en barras enfrentadas. Un rival europeo solo tiene
- * una media, así que su lado es el mismo número en las dos filas.
+ * Desde la v0.25.100 se pinta en barras enfrentadas. Un rival europeo sin estilo (partidas
+ * anteriores a la v0.25.105) solo tiene una media, así que su lado es el mismo número en las dos filas.
  */
 export function getLineDuelRows(duel: MatchLineDuel): LineDuelRow[] {
   if (duel.rivalHasOnlyOverall) {

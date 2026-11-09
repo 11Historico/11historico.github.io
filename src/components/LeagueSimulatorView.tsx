@@ -62,6 +62,7 @@ import {
   getNextEuropeanMatch,
   isEuropeanKnockoutMatch,
 } from "../europe/europeanTournament";
+import { EUROPEAN_STYLE_LABEL } from "../europe/europeanOpponents";
 import { getEuropeanCompetitionIconKind, getEuropeanCompetitionLabel } from "../europe/europeanQualification";
 import { getDecisionBalance, getDecisionBalanceText } from "../simulation/decisionBalance";
 import {
@@ -325,6 +326,7 @@ export function LeagueSimulatorView({
     () => pendingEuropeanMatch && estimateEuropeanMatchOdds({
       userTeamRating: europeanUserRating,
       opponentRating: pendingEuropeanMatch.opponent.rating,
+      opponentStyle: pendingEuropeanMatch.opponent.style,
       isHome: pendingEuropeanMatch.isHome,
       competition: pendingEuropeanMatch.competition,
       approach,
@@ -515,6 +517,7 @@ export function LeagueSimulatorView({
     const input: SimulateEuropeanMatchInput = {
       userTeamRating: europeanUserRating,
       opponentRating: pendingEuropeanMatch.opponent.rating,
+      opponentStyle: pendingEuropeanMatch.opponent.style,
       isHome: pendingEuropeanMatch.isHome,
       competition: pendingEuropeanMatch.competition,
       seed: `${gameId}_${pendingEuropeanMatch.id}`,
@@ -929,6 +932,7 @@ export function LeagueSimulatorView({
                     Próximo partido · {getEuropeanCompetitionLabel(pendingEuropeanMatch.competition)} ·{" "}
                     {getEuropeanTournamentPhaseLabel(pendingEuropeanMatch.phase)} · {pendingEuropeanMatch.isHome ? "En San Mamés" : "Fuera de casa"} ·
                     Rival de {pendingEuropeanMatch.opponent.country}
+                    {pendingEuropeanMatch.opponent.style && `, de estilo ${EUROPEAN_STYLE_LABEL[pendingEuropeanMatch.opponent.style]}`}
                   </span>
                   {/* v0.25.102: el escudo genérico va pegado al nombre del rival, a la izquierda o a la derecha. */}
                   <strong className="next-match-preview-crest">
@@ -943,6 +947,7 @@ export function LeagueSimulatorView({
                     duel={getEuropeanLineDuel({
                       userTeamRating: europeanUserRating,
                       opponentRating: pendingEuropeanMatch.opponent.rating,
+                      opponentStyle: pendingEuropeanMatch.opponent.style,
                       competition: pendingEuropeanMatch.competition,
                       userProfile: effectiveTeamRating,
                     })}

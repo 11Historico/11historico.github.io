@@ -1,10 +1,10 @@
 // scripts/auditEuropeanRivalStyles.ts
 //
 // Fase 10 del roadmap: auditoría de los estilos de los rivales europeos. No cambia el juego.
-// Hoy el rival europeo tiene todas las líneas iguales a su media (buildUniformRivalTeam en
-// src/europe/europeanMatchEngine.ts). La propuesta es darle un estilo: más ataque y menos defensa
-// (ofensivo) o al revés (defensivo), con la misma media ponderada del motor (ataque y defensa
-// pesan lo mismo, 0,22).
+// Hasta la v0.25.104 el rival europeo tenía todas las líneas iguales a su media. Desde la
+// v0.25.105 (opción B) cada club tiene un estilo: más ataque y menos defensa (ofensivo) o al
+// revés (defensivo), ±3, con la misma media ponderada del motor (ataque y defensa pesan lo
+// mismo, 0,22). Aquí se miden también ±6 y el reparto por nombre que sirvió para decidir.
 //
 // Mide, con el motor real (simulateMatch) y las mismas semillas:
 //  1. Partido a partido: si el estilo cambia la fuerza del rival y qué planteamiento rinde más.
@@ -22,7 +22,7 @@ import {
   createEuropeanTournamentForQualification,
   getEuropeanLeaguePhaseUserPosition,
 } from "../src/europe/europeanTournament";
-import type { EuropeanCompetition, EuropeanQualificationResult } from "../src/europe/europeanTypes";
+import type { EuropeanCompetition, EuropeanOpponent, EuropeanOpponentStyle, EuropeanQualificationResult } from "../src/europe/europeanTypes";
 import { getAverageUserRating, simulateMatch } from "../src/simulation/matchEngine";
 import type { MatchApproach, RivalTeam, SelectedPlayer, TeamRating } from "../src/types/game";
 
@@ -115,17 +115,24 @@ const points = (outcome: Outcome) => (outcome.result === "win" ? 3 : outcome.res
 
 // --- 0. Comprobación: el rival uniforme reproduce el juego ---
 
+// Desde la v0.25.105 el juego también tiene estilos: se comprueban el rival sin estilo y los dos estilos.
+const GAME_STYLES: { style: Style; opponentStyle?: EuropeanOpponentStyle }[] = [
+  { style: UNIFORM },
+  { style: styles(3)[0], opponentStyle: "attacking" },
+  { style: styles(3)[1], opponentStyle: "defensive" },
+];
 let mismatches = 0;
 for (let index = 0; index < 2000; index += 1) {
   const isHome = index % 2 === 0;
   const approach = APPROACHES[index % 3];
   const seed = `check_${index}`;
-  const game = simulateEuropeanMatch({ userTeamRating: 85, opponentRating: 84 + (index % 7), isHome, competition: "champions_league", seed, approach, userProfile: profile, selectedPlayers });
-  const audit = play({ userRating: 85, rival: 84 + (index % 7), isHome, competition: "champions_league", style: UNIFORM, approach, seed });
+  const { style, opponentStyle } = GAME_STYLES[index % GAME_STYLES.length];
+  const game = simulateEuropeanMatch({ userTeamRating: 85, opponentRating: 84 + (index % 7), opponentStyle, isHome, competition: "champions_league", seed, approach, userProfile: profile, selectedPlayers });
+  const audit = play({ userRating: 85, rival: 84 + (index % 7), isHome, competition: "champions_league", style, approach, seed });
   if (game.userGoals !== audit.userGoals || game.opponentGoals !== audit.opponentGoals) mismatches += 1;
 }
 console.log(`# Auditoría de estilos de los rivales europeos\n`);
-console.log(`Comprobación: el rival uniforme de la auditoría da el mismo marcador que el juego en ${2000 - mismatches} de 2000 partidos.\n`);
+console.log(`Comprobación: el rival de la auditoría (sin estilo, ofensivo ±3 y defensivo ±3) da el mismo marcador que el juego en ${2000 - mismatches} de 2000 partidos.\n`);
 if (mismatches > 0) throw new Error("La auditoría no reproduce el motor europeo.");
 
 // --- 1. Partido a partido ---
@@ -197,10 +204,16 @@ const COMPETITIONS: { label: string; value: EuropeanCompetition }[] = [
 ];
 const TOURNAMENT_RATINGS = [84, 86];
 
-/** Estilo fijo por club: un tercio ofensivos, un tercio defensivos y un tercio uniformes, según el nombre. */
-function styleForClub(name: string, amplitude: number): Style {
+/**
+ * Estilo por club: «game» usa el del juego (v0.25.105, fijado a mano en europeanOpponents.ts);
+ * con un número, un tercio ofensivos, un tercio defensivos y un tercio uniformes según el nombre.
+ */
+function styleForClub(opponent: EuropeanOpponent, amplitude: number | "game"): Style {
+  if (amplitude === "game") {
+    return opponent.style === "attacking" ? styles(3)[0] : opponent.style === "defensive" ? styles(3)[1] : UNIFORM;
+  }
   if (amplitude === 0) return UNIFORM;
-  const slot = seedToNumber(name) % 3;
+  const slot = seedToNumber(opponent.name) % 3;
   return slot === 0 ? styles(amplitude)[0] : slot === 1 ? styles(amplitude)[1] : UNIFORM;
 }
 
@@ -228,10 +241,11 @@ function bestApproach(userRating: number, rival: number, isHome: boolean, compet
 console.log(`\n## 2. Fase inicial completa (${TOURNAMENTS} torneos por casilla, mismas semillas)\n`);
 console.log("Pasa a semifinales (top 2) y puntos medios. «Decide bien» elige en cada partido el planteamiento que más puntos da contra ese rival.\n");
 
-const VARIANTS = [
-  { label: "Hoy (uniforme)", amplitude: 0 },
-  { label: "Estilos ±3", amplitude: 3 },
-  { label: "Estilos ±6", amplitude: 6 },
+const VARIANTS: { label: string; amplitude: number | "game" }[] = [
+  { label: "Sin estilos (v0.25.104)", amplitude: 0 },
+  { label: "Estilos ±3 por nombre", amplitude: 3 },
+  { label: "Estilos ±6 por nombre", amplitude: 6 },
+  { label: "Juego (v0.25.105)", amplitude: "game" },
 ];
 
 for (const { label: competitionLabel, value: competition } of COMPETITIONS) {
@@ -253,7 +267,7 @@ for (const { label: competitionLabel, value: competition } of COMPETITIONS) {
           if (!tournament) throw new Error("No se creó el torneo.");
 
           for (const match of tournament.matches) {
-            const style = styleForClub(match.opponent.name, amplitude);
+            const style = styleForClub(match.opponent, amplitude);
             const approach = policy === "Decide bien" ? bestApproach(userRating, match.opponent.rating, match.isHome, competition, style) : "balanced";
             const outcome = play({ userRating, rival: match.opponent.rating, isHome: match.isHome, competition, style, approach, seed: `audit_${index}_${match.id}` });
             tournament = applyEuropeanMatchResult(tournament, match.id, { ...outcome, goalEvents: [] });

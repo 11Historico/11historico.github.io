@@ -166,8 +166,9 @@ test("el partido europeo se reproduce en directo antes de mostrar el resultado",
   // v0.25.75: el planteamiento se elige en la previa y el resultado cuenta qué cambió.
   await preview.getByRole("button", { name: "Ofensivo" }).click();
   await expect(preview.getByRole("button", { name: "Ofensivo" })).toHaveAttribute("aria-pressed", "true");
-  // v0.25.77: tus líneas en la previa, con el rival como un solo número.
-  await expect(preview).toContainText("Nivel del rival");
+  // v0.25.105: el rival europeo tiene estilo, así que la previa enseña sus líneas, no un solo número.
+  await expect(preview).toContainText("Su defensa");
+  await expect(preview).toContainText(/de estilo (ofensivo|equilibrado|defensivo)/i);
 
   // Mientras se reproduce un partido de Liga, las estadísticas no se actualizan hasta que acaba.
   await expect(page.locator(".match-sequence-skip")).toHaveCount(0, { timeout: 15_000 });
