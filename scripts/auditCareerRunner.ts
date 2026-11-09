@@ -44,6 +44,7 @@ import { USER_TEAM_ID } from "../src/data/laliga2526Teams";
 import { applyHalfTimeChoice, type MatchOdds } from "../src/simulation/matchEngine";
 import type { CareerSupercopaQualification, CareerTrophyCounts } from "../src/types/career";
 import type { FinalGameSummary, Formation, FormationSlot, GameDifficulty, HalfTimeChoice, MatchApproach, MatchResult, PlayerSeason, RivalTeam, SeasonId, SelectedCoach, SelectedPlayer, TeamRating } from "../src/types/game";
+import { auditGameId } from "./auditSeeds";
 
 // Tope por carrera: sin él, un equipo muy fuerte puede no terminar nunca. La tabla dice cuántas llegan.
 const MAX_SEASONS = 25;
@@ -293,7 +294,7 @@ export function playCareer(params: {
   team: CareerTeam;
 }) {
   const { policy, seed, difficulty, team } = params;
-  const gameId = `audit_${seed}`;
+  const gameId = auditGameId(seed);
   let completedSeasons = 0;
   let trophies: CareerTrophyCounts = { champions: 0, liga: 0, europaLeague: 0, copa: 0, conference: 0, supercopa: 0 };
   let rivals = getInitialCareerLeagueRivals();

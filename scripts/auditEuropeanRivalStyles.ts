@@ -25,6 +25,7 @@ import {
 import type { EuropeanCompetition, EuropeanOpponent, EuropeanOpponentStyle, EuropeanQualificationResult } from "../src/europe/europeanTypes";
 import { getAverageUserRating, simulateMatch } from "../src/simulation/matchEngine";
 import type { MatchApproach, RivalTeam, SelectedPlayer, TeamRating } from "../src/types/game";
+import { auditGameId } from "./auditSeeds";
 
 const arg = (name: string, fallback: number) => Number(process.argv.find((value) => value.startsWith(`--${name}=`))?.split("=")[1] ?? fallback);
 const MATCHES = arg("matches", 10000);
@@ -262,14 +263,14 @@ for (const { label: competitionLabel, value: competition } of COMPETITIONS) {
           let tournament = createEuropeanTournamentForQualification({
             seasonNumber: index + 1,
             qualification: { qualified: true, competition } as Pick<EuropeanQualificationResult, "qualified" | "competition"> as EuropeanQualificationResult,
-            seed: `audit_${index}_${competition}`,
+            seed: `${auditGameId(index)}_${index + 1}`,
           });
           if (!tournament) throw new Error("No se creó el torneo.");
 
           for (const match of tournament.matches) {
             const style = styleForClub(match.opponent, amplitude);
             const approach = policy === "Decide bien" ? bestApproach(userRating, match.opponent.rating, match.isHome, competition, style) : "balanced";
-            const outcome = play({ userRating, rival: match.opponent.rating, isHome: match.isHome, competition, style, approach, seed: `audit_${index}_${match.id}` });
+            const outcome = play({ userRating, rival: match.opponent.rating, isHome: match.isHome, competition, style, approach, seed: `${auditGameId(index)}_${match.id}` });
             tournament = applyEuropeanMatchResult(tournament, match.id, { ...outcome, goalEvents: [] });
           }
 
