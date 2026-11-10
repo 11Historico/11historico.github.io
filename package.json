@@ -23,6 +23,7 @@
     "audit:approach": "vite build --ssr scripts/auditMatchApproach.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditMatchApproach.js",
     "audit:cards": "vite build --ssr scripts/auditCards.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditCards.js",
     "audit:card-types": "vite build --ssr scripts/auditCardTypes.ts --config scripts/auditCardTypes.vite.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditCardTypes.js",
+    "audit:game-cards": "vite build --ssr scripts/auditGameCards.ts --config scripts/auditCardTypes.vite.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditGameCards.js",
     "audit:approach-lines": "vite build --ssr scripts/auditApproachLines.ts --config scripts/auditApproachLines.vite.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditApproachLines.js",
     "qa:formation-reward": "vite build --ssr scripts/qaFormationReward.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaFormationReward.js",
     "qa:career-ranking": "vite build --ssr scripts/qaCareerLocalRanking.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/qaCareerLocalRanking.js",

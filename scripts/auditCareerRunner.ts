@@ -43,6 +43,7 @@ import {
   getCoachCompetitionBoost,
   getInitialCareerLeagueRivals,
   getInitialCareerSecondDivisionPool,
+  getNextUserMatchInfo,
   getNextUserMatchPreview,
   getPendingCupFixture,
   simulateNextCupMatch,
@@ -50,7 +51,7 @@ import {
 } from "../src/simulation/leagueSimulator";
 import { USER_TEAM_ID } from "../src/data/laliga2526Teams";
 import { getDisplayTable, getPendingFixturesForCurrentMatchday } from "../src/simulation/leagueTable";
-import { applyHalfTimeChoice, getAverageUserRating, type MatchOdds } from "../src/simulation/matchEngine";
+import { applyHalfTimeChoice, getAverageUserRating, type MatchCardEffect, type MatchOdds } from "../src/simulation/matchEngine";
 import type { CareerSupercopaQualification, CareerSupercopaResult, CareerTrophyCounts } from "../src/types/career";
 import type { FinalGameSummary, Formation, FormationSlot, GameDifficulty, HalfTimeChoice, MatchApproach, MatchResult, PlayerSeason, RivalTeam, SeasonId, SelectedCoach, SelectedPlayer, TeamRating } from "../src/types/game";
 import { auditGameId } from "./auditSeeds";
@@ -220,8 +221,8 @@ export interface CardMatch {
 export interface CardEffect {
   /** Suma a las líneas del rating de simulación. */
   lines?: Partial<Record<"attack" | "defense" | "control" | "physical" | "mentality" | "goalkeeping", number>>;
-  /** Efectos del motor; solo funcionan con scripts/auditCardTypes.vite.ts. */
-  engine?: { userGoals?: number; rivalGoals?: number; neutralVenue?: boolean; shootout?: boolean };
+  /** Efectos del motor (los del juego, v0.25.108); llegan con scripts/auditCardTypes.vite.ts. */
+  engine?: MatchCardEffect;
   /** Remontada: si vas perdiendo al descanso, el partido se repite con las mismas tiradas y esta media de más. */
   comeback?: number;
 }
@@ -229,6 +230,8 @@ export interface CardEffect {
 export interface CardHook {
   /** Con previa (campo, medias, líder) y Supercopa con cartas. Sin él, como en audit:cards. */
   detailed?: boolean;
+  /** Liga: la previa del juego (getNextUserMatchInfo, con la forma del rival), como en audit:game-cards. */
+  gameInfo?: boolean;
   startSeason(): void;
   /** Bonus de media para este partido, o el efecto de la carta; 0 si no se usa. */
   bonusFor(match: CardMatch): number | CardEffect;
@@ -297,6 +300,23 @@ function getLeagueCardInfo(
     userOverall: Math.round(teamRating.overall),
     rivalOverall: rival ? Math.round(rival.ratings.overall) : undefined,
     rivalIsLeader: Boolean(leaderId && leaderId === rivalId && leaderId !== USER_TEAM_ID),
+    knockoutsAhead: getKnockoutsAhead(context, tournament, leaguePlayed + 1),
+  };
+}
+
+/** Liga, como la previa del juego (v0.25.108): el rival con su forma de temporada. */
+function getGameLeagueCardInfo(
+  context: ReturnType<typeof createUserLeagueSimulation>,
+  teamRating: TeamRating,
+  leaguePlayed: number,
+  tournament: EuropeanTournamentState | null | undefined,
+): Partial<CardMatch> {
+  const info = getNextUserMatchInfo({ context, teamRating });
+  return {
+    venue: info?.venue,
+    userOverall: info?.userOverall,
+    rivalOverall: info?.rivalOverall,
+    rivalIsLeader: info?.rivalIsLeader,
     knockoutsAhead: getKnockoutsAhead(context, tournament, leaguePlayed + 1),
   };
 }
@@ -409,7 +429,7 @@ function playSeason(params: {
       const { outcome, cameBack } = playWithComeback(card, playCup, ({ firstHalf }) => (firstHalf ? getHalfTimeMargin(firstHalf) : 0));
 
       context = outcome.decided.context;
-      cards?.afterMatch(cupMatch, Boolean(outcome.decided.result?.userTeamWon), Boolean(outcome.decided.result?.userTeamLost), cameBack);
+      cards?.afterMatch(cupMatch, Boolean(outcome.decided.result?.userTeamWon), Boolean(outcome.decided.result?.userTeamLost), cameBack || Boolean(outcome.decided.result?.comebackActivated));
       continue;
     }
 
@@ -460,7 +480,7 @@ function playSeason(params: {
       const { outcome: played, cameBack } = playWithComeback(card, playEurope, ({ margin }) => margin);
 
       tournament = applyEuropeanMatchResult(currentTournament, pendingEuropean.id, played.outcome, EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS);
-      cards?.afterMatch(europeMatch, played.outcome.result === "win", played.outcome.result === "loss", cameBack);
+      cards?.afterMatch(europeMatch, played.outcome.result === "win", played.outcome.result === "loss", cameBack || Boolean(played.outcome.comebackActivated));
       continue;
     }
 
@@ -476,7 +496,7 @@ function playSeason(params: {
       knockout: false,
       leagueMatchday: leaguePlayed + 1,
       bigRival: isBigLeagueRival(context, effectiveRating),
-      ...(cards.detailed ? getLeagueCardInfo(context, effectiveRating, leaguePlayed, tournament) : {}),
+      ...(cards.detailed ? (cards.gameInfo ? getGameLeagueCardInfo(context, effectiveRating, leaguePlayed, tournament) : getLeagueCardInfo(context, effectiveRating, leaguePlayed, tournament)) : {}),
     };
     const card = cards.bonusFor(leagueMatch);
     const before = context;
@@ -486,7 +506,7 @@ function playSeason(params: {
       ({ result }) => (result ? getHalfTimeMargin(result) : 0),
     );
     context = leagueResult.context;
-    cards.afterMatch(leagueMatch, Boolean(leagueResult.result?.userTeamWon), Boolean(leagueResult.result?.userTeamLost), cameBack);
+    cards.afterMatch(leagueMatch, Boolean(leagueResult.result?.userTeamWon), Boolean(leagueResult.result?.userTeamLost), cameBack || Boolean(leagueResult.result?.comebackActivated));
   }
 
   return {
@@ -510,6 +530,7 @@ function playSupercopaWithCards(params: {
     const rival = preview && rivals.find((item) => item.name === preview.rivalName);
     return { competition: "supercopa", knockout: true, leagueMatchday: 0, venue: preview?.venue, userOverall: Math.round(teamRating.overall), rivalOverall: rival ? Math.round(rival.ratings.overall) : undefined };
   };
+  const userComeback = (result: CareerSupercopaResult) => Boolean([...result.results].reverse().find((item) => item.userTeamPlayed)?.comebackActivated);
   const userMargin = (result: CareerSupercopaResult) => {
     const match = [...result.results].reverse().find((item) => item.userTeamPlayed);
     return match ? getHalfTimeMargin(match) : 0;
@@ -524,7 +545,7 @@ function playSupercopaWithCards(params: {
     return simulateSupercopaSemifinals({ ...shared, qualification, teamRating: rating, approach });
   }, userMargin);
   const inFinal = Boolean(semis.outcome.awaitingFinal);
-  cards.afterMatch(semiMatch, inFinal, !inFinal, semis.cameBack);
+  cards.afterMatch(semiMatch, inFinal, !inFinal, semis.cameBack || userComeback(semis.outcome));
   if (!inFinal) return false;
 
   const semifinals = semis.outcome;
@@ -535,7 +556,7 @@ function playSupercopaWithCards(params: {
     const approach = pickApproach(policy.approach, (option) => getSupercopaFinalPreview({ ...shared, semifinals, teamRating: rating, approach: option })?.odds, advanceValue);
     return simulateSupercopaFinal({ ...shared, semifinals, teamRating: rating, approach });
   }, userMargin);
-  cards.afterMatch(finalMatch, final.outcome.won, !final.outcome.won, final.cameBack);
+  cards.afterMatch(finalMatch, final.outcome.won, !final.outcome.won, final.cameBack || userComeback(final.outcome));
 
   return final.outcome.won;
 }
