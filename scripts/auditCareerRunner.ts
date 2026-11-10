@@ -13,7 +13,15 @@ import { calculateCareerArcadeScore, getFinalCareerTrophyCounts } from "../src/c
 import { applyCareerRivalProgression, CAREER_RELEGATION_POSITION, evaluateCareerObjective, getEuropeanQualification } from "../src/career/careerRules";
 import { awardEuropeanPrestigeToCareer } from "../src/career/europeanPrestige";
 import { awardEuropeanTrophyToCareer } from "../src/career/europeanTrophies";
-import { createCareerSupercopaQualification, getSupercopaSemifinalPreview, simulateCareerSupercopa } from "../src/career/supercopaRules";
+import {
+  createCareerSupercopaQualification,
+  getSupercopaFinalPreview,
+  getSupercopaSemifinalPreview,
+  simulateCareerSupercopa,
+  simulateSupercopaFinal,
+  simulateSupercopaSemifinals,
+  type SupercopaSemifinalPreview,
+} from "../src/career/supercopaRules";
 import { applyCareerRatingBonus, applyDifficultyModifier, applyDifficultyToTeamRating } from "../src/career/teamPower";
 import { ATHLETIC_SEASONS } from "../src/data/athletic/seasons";
 import { getAvailableSlotsForPlayer, isPlayerAlreadySelected, resolvePlayerSlotPlacement } from "../src/domain/positionRules";
@@ -41,9 +49,9 @@ import {
   simulateNextUserLeagueMatch,
 } from "../src/simulation/leagueSimulator";
 import { USER_TEAM_ID } from "../src/data/laliga2526Teams";
-import { getPendingFixturesForCurrentMatchday } from "../src/simulation/leagueTable";
+import { getDisplayTable, getPendingFixturesForCurrentMatchday } from "../src/simulation/leagueTable";
 import { applyHalfTimeChoice, getAverageUserRating, type MatchOdds } from "../src/simulation/matchEngine";
-import type { CareerSupercopaQualification, CareerTrophyCounts } from "../src/types/career";
+import type { CareerSupercopaQualification, CareerSupercopaResult, CareerTrophyCounts } from "../src/types/career";
 import type { FinalGameSummary, Formation, FormationSlot, GameDifficulty, HalfTimeChoice, MatchApproach, MatchResult, PlayerSeason, RivalTeam, SeasonId, SelectedCoach, SelectedPlayer, TeamRating } from "../src/types/game";
 import { auditGameId } from "./auditSeeds";
 
@@ -90,6 +98,16 @@ Date.now = () => {
 export function seedCareer(seed: number): void {
   randomState = (seed * 48271 + 11) % 2147483647 || 1;
   clock = 1_700_000_000_000 + seed * 1_000_003;
+}
+
+/** Para repetir un partido con las mismas tiradas (la carta Remontada). */
+function snapshotRandom(): [number, number] {
+  return [randomState, clock];
+}
+
+function restoreRandom([state, time]: [number, number]): void {
+  randomState = state;
+  clock = time;
 }
 
 export type DraftStyle = "best" | "random" | "attack" | "defense" | "attackExtreme" | "defenseExtreme";
@@ -180,20 +198,107 @@ export function pickHalfTime(policy: HalfTimePolicy, margin: number, userIsWeake
  * audit:cards. Sin `cards`, la carrera es la de siempre.
  */
 export interface CardMatch {
-  competition: "league" | "copa" | "europe";
+  competition: "league" | "copa" | "europe" | "supercopa";
   knockout: boolean;
   /** Jornada de Liga que toca: la siguiente a las ya jugadas. */
   leagueMatchday: number;
   /** Solo en Liga: si el rival llega a tu media menos 1 (los «partidos grandes» de la v0.25.84). */
   bigRival?: boolean;
+  /** Desde aquí, solo con `detailed` (audit:card-types): lo que enseña la previa. */
+  venue?: "home" | "away";
+  userOverall?: number;
+  rivalOverall?: number;
+  /** Liga: el rival va primero (y no eres tú). */
+  rivalIsLeader?: boolean;
+  /** Copa: la ronda que se juega. */
+  roundId?: string;
+  /** Eliminatorias de Copa y Europa que aún pueden quedar esta temporada. */
+  knockoutsAhead?: number;
+}
+
+/** Una carta que no es solo media (audit:card-types). */
+export interface CardEffect {
+  /** Suma a las líneas del rating de simulación. */
+  lines?: Partial<Record<"attack" | "defense" | "control" | "physical" | "mentality" | "goalkeeping", number>>;
+  /** Efectos del motor; solo funcionan con scripts/auditCardTypes.vite.ts. */
+  engine?: { userGoals?: number; rivalGoals?: number; neutralVenue?: boolean; shootout?: boolean };
+  /** Remontada: si vas perdiendo al descanso, el partido se repite con las mismas tiradas y esta media de más. */
+  comeback?: number;
 }
 
 export interface CardHook {
+  /** Con previa (campo, medias, líder) y Supercopa con cartas. Sin él, como en audit:cards. */
+  detailed?: boolean;
   startSeason(): void;
-  /** Bonus de media para este partido; 0 si no se usa carta. */
-  bonusFor(match: CardMatch): number;
-  /** Tras el partido: si lo ganó (en una eliminatoria, si pasó). */
-  afterMatch(match: CardMatch, won: boolean): void;
+  /** Bonus de media para este partido, o el efecto de la carta; 0 si no se usa. */
+  bonusFor(match: CardMatch): number | CardEffect;
+  /** Tras el partido: si lo ganó (en una eliminatoria, si pasó) y si lo perdió. */
+  afterMatch(match: CardMatch, won: boolean, lost: boolean, cameBack?: boolean): void;
+}
+
+const LINE_WEIGHTS = { attack: 0.22, defense: 0.22, control: 0.18, physical: 0.1, mentality: 0.13, goalkeeping: 0.15 } as const;
+
+/** Media de una carta: un número suma a todo, como en audit:cards. */
+export function withCard(rating: TeamRating, card: number | CardEffect, extra = 0): TeamRating {
+  if (typeof card === "number") return withCardBonus(rating, card + extra);
+
+  const next = { ...withCardBonus(rating, extra) };
+  let overall = next.overall;
+  for (const [line, value] of Object.entries(card.lines ?? {}) as [keyof typeof LINE_WEIGHTS, number][]) {
+    next[line] += value;
+    overall += value * LINE_WEIGHTS[line];
+  }
+
+  return { ...next, overall };
+}
+
+export function setCardEngine(card: number | CardEffect | undefined): void {
+  (globalThis as { __auditCard?: CardEffect["engine"] }).__auditCard = typeof card === "object" ? card.engine : undefined;
+}
+
+/** Remontada: se repite el partido si vas perdiendo al descanso. */
+function playWithComeback<T>(card: number | CardEffect, play: (extra: number) => T, halfTimeMargin: (outcome: T) => number): { outcome: T; cameBack: boolean } {
+  const comeback = typeof card === "object" ? card.comeback ?? 0 : 0;
+  const snapshot = snapshotRandom();
+  setCardEngine(card);
+  let outcome = play(0);
+  let cameBack = false;
+
+  if (comeback && halfTimeMargin(outcome) < 0) {
+    restoreRandom(snapshot);
+    outcome = play(comeback);
+    cameBack = true;
+  }
+
+  setCardEngine(undefined);
+  return { outcome, cameBack };
+}
+
+function getKnockoutsAhead(context: ReturnType<typeof createUserLeagueSimulation>, tournament: EuropeanTournamentState | null | undefined, leagueMatchday: number): number {
+  const copa = context.cupState.status === "active" ? context.cupState.fixtures.filter((fixture) => !fixture.played).length : 0;
+  const europe = tournament && !tournament.eliminated && !tournament.completed ? [27, 30, 36].filter((matchday) => matchday >= leagueMatchday).length : 0;
+  return copa + europe;
+}
+
+/** Liga: campo, medias de la previa y si el rival es el líder. */
+function getLeagueCardInfo(
+  context: ReturnType<typeof createUserLeagueSimulation>,
+  teamRating: TeamRating,
+  leaguePlayed: number,
+  tournament: EuropeanTournamentState | null | undefined,
+): Partial<CardMatch> {
+  const fixture = getPendingFixturesForCurrentMatchday(context.state).find((item) => item.includesUserTeam);
+  const rivalId = fixture?.homeTeamId === USER_TEAM_ID ? fixture.awayTeamId : fixture?.homeTeamId;
+  const rival = context.rivals?.find((item) => item.id === rivalId);
+  const leaderId = leaguePlayed > 0 ? getDisplayTable(context.state.table)[0]?.teamId : undefined;
+
+  return {
+    venue: fixture?.homeTeamId === USER_TEAM_ID ? "home" : "away",
+    userOverall: Math.round(teamRating.overall),
+    rivalOverall: rival ? Math.round(rival.ratings.overall) : undefined,
+    rivalIsLeader: Boolean(leaderId && leaderId === rivalId && leaderId !== USER_TEAM_ID),
+    knockoutsAhead: getKnockoutsAhead(context, tournament, leaguePlayed + 1),
+  };
 }
 
 /** La carta suma lo mismo a todas las líneas del rating de simulación (ya comprimido). */
@@ -268,33 +373,43 @@ function playSeason(params: {
     ...createUserLeagueSimulation({ rivals: applyCareerRivalProgression(rivals, completedSeasons) }),
     selectedCoach,
   };
-  cards?.startSeason();
 
   for (let guard = 0; guard < 200; guard += 1) {
     const pendingCup = getPendingCupFixture(context);
     const leaguePlayed = context.state.table.find((row) => row.teamId === USER_TEAM_ID)?.played ?? 0;
 
     if (pendingCup) {
-      const cupMatch: CardMatch = { competition: "copa", knockout: true, leagueMatchday: leaguePlayed + 1 };
-      const cupRating = withCardBonus(effectiveRating, cards?.bonusFor(cupMatch) ?? 0);
-      const approach = pickApproach(
-        policy.approach,
-        (option) => getNextUserMatchPreview({ context, teamRating: cupRating, selectedPlayers, approach: option })?.odds,
-        advanceValue,
-      );
+      const preview = cards?.detailed ? getNextUserMatchPreview({ context, teamRating: effectiveRating, selectedPlayers }) : undefined;
+      const cupMatch: CardMatch = {
+        competition: "copa",
+        knockout: true,
+        leagueMatchday: leaguePlayed + 1,
+        ...(preview ? { venue: preview.venue, userOverall: preview.userOverall, rivalOverall: preview.rivalOverall, roundId: pendingCup.roundId } : {}),
+      };
+      const card = cards?.bonusFor(cupMatch) ?? 0;
       const before = context;
-      const base = { context: before, teamRating: cupRating, selectedPlayers, approach };
-      const played = simulateNextCupMatch(base);
-      const regular = played.regularTimeResult;
-      const choice = regular
-        ? pickHalfTime(policy.halfTime, getHalfTimeMargin(regular), (regular.expectedGoals?.user ?? 0) < (regular.expectedGoals?.rival ?? 0))
-        : "keep";
-      const decided = regular && choice !== "keep"
-        ? simulateNextCupMatch({ ...base, regularTimeResult: applyHalfTimeChoice({ result: regular, choice, selectedPlayers }) })
-        : played;
+      const playCup = (extra: number) => {
+        const cupRating = withCard(effectiveRating, card, extra);
+        const approach = pickApproach(
+          policy.approach,
+          (option) => getNextUserMatchPreview({ context: before, teamRating: cupRating, selectedPlayers, approach: option })?.odds,
+          advanceValue,
+        );
+        const base = { context: before, teamRating: cupRating, selectedPlayers, approach };
+        const played = simulateNextCupMatch(base);
+        const regular = played.regularTimeResult;
+        const choice = regular
+          ? pickHalfTime(policy.halfTime, getHalfTimeMargin(regular), (regular.expectedGoals?.user ?? 0) < (regular.expectedGoals?.rival ?? 0))
+          : "keep";
+        const decided = regular && choice !== "keep"
+          ? simulateNextCupMatch({ ...base, regularTimeResult: applyHalfTimeChoice({ result: regular, choice, selectedPlayers }) })
+          : played;
+        return { decided, firstHalf: regular ?? played.result };
+      };
+      const { outcome, cameBack } = playWithComeback(card, playCup, ({ firstHalf }) => (firstHalf ? getHalfTimeMargin(firstHalf) : 0));
 
-      context = decided.context;
-      cards?.afterMatch(cupMatch, Boolean(decided.result?.userTeamWon));
+      context = outcome.decided.context;
+      cards?.afterMatch(cupMatch, Boolean(outcome.decided.result?.userTeamWon), Boolean(outcome.decided.result?.userTeamLost), cameBack);
       continue;
     }
 
@@ -303,31 +418,49 @@ function playSeason(params: {
     if (pendingEuropean && tournament) {
       const legacy = policy.legacyEurope;
       const isKnockout = isEuropeanKnockoutMatch(pendingEuropean);
-      const europeMatch: CardMatch = { competition: "europe", knockout: isKnockout, leagueMatchday: leaguePlayed + 1 };
-      const bonus = cards?.bonusFor(europeMatch) ?? 0;
-      const shared = {
-        userTeamRating: effectiveRating.overall + bonus + (legacy ? 0 : getCoachCompetitionBoost(context, "europe")),
-        opponentRating: pendingEuropean.opponent.rating,
-        isHome: pendingEuropean.isHome,
-        competition: pendingEuropean.competition,
-        coachSkills,
-        // El estilo del rival (v0.25.105) va con el juego actual, no con el «legacy».
-        ...(legacy ? {} : { userProfile: withCardBonus(effectiveRating, bonus), selectedPlayers, opponentStyle: pendingEuropean.opponent.style }),
+      const userEuropeanRating = effectiveRating.overall + (legacy ? 0 : getCoachCompetitionBoost(context, "europe"));
+      const europeMatch: CardMatch = {
+        competition: "europe",
+        knockout: isKnockout,
+        leagueMatchday: leaguePlayed + 1,
+        ...(cards?.detailed
+          ? {
+            venue: pendingEuropean.isHome ? "home" : "away",
+            userOverall: Math.round(userEuropeanRating),
+            rivalOverall: pendingEuropean.opponent.rating,
+            knockoutsAhead: getKnockoutsAhead(context, tournament, leaguePlayed + 1),
+          }
+          : {}),
       };
-      const approach = pickApproach(
-        policy.approach,
-        (option) => estimateEuropeanMatchOdds({ ...shared, approach: option }),
-        isKnockout ? advanceValue : pointsValue,
-      );
-      const input: SimulateEuropeanMatchInput = { ...shared, approach, isKnockout, seed: `${gameId}_${pendingEuropean.id}` };
-      const base = simulateEuropeanMatch(input);
-      const firstHalf = base.goalEvents.filter((goal) => goal.minute <= 45);
-      const margin = firstHalf.filter((goal) => goal.isUserGoal).length - firstHalf.filter((goal) => !goal.isUserGoal).length;
-      const choice = pickHalfTime(policy.halfTime, margin, (base.expectedGoals?.user ?? 0) < (base.expectedGoals?.rival ?? 0));
-      const outcome = choice === "keep" ? base : simulateEuropeanMatch({ ...input, halfTimeChoice: choice });
+      const card = cards?.bonusFor(europeMatch) ?? 0;
+      const currentTournament = tournament;
+      const playEurope = (extra: number) => {
+        const profile = withCard(effectiveRating, card, extra);
+        const shared = {
+          userTeamRating: userEuropeanRating + (profile.overall - effectiveRating.overall),
+          opponentRating: pendingEuropean.opponent.rating,
+          isHome: pendingEuropean.isHome,
+          competition: pendingEuropean.competition,
+          coachSkills,
+          // El estilo del rival (v0.25.105) va con el juego actual, no con el «legacy».
+          ...(legacy ? {} : { userProfile: profile, selectedPlayers, opponentStyle: pendingEuropean.opponent.style }),
+        };
+        const approach = pickApproach(
+          policy.approach,
+          (option) => estimateEuropeanMatchOdds({ ...shared, approach: option }),
+          isKnockout ? advanceValue : pointsValue,
+        );
+        const input: SimulateEuropeanMatchInput = { ...shared, approach, isKnockout, seed: `${gameId}_${pendingEuropean.id}` };
+        const base = simulateEuropeanMatch(input);
+        const firstHalf = base.goalEvents.filter((goal) => goal.minute <= 45);
+        const margin = firstHalf.filter((goal) => goal.isUserGoal).length - firstHalf.filter((goal) => !goal.isUserGoal).length;
+        const choice = pickHalfTime(policy.halfTime, margin, (base.expectedGoals?.user ?? 0) < (base.expectedGoals?.rival ?? 0));
+        return { outcome: choice === "keep" ? base : simulateEuropeanMatch({ ...input, halfTimeChoice: choice }), margin };
+      };
+      const { outcome: played, cameBack } = playWithComeback(card, playEurope, ({ margin }) => margin);
 
-      tournament = applyEuropeanMatchResult(tournament, pendingEuropean.id, outcome, EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS);
-      cards?.afterMatch(europeMatch, outcome.result === "win");
+      tournament = applyEuropeanMatchResult(currentTournament, pendingEuropean.id, played.outcome, EUROPEAN_DEFAULT_LEAGUE_MATCHDAYS);
+      cards?.afterMatch(europeMatch, played.outcome.result === "win", played.outcome.result === "loss", cameBack);
       continue;
     }
 
@@ -338,16 +471,73 @@ function playSeason(params: {
       continue;
     }
 
-    const leagueMatch: CardMatch = { competition: "league", knockout: false, leagueMatchday: leaguePlayed + 1, bigRival: isBigLeagueRival(context, effectiveRating) };
-    const leagueResult = simulateNextUserLeagueMatch({ context, teamRating: withCardBonus(effectiveRating, cards.bonusFor(leagueMatch)), selectedPlayers });
+    const leagueMatch: CardMatch = {
+      competition: "league",
+      knockout: false,
+      leagueMatchday: leaguePlayed + 1,
+      bigRival: isBigLeagueRival(context, effectiveRating),
+      ...(cards.detailed ? getLeagueCardInfo(context, effectiveRating, leaguePlayed, tournament) : {}),
+    };
+    const card = cards.bonusFor(leagueMatch);
+    const before = context;
+    const { outcome: leagueResult, cameBack } = playWithComeback(
+      card,
+      (extra) => simulateNextUserLeagueMatch({ context: before, teamRating: withCard(effectiveRating, card, extra), selectedPlayers }),
+      ({ result }) => (result ? getHalfTimeMargin(result) : 0),
+    );
     context = leagueResult.context;
-    cards.afterMatch(leagueMatch, Boolean(leagueResult.result?.userTeamWon));
+    cards.afterMatch(leagueMatch, Boolean(leagueResult.result?.userTeamWon), Boolean(leagueResult.result?.userTeamLost), cameBack);
   }
 
   return {
     tournament,
     summary: createFinalLeagueSummary({ gameId, formationName, coachName: selectedCoach.coachSeason.name, context }),
   };
+}
+
+/** Supercopa con cartas: la semifinal y la final por separado, como en el juego (v0.25.90). */
+function playSupercopaWithCards(params: {
+  qualification: CareerSupercopaQualification;
+  teamRating: TeamRating;
+  selectedPlayers: SelectedPlayer[];
+  rivals: RivalTeam[];
+  coachSkills: SelectedCoach["coachSeason"]["skills"];
+  policy: Policy;
+  cards: CardHook;
+}): boolean {
+  const { qualification, teamRating, selectedPlayers, rivals, coachSkills, policy, cards } = params;
+  const toMatch = (preview?: SupercopaSemifinalPreview): CardMatch => {
+    const rival = preview && rivals.find((item) => item.name === preview.rivalName);
+    return { competition: "supercopa", knockout: true, leagueMatchday: 0, venue: preview?.venue, userOverall: Math.round(teamRating.overall), rivalOverall: rival ? Math.round(rival.ratings.overall) : undefined };
+  };
+  const userMargin = (result: CareerSupercopaResult) => {
+    const match = [...result.results].reverse().find((item) => item.userTeamPlayed);
+    return match ? getHalfTimeMargin(match) : 0;
+  };
+  const shared = { selectedPlayers, rivals, coachSkills };
+
+  const semiMatch = toMatch(getSupercopaSemifinalPreview({ ...shared, qualification, teamRating }));
+  const semiCard = cards.bonusFor(semiMatch);
+  const semis = playWithComeback(semiCard, (extra) => {
+    const rating = withCard(teamRating, semiCard, extra);
+    const approach = pickApproach(policy.approach, (option) => getSupercopaSemifinalPreview({ ...shared, qualification, teamRating: rating, approach: option })?.odds, advanceValue);
+    return simulateSupercopaSemifinals({ ...shared, qualification, teamRating: rating, approach });
+  }, userMargin);
+  const inFinal = Boolean(semis.outcome.awaitingFinal);
+  cards.afterMatch(semiMatch, inFinal, !inFinal, semis.cameBack);
+  if (!inFinal) return false;
+
+  const semifinals = semis.outcome;
+  const finalMatch = toMatch(getSupercopaFinalPreview({ ...shared, semifinals, teamRating }));
+  const finalCard = cards.bonusFor(finalMatch);
+  const final = playWithComeback(finalCard, (extra) => {
+    const rating = withCard(teamRating, finalCard, extra);
+    const approach = pickApproach(policy.approach, (option) => getSupercopaFinalPreview({ ...shared, semifinals, teamRating: rating, approach: option })?.odds, advanceValue);
+    return simulateSupercopaFinal({ ...shared, semifinals, teamRating: rating, approach });
+  }, userMargin);
+  cards.afterMatch(finalMatch, final.outcome.won, !final.outcome.won, final.cameBack);
+
+  return final.outcome.won;
 }
 
 export function playCareer(params: {
@@ -379,8 +569,20 @@ export function playCareer(params: {
   for (;;) {
     const seasonRating = applyCareerRatingBonus(team.teamRating, ratingBonus);
     let wonSupercopa = false;
+    // Antes de la Supercopa: la mano de la temporada también vale para ella (audit:card-types).
+    cards?.startSeason();
 
-    if (pendingSupercopa) {
+    if (pendingSupercopa && cards?.detailed) {
+      wonSupercopa = playSupercopaWithCards({
+        qualification: pendingSupercopa,
+        teamRating: applyDifficultyModifier(seasonRating, difficulty),
+        selectedPlayers: team.selectedPlayers,
+        rivals,
+        coachSkills: team.selectedCoach.coachSeason.skills,
+        policy,
+        cards,
+      });
+    } else if (pendingSupercopa) {
       const qualification = pendingSupercopa;
       // Como el juego desde v0.25.101: la media visible con la dificultad.
       const supercopaRating = applyDifficultyModifier(seasonRating, difficulty);
