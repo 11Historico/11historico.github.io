@@ -144,7 +144,7 @@ Son clubes reales sin escudos ni equipaciones, así que todo es genérico, sin m
 
 ## Método y limitaciones
 
-- **Script:** `scripts/auditEuropePhase.ts`. Juega solo la fase inicial, con `createEuropeanTournamentForQualification`, `simulateEuropeanMatch` y la tabla del juego.
+- **Script:** `scripts/auditEuropePhase.ts`. Juega solo la fase inicial, con `createEuropeanTournamentForQualification`, `simulateEuropeanMatch` y la tabla del juego. Desde `INFORME_CIERRE_EUROPA_v0_25_107.md` el script también juega la previa y pasa el estilo de los rivales; la medición del cierre está en ese informe.
 - **Odds:** para elegir el planteamiento, el jugador simulado calcula las odds con 60 muestras; el juego usa 300.
 - **Líneas:** el usuario juega con las líneas iguales a su media. En el juego juega con sus líneas reales desplazadas a esa media, que es casi lo mismo contra rivales con las líneas iguales.
 - **Margen:** con 1.000 torneos por casilla es de unos ±3 puntos porcentuales.

@@ -174,7 +174,7 @@ export function pickHalfTime(policy: HalfTimePolicy, margin: number, userIsWeake
   return margin < 0 ? "close" : margin > 0 ? "push" : userIsWeaker ? "push" : "close";
 }
 
-const advanceValue = (odds: MatchOdds) => odds.win + odds.draw / 2;
+export const advanceValue = (odds: MatchOdds) => odds.win + odds.draw / 2;
 export const pointsValue = (odds: MatchOdds) => 3 * odds.win + odds.draw;
 
 export function getHalfTimeMargin(result: MatchResult): number {
