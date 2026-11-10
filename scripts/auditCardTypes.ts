@@ -47,15 +47,25 @@ const RARITY_LABELS = ["Común", "Rara", "Épica"];
 type CardId =
   | "plus2" | "mediocampo" | "fortin" | "revancha" | "ojeador"
   | "plus4" | "defensa" | "ataque" | "clasico" | "remontada" | "portero"
-  | "plus6" | "sanMames" | "dobleONada";
+  | "plus6" | "sanMames" | "dobleONada"
+  // Retoques del informe (2026-11-10).
+  | "mediocampoV2" | "remontadaV2" | "dobleV2";
+
+type Rarity = 0 | 1 | 2;
 
 interface CardType {
   id: CardId;
   label: string;
-  rarity: 0 | 1 | 2;
+  rarity: Rarity;
   description: string;
   /** El efecto en este partido, o undefined si no se puede usar en él. */
   effect(match: CardMatch): CardEffect | undefined;
+  /** Remontada: solo se gasta si se activa (ibas perdiendo al descanso). */
+  spentOnlyIfActivated?: boolean;
+  /** Revancha: si pierdes, vuelve a la mano. */
+  returnsOnLoss?: boolean;
+  /** Doble o nada: si pierdes, −2 el siguiente partido, o pierdes otra carta de la mano. */
+  onLoss?: "minusTwo" | "loseCard";
 }
 
 const all = (value: number): CardEffect => ({ lines: { attack: value, defense: value, control: value, physical: value, mentality: value, goalkeeping: value } });
@@ -66,13 +76,13 @@ const CARDS: CardType[] = [
   { id: "plus2", label: "+2", rarity: 0, description: "+2 a toda la media", effect: () => all(2) },
   { id: "mediocampo", label: "Mediocampo", rarity: 0, description: "+6 solo en el control", effect: () => ({ lines: { control: 6 } }) },
   { id: "fortin", label: "Fortín fuera", rarity: 0, description: "fuera de casa, campo neutral", effect: (match) => (match.venue === "away" ? { engine: { neutralVenue: true } } : undefined) },
-  { id: "revancha", label: "Revancha", rarity: 0, description: "+3; si pierdes, vuelve a la mano", effect: () => all(3) },
+  { id: "revancha", label: "Revancha", rarity: 0, description: "+3; si pierdes, vuelve a la mano", effect: () => all(3), returnsOnLoss: true },
   { id: "ojeador", label: "Ojeador", rarity: 0, description: "en el siguiente sorteo ves 1 de las 6", effect: () => undefined },
   { id: "plus4", label: "+4", rarity: 1, description: "+4 a toda la media", effect: () => all(4) },
   { id: "defensa", label: "Defensa total", rarity: 1, description: "el rival marca un 40 % menos", effect: () => ({ engine: { rivalGoals: 0.6 } }) },
   { id: "ataque", label: "Ataque total", rarity: 1, description: "marcas un 40 % más y el rival un 10 % más", effect: () => ({ engine: { userGoals: 1.4, rivalGoals: 1.1 } }) },
   { id: "clasico", label: "Clásico", rarity: 1, description: "+5 contra un rival con más media", effect: (match) => (rivalIsStronger(match) ? all(5) : undefined) },
-  { id: "remontada", label: "Remontada", rarity: 1, description: "si pierdes al descanso, +6 la segunda parte; si no, no se gasta", effect: () => ({ comeback: 3 }) },
+  { id: "remontada", label: "Remontada", rarity: 1, description: "si pierdes al descanso, +6 la segunda parte; si no, no se gasta", effect: () => ({ comeback: 3 }), spentOnlyIfActivated: true },
   { id: "portero", label: "Portero inspirado", rarity: 1, description: "en eliminatorias, la prórroga o los penaltis", effect: (match) => (match.knockout ? { engine: { shootout: true } } : undefined) },
   { id: "plus6", label: "+6", rarity: 2, description: "+6 a toda la media", effect: () => all(6) },
   {
@@ -82,10 +92,31 @@ const CARDS: CardType[] = [
     description: "en casa, subes a la media del rival",
     effect: (match) => (match.venue === "home" && rivalIsStronger(match) ? all((match.rivalOverall ?? 0) - (match.userOverall ?? 0)) : undefined),
   },
-  { id: "dobleONada", label: "Doble o nada", rarity: 2, description: "+6; si pierdes, el siguiente partido −2", effect: () => all(6) },
+  { id: "dobleONada", label: "Doble o nada", rarity: 2, description: "+6; si pierdes, el siguiente partido −2", effect: () => all(6), onLoss: "minusTwo" },
+  // Retoques (el mismo nombre en el juego; aquí, con «retocada» para distinguirlas).
+  {
+    id: "mediocampoV2",
+    label: "Mediocampo (retocada)",
+    rarity: 0,
+    description: "+6 en el control y +2 en el resto",
+    effect: () => ({ lines: { attack: 2, defense: 2, control: 6, physical: 2, mentality: 2, goalkeeping: 2 } }),
+  },
+  { id: "remontadaV2", label: "Remontada (retocada)", rarity: 1, description: "si pierdes al descanso, +12 la segunda parte; si no, no se gasta", effect: () => ({ comeback: 6 }), spentOnlyIfActivated: true },
+  { id: "dobleV2", label: "Doble o nada (retocada)", rarity: 2, description: "+6; si pierdes, pierdes otra carta de la mano", effect: () => all(6), onLoss: "loseCard" },
 ];
 const CARD_BY_ID = new Map(CARDS.map((card) => [card.id, card]));
-const PLUS_ONLY: CardId[] = ["plus2", "plus4", "plus6"];
+const ORIGINAL_IDS: CardId[] = ["plus2", "mediocampo", "fortin", "revancha", "ojeador", "plus4", "defensa", "ataque", "clasico", "remontada", "portero", "plus6", "sanMames", "dobleONada"];
+
+/** Un mazo: qué cartas entran y con qué rareza. */
+type Deck = { id: CardId; rarity: Rarity }[];
+const ORIGINAL_DECK: Deck = ORIGINAL_IDS.map((id) => ({ id, rarity: CARD_BY_ID.get(id)!.rarity }));
+const PLUS_ONLY: Deck = ORIGINAL_DECK.filter(({ id }) => id === "plus2" || id === "plus4" || id === "plus6");
+// La propuesta del informe: cada carta en la rareza de lo que vale, con los tres retoques.
+const RETOUCHED_DECK: Deck = [
+  ...(["plus2", "ataque", "portero", "ojeador", "mediocampoV2"] as CardId[]).map((id) => ({ id, rarity: 0 as Rarity })),
+  ...(["plus4", "defensa", "clasico", "revancha", "remontadaV2"] as CardId[]).map((id) => ({ id, rarity: 1 as Rarity })),
+  ...(["plus6", "sanMames", "fortin", "dobleV2"] as CardId[]).map((id) => ({ id, rarity: 2 as Rarity })),
+];
 
 function mergeEffects(a: CardEffect | undefined, b: CardEffect | undefined): CardEffect | undefined {
   if (!a) return b;
@@ -250,7 +281,7 @@ function runProbe(): Map<CardId, CardValue> {
       value.knockoutDelta === undefined ? "-" : `${value.knockoutDelta >= 0 ? "+" : ""}${(value.knockoutDelta * 100).toFixed(1)} pts`,
       value.knockout === undefined ? "-" : signed(value.knockout, 1),
       share(Math.round(value.lostWithCard * 1000), 1000),
-      card.id === "remontada" ? share(Math.round(value.cameBack * 1000), 1000) : "-",
+      card.spentOnlyIfActivated ? share(Math.round(value.cameBack * 1000), 1000) : "-",
     ].join(" | ")} |`);
   }
 
@@ -261,6 +292,8 @@ function runProbe(): Map<CardId, CardValue> {
   if (doble) console.log(`\nDoble o nada: con ella pierdes el ${((doble.lostWithCard ?? 0) * 100).toFixed(0)} % de los partidos, y el −2 del siguiente cuesta ${minusTwo.toFixed(2)} puntos en Liga: ${(minusTwo * (doble.lostWithCard ?? 0)).toFixed(2)} por carta usada.`);
   const revancha = values.get("revancha");
   if (revancha) console.log(`Revancha: vuelve a la mano en el ${((revancha.lostWithCard ?? 0) * 100).toFixed(0)} % de los partidos.`);
+  const dobleV2 = values.get("dobleV2");
+  if (dobleV2) console.log(`Doble o nada (retocada): pierdes otra carta de la mano en el ${((dobleV2.lostWithCard ?? 0) * 100).toFixed(0)} % de los usos (si te queda alguna).`);
 
   return values;
 }
@@ -274,7 +307,7 @@ const SOURCE_LABELS: Record<Source, string> = { base: "al empezar", copa: "Copa"
 
 interface CardPolicy {
   label: string;
-  deck: CardId[];
+  deck: Deck;
   perSeason: number;
   earn: { copa: boolean; leader: boolean; streak: number; europe: boolean };
   use: "smart" | "next";
@@ -288,11 +321,13 @@ interface Stats {
   usedKnockout: number;
   expired: number;
   returned: number;
+  /** Cartas perdidas por Doble o nada (retocada). */
+  burned: number;
   byCard: Map<CardId, { used: number; won: number; lost: number }>;
 }
 
 function emptyStats(): Stats {
-  return { seasons: 0, earned: { base: 0, copa: 0, leader: 0, streak: 0, europe: 0 }, lostFull: 0, used: 0, usedKnockout: 0, expired: 0, returned: 0, byCard: new Map() };
+  return { seasons: 0, earned: { base: 0, copa: 0, leader: 0, streak: 0, europe: 0 }, lostFull: 0, used: 0, usedKnockout: 0, expired: 0, returned: 0, burned: 0, byCard: new Map() };
 }
 
 function createCards(policy: CardPolicy, seed: number, stats: Stats, values: Map<CardId, CardValue>): CardHook {
@@ -301,8 +336,8 @@ function createCards(policy: CardPolicy, seed: number, stats: Stats, values: Map
     state = (state * 48271) % 2147483647;
     return state / 2147483647;
   };
-  const deck = policy.deck.map((id) => CARD_BY_ID.get(id)!);
-  const byRarity = [0, 1, 2].map((rarity) => deck.filter((card) => card.rarity === rarity));
+  const deck = policy.deck.map(({ id }) => CARD_BY_ID.get(id)!);
+  const byRarity = [0, 1, 2].map((rarity) => policy.deck.filter((entry) => entry.rarity === rarity).map(({ id }) => CARD_BY_ID.get(id)!));
   const drawOne = (): CardType => {
     const roll = random();
     const rarity = roll < RARITY_WEIGHTS[0] ? 0 : roll < RARITY_WEIGHTS[0] + RARITY_WEIGHTS[1] ? 1 : 2;
@@ -382,7 +417,7 @@ function createCards(policy: CardPolicy, seed: number, stats: Stats, values: Map
     afterMatch(match, won, lost, cameBack) {
       if (inPlay) {
         // Remontada no se activa (ni se gasta) si no ibas perdiendo al descanso; Revancha vuelve si pierdes.
-        const activated = inPlay.id !== "remontada" || Boolean(cameBack);
+        const activated = !inPlay.spentOnlyIfActivated || Boolean(cameBack);
         if (activated) {
           const usage = stats.byCard.get(inPlay.id) ?? { used: 0, won: 0, lost: 0 };
           usage.used += 1;
@@ -390,13 +425,17 @@ function createCards(policy: CardPolicy, seed: number, stats: Stats, values: Map
           usage.lost += lost ? 1 : 0;
           stats.byCard.set(inPlay.id, usage);
         }
-        if (!activated || (inPlay.id === "revancha" && lost)) {
+        if (!activated || (inPlay.returnsOnLoss && lost)) {
           hand.push(inPlay);
           stats.returned += 1;
           stats.used -= 1;
           if (match.knockout) stats.usedKnockout -= 1;
         }
-        if (inPlay.id === "dobleONada" && lost) pendingPenalty = true;
+        if (inPlay.onLoss === "minusTwo" && lost) pendingPenalty = true;
+        if (inPlay.onLoss === "loseCard" && lost && hand.length > 0) {
+          hand.splice(Math.floor(random() * hand.length), 1);
+          stats.burned += 1;
+        }
         inPlay = undefined;
       }
 
@@ -412,14 +451,17 @@ function createCards(policy: CardPolicy, seed: number, stats: Stats, values: Map
   };
 }
 
-const FULL_DECK = CARDS.map((card) => card.id);
 const ALL_EXTRAS = { copa: true, leader: true, streak: 8, europe: true };
 const NO_EXTRAS = { copa: false, leader: false, streak: 0, europe: false };
-const smart = { deck: FULL_DECK, perSeason: 4, earn: ALL_EXTRAS, use: "smart" } as const;
+const smart: Omit<CardPolicy, "label"> = { deck: ORIGINAL_DECK, perSeason: 4, earn: ALL_EXTRAS, use: "smart" };
+// Las que reciben la tabla de qué cartas se usan.
+const USAGE_TABLES = ["Mazo completo, uso sensato", "Mazo retocado, uso sensato"];
 const POLICIES: (CardPolicy | null)[] = [
   null,
   { ...smart, label: "Mazo completo, uso sensato" },
   { ...smart, label: "Mazo completo, en el siguiente partido", use: "next" },
+  { ...smart, label: "Mazo retocado, uso sensato", deck: RETOUCHED_DECK },
+  { ...smart, label: "Mazo retocado, en el siguiente partido", deck: RETOUCHED_DECK, use: "next" },
   { ...smart, label: "Solo +2 / +4 / +6, uso sensato", deck: PLUS_ONLY },
   { ...smart, label: "5 al empezar", perSeason: 5 },
   { ...smart, label: "Racha de 6", earn: { ...ALL_EXTRAS, streak: 6 } },
@@ -445,8 +487,7 @@ interface RowSummary { seasons: number; points: number; copa: number; europe: nu
 
 const values = runProbe();
 const summaries = new Map<string, RowSummary[]>();
-const cardTotals = new Map<CardId, { used: number; won: number; lost: number }>();
-let cardSeasons = 0;
+const cardTotals = new Map<string, { seasons: number; burned: number; byCard: Map<CardId, { used: number; won: number; lost: number }> }>();
 let played = 0;
 let rejected = 0;
 
@@ -480,12 +521,15 @@ for (const { label: difficultyLabel, value: difficulty } of DIFFICULTIES) {
         score: mean(careers.map((career) => career.score)),
       };
       summaries.set(label, [...(summaries.get(label) ?? []), summary]);
-      if (policy?.label === "Mazo completo, uso sensato") {
-        cardSeasons += stats.seasons;
+      if (policy && USAGE_TABLES.includes(policy.label)) {
+        const totals = cardTotals.get(policy.label) ?? { seasons: 0, burned: 0, byCard: new Map() };
+        totals.seasons += stats.seasons;
+        totals.burned += stats.burned;
         for (const [id, usage] of stats.byCard) {
-          const total = cardTotals.get(id) ?? { used: 0, won: 0, lost: 0 };
-          cardTotals.set(id, { used: total.used + usage.used, won: total.won + usage.won, lost: total.lost + usage.lost });
+          const total = totals.byCard.get(id) ?? { used: 0, won: 0, lost: 0 };
+          totals.byCard.set(id, { used: total.used + usage.used, won: total.won + usage.won, lost: total.lost + usage.lost });
         }
+        cardTotals.set(policy.label, totals);
       }
 
       played += careers.length;
@@ -531,15 +575,18 @@ for (const [label, rows] of summaries) {
   ].join(" | ")} |`);
 }
 
-if (cardSeasons) {
-  console.log(`\n### Qué cartas se usan (mazo completo, uso sensato, los 4 casos)\n`);
+for (const [label, totals] of cardTotals) {
+  const deck = POLICIES.find((policy) => policy?.label === label)?.deck ?? [];
+  console.log(`\n### Qué cartas se usan («${label}», los 4 casos)\n`);
   console.log("| Carta | Rareza | Usadas por temporada | Ganados | Perdidos |");
   console.log("| --- | --- | --- | --- | --- |");
-  for (const card of CARDS) {
-    const usage = cardTotals.get(card.id);
-    const isScout = card.id === "ojeador";
-    console.log(`| ${card.label} | ${RARITY_LABELS[card.rarity]} | ${usage ? (usage.used / cardSeasons).toFixed(2) : "0.00"}${isScout ? " (en sorteos)" : ""} | ${usage && !isScout ? share(usage.won, usage.used) : "-"} | ${usage && !isScout ? share(usage.lost, usage.used) : "-"} |`);
+  for (const { id, rarity } of deck) {
+    const card = CARD_BY_ID.get(id)!;
+    const usage = totals.byCard.get(id);
+    const isScout = id === "ojeador";
+    console.log(`| ${card.label} | ${RARITY_LABELS[rarity]} | ${usage ? (usage.used / totals.seasons).toFixed(2) : "0.00"}${isScout ? " (en sorteos)" : ""} | ${usage && !isScout ? share(usage.won, usage.used) : "-"} | ${usage && !isScout ? share(usage.lost, usage.used) : "-"} |`);
   }
+  if (totals.burned) console.log(`\nCartas perdidas por Doble o nada (retocada): ${(totals.burned / totals.seasons).toFixed(2)} por temporada.`);
 }
 
 console.log(`\nCarreras simuladas: ${played}. Rechazadas por la regla de plausibilidad del ranking: ${rejected}.`);

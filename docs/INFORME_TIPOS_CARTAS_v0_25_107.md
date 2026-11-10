@@ -172,9 +172,9 @@ Clásico, Remontada y San Mamés ganan menos porque solo se usan en partidos dif
 
 | Rareza | Cartas | Cambios |
 | --- | --- | --- |
-| Común (≈ +2) | +2, Ataque total, Portero inspirado, Ojeador, Mediocampo | Ataque total y Portero bajan de rara a común. Mediocampo debería ser «+6 en el control y +2 en el resto» (sin medir) o desaparecer |
-| Rara (≈ +4) | +4, Defensa total, Clásico, Revancha, Remontada | Revancha sube de común a rara. Remontada debería ser «+12 la segunda parte» (sin medir), o se queda floja |
-| Épica (≈ +6) | +6, Efecto San Mamés, Fortín fuera, Doble o nada | Fortín fuera sube de común a épica. Doble o nada necesita un coste real: si pierdes, pierdes otra carta de la mano (sin medir) |
+| Común (≈ +2) | +2, Ataque total, Portero inspirado, Ojeador, Mediocampo | Ataque total y Portero bajan de rara a común. Mediocampo debería ser «+6 en el control y +2 en el resto» (medido abajo) o desaparecer |
+| Rara (≈ +4) | +4, Defensa total, Clásico, Revancha, Remontada | Revancha sube de común a rara. Remontada debería ser «+12 la segunda parte» (medido abajo), o se queda floja |
+| Épica (≈ +6) | +6, Efecto San Mamés, Fortín fuera, Doble o nada | Fortín fuera sube de común a épica. Doble o nada necesita un coste real: si pierdes, pierdes otra carta de la mano (medido abajo) |
 
 **Cómo se ganan:** como se ha medido.
 - 4 al empezar la temporada;
@@ -186,9 +186,54 @@ Clásico, Remontada y San Mamés ganan menos porque solo se usan en partidos dif
 
 Quedan 14 tipos, más de los 9 que pedía el usuario.
 
-**Antes de construir, convendría medir de nuevo las tres cartas retocadas** (Mediocampo, Remontada y Doble o nada) y el mazo con la rareza nueva. La inflación esperada no cambia mucho, porque las cartas solo se recolocan y el valor medio del mazo es parecido.
+Los tres retoques y el mazo con la rareza nueva se midieron después: los resultados están en la sección siguiente.
 
 **Permiso:** construirlo toca el modo carrera, la entrada del simulador, el motor de partidos (para Defensa total, Ataque total, Fortín fuera y Portero inspirado), las recompensas y el guardado de la partida. Sería una fase nueva con su versión.
+
+## Retoques medidos
+
+El usuario pidió «mide los retoques».
+
+**Reproducible:** `npm run audit:card-types -- "--only=hoy|Mazo"`. Las filas del mazo original salen idénticas a las de arriba.
+
+**Las tres cartas retocadas, en un partido:**
+
+| Carta | Antes | Ahora | Liga: equivale a | Eliminatoria: equivale a | Por carta gastada |
+| --- | --- | --- | --- | --- | --- |
+| Mediocampo | +6 en el control | +6 en el control y +2 en el resto | +2,5 (antes +0,5) | +2,7 (antes +0,4) | Igual: se gasta siempre |
+| Remontada | +6 la segunda parte | +12 la segunda parte | +1,6 (antes +0,5) | +1,5 (antes +0,6) | **≈ +5** (antes ≈ +1,7): solo se gasta el 30 % de las veces, cuando vas perdiendo al descanso |
+| Doble o nada | si pierdes, −2 el siguiente partido | si pierdes, pierdes otra carta de la mano | +6 | +6 | El 39 % de las veces pierdes además otra carta: 0,07 cartas por temporada en las carreras |
+
+**Ahora cada carta vale lo que dice su rareza:**
+- Mediocampo vale como una común (≈ +2,5).
+- Remontada vale como una rara si se cuenta por carta gastada (≈ +5).
+- Doble o nada sigue siendo un +6, pero ahora con un riesgo que se nota.
+
+**El mazo retocado en carreras** (media de los cuatro casos):
+
+| Cartas | Temporadas superadas | Puntos en la 1.ª | Copas por temporada | Títulos por temporada | Puntuación | Frente a sin cartas |
+| --- | --- | --- | --- | --- | --- | --- |
+| Sin cartas (hoy) | 2,19 | 58,4 | 0,15 | 0,38 | 28,0 | - |
+| Mazo original, uso sensato | 2,51 | 58,7 | 0,23 | 0,52 | 34,1 | +22 % |
+| Mazo original, en el siguiente partido | 2,57 | 59,9 | 0,15 | 0,42 | 33,0 | +18 % |
+| **Mazo retocado, uso sensato** | 2,44 | 58,9 | **0,21** | **0,51** | 33,0 | **+18 %** |
+| Mazo retocado, en el siguiente partido | 2,64 | 59,9 | 0,14 | 0,41 | 33,8 | +21 % |
+
+6.000 carreras; ninguna rechazada por la regla de plausibilidad.
+
+**Lo que dicen los datos:**
+1. **El mazo retocado infla un poco menos (+18 % frente a +22 %).** El Fortín fuera, la mejor carta, ahora es épica y sale menos: 0,28 usos por temporada frente a 0,76. La diferencia entre los dos mazos está dentro del margen.
+2. **El impacto sigue en los títulos.** Las Copas suben de 0,15 a 0,21 por temporada (+40 %) y los títulos totales, de 0,38 a 0,51.
+3. **La decisión se mantiene.** Gastadas en el siguiente partido, dan más supervivencia (+0,45 temporadas) y más puntos, pero ninguna Copa de más.
+4. **El uso se reparte:** ninguna carta pasa de 0,7 usos por temporada. Las que más se usan son +2, Ataque total y Mediocampo, que son las comunes.
+
+**Mazo final propuesto** (14 tipos):
+
+| Rareza (probabilidad) | Cartas |
+| --- | --- |
+| Común (50 %) | +2, Ataque total, Portero inspirado, Ojeador, Mediocampo (+6 en el control y +2 en el resto) |
+| Rara (35 %) | +4, Defensa total, Clásico, Revancha, Remontada (+12 la segunda parte) |
+| Épica (15 %) | +6, Efecto San Mamés, Fortín fuera, Doble o nada (si pierdes, pierdes otra carta) |
 
 ## Limitaciones
 
