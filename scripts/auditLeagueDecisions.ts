@@ -33,8 +33,22 @@ interface LeaguePolicy {
   halfTime?: "good" | "bad" | "random";
   /** Fase 3: multiplica el efecto del planteamiento y del descanso en esos partidos. Sin definir, 1. */
   weight?: number;
+  /** Idea I3 (v0.25.107): comodines de descanso por temporada. La Liga solo se para si vas empatando o perdiendo y te queda alguno. */
+  wildcards?: number;
+  /** Cuándo gasta el comodín el jugador en cada parada. */
+  wildcardUse?: WildcardUse;
   cups: Policy;
 }
+
+type WildcardUse = "always" | "losing" | "losingBig" | "random" | "bad";
+
+const WILDCARD_USES: { use: WildcardUse; label: string }[] = [
+  { use: "always", label: "gasta en cuanto puede" },
+  { use: "losing", label: "solo si pierde" },
+  { use: "losingBig", label: "solo si pierde contra un grande" },
+  { use: "random", label: "al azar" },
+  { use: "bad", label: "decide mal" },
+];
 
 const CUPS_NEVER: Policy = { label: "Nunca decide", approach: "balanced", halfTime: "keep" };
 const CUPS_WELL: Policy = { label: "Decide bien", approach: "best", halfTime: "good" };
@@ -80,6 +94,12 @@ const POLICIES: LeaguePolicy[] = [
   { label: "Todos los partidos", decisions: "38", approach: "best", cups: CUPS_WELL },
   { label: "Todos los partidos, con descanso", decisions: "76", approach: "best", halfTime: "good", cups: CUPS_WELL },
   { label: "Todos los partidos, decide mal", decisions: "76", approach: "worst", halfTime: "bad", cups: CUPS_BADLY },
+  // Idea I3: N comodines de descanso por temporada. «Sin tope» es el techo: para siempre que vas empatando o perdiendo.
+  ...[2, 3, 5].flatMap((wildcards) => WILDCARD_USES.map(({ use, label }): LeaguePolicy => (
+    { label: `Comodín ${wildcards}: ${label}`, decisions: "", approach: "none", wildcards, wildcardUse: use, cups: CUPS_WELL }
+  ))),
+  { label: "Comodín sin tope: gasta en cuanto puede", decisions: "", approach: "none", wildcards: LEAGUE_MATCHDAYS, wildcardUse: "always", cups: CUPS_WELL },
+  { label: "Comodín sin tope: solo si pierde", decisions: "", approach: "none", wildcards: LEAGUE_MATCHDAYS, wildcardUse: "losing", cups: CUPS_WELL },
 ];
 
 const APPROACHES: MatchApproach[] = ["balanced", "attacking", "defensive"];
@@ -98,6 +118,29 @@ let lastMatchday = 0;
 let seasonIndex = 0;
 let decidedBySeason: number[] = [];
 let careersBySeason: number[] = [];
+// Comodines (I3): los que quedan esta temporada, si el partido es contra un grande, y paradas y comodines gastados en total.
+let wildcardsLeft = 0;
+let bigMatch = false;
+let wildcardPauses = 0;
+let wildcardsUsed = 0;
+
+/** Qué hace el jugador en una parada: «keep» guarda el comodín. */
+function pickWildcard(margin: number, userIsWeaker: boolean): HalfTimeChoice {
+  const losing = margin < 0;
+
+  switch (current.wildcardUse) {
+    case "always":
+      return losing ? "push" : userIsWeaker ? "close" : "push";
+    case "losing":
+      return losing ? "push" : "keep";
+    case "losingBig":
+      return losing && bigMatch ? "push" : "keep";
+    case "random":
+      return HALF_TIME_CHOICES[Math.floor(Math.random() * HALF_TIME_CHOICES.length)];
+    default:
+      return losing ? "close" : userIsWeaker ? "push" : "close";
+  }
+}
 
 function isDecisionMatchday(matchday: number): boolean {
   return current.lastMatchdays === undefined || matchday > LEAGUE_MATCHDAYS - current.lastMatchdays;
@@ -139,11 +182,17 @@ function getLeagueApproach(params: {
 
 (globalThis as { __auditLeague?: unknown }).__auditLeague = {
   matchOptions(params: Parameters<typeof getLeagueApproach>[0] & { matchday: number }) {
-    decidedThisMatch = isDecisionMatchday(params.matchday)
+    // Con comodines, el planteamiento no se decide: solo el descanso, en afterMatch.
+    decidedThisMatch = current.wildcards === undefined
+      && isDecisionMatchday(params.matchday)
       && (current.bigMatchMargin === undefined || params.rival.ratings.overall >= getAverageUserRating(params.teamRating) - current.bigMatchMargin);
 
     if (params.matchday <= lastMatchday) seasonIndex += 1;
-    if (params.matchday <= lastMatchday || lastMatchday === 0) careersBySeason[seasonIndex] = (careersBySeason[seasonIndex] ?? 0) + 1;
+    if (params.matchday <= lastMatchday || lastMatchday === 0) {
+      careersBySeason[seasonIndex] = (careersBySeason[seasonIndex] ?? 0) + 1;
+      wildcardsLeft = current.wildcards ?? 0;
+    }
+    bigMatch = params.rival.ratings.overall >= getAverageUserRating(params.teamRating) - 1;
     lastMatchday = params.matchday;
     if (decidedThisMatch) decidedBySeason[seasonIndex] = (decidedBySeason[seasonIndex] ?? 0) + 1;
 
@@ -158,6 +207,19 @@ function getLeagueApproach(params: {
   },
   afterMatch({ result, selectedPlayers }: { result: MatchResult; selectedPlayers: SelectedPlayer[] }) {
     try {
+      if (current.wildcards !== undefined) {
+        const margin = getHalfTimeMargin(result);
+        if (margin > 0 || wildcardsLeft === 0) return result;
+
+        wildcardPauses += 1;
+        const choice = pickWildcard(margin, (result.expectedGoals?.user ?? 0) < (result.expectedGoals?.rival ?? 0));
+        if (choice === "keep") return result;
+
+        wildcardsLeft -= 1;
+        wildcardsUsed += 1;
+        return applyHalfTimeChoice({ result, choice, selectedPlayers });
+      }
+
       if (!current.halfTime || !decidedThisMatch) return result;
 
       const choice = current.halfTime === "random"
@@ -186,14 +248,16 @@ let rejected = 0;
 for (const { label: difficultyLabel, value: difficulty } of DIFFICULTIES) {
   for (const { label: draftLabel, style } of DRAFTS) {
     console.log(`\n### Dificultad ${difficultyLabel} · draft «${draftLabel}»\n`);
-    console.log("| Jugador | Decisiones en Liga por temporada | Partidos en que decide, temporadas 1.ª · 3.ª · 5.ª | Temporadas superadas | Pasa la 1.ª | Posición en la 1.ª | Puntos en la 1.ª | Posición media | Títulos por temporada | Goles a favor por partido | En contra | Puntuación | Elige ataque | Equilibrado | Defensa |");
-    console.log("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+    console.log("| Jugador | Decisiones en Liga por temporada | Partidos en que decide, temporadas 1.ª · 3.ª · 5.ª | Temporadas superadas | Pasa la 1.ª | Posición en la 1.ª | Puntos en la 1.ª | Posición media | Títulos por temporada | Goles a favor por partido | En contra | Puntuación | Elige ataque | Equilibrado | Defensa | Rechazadas por plausibilidad |");
+    console.log("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
 
     for (const policy of POLICIES.filter((item) => ONLY.split(",").some((part) => item.label.includes(part)))) {
       current = policy;
       chosen = { balanced: 0, attacking: 0, defensive: 0 };
       decidedBySeason = [];
       careersBySeason = [];
+      wildcardPauses = 0;
+      wildcardsUsed = 0;
 
       const careers = Array.from({ length: CAREERS_PER_CELL }, (_, index) => {
         const seed = index + 1;
@@ -215,7 +279,9 @@ for (const { label: difficultyLabel, value: difficulty } of DIFFICULTIES) {
 
       console.log(`| ${[
         policy.label,
-        policy.decisions || (decided / Math.max(1, seasons)).toFixed(1),
+        policy.wildcards !== undefined
+          ? `${(wildcardPauses / Math.max(1, seasons)).toFixed(1)} paradas, ${(wildcardsUsed / Math.max(1, seasons)).toFixed(1)} comodines gastados`
+          : policy.decisions || (decided / Math.max(1, seasons)).toFixed(1),
         [0, 2, 4].map(decidedInSeason).join(" · "),
         meanWithMargin(careers.map((career) => career.completedSeasons)),
         share(careers.filter((career) => career.completedSeasons >= 1).length, careers.length),
@@ -229,6 +295,7 @@ for (const { label: difficultyLabel, value: difficulty } of DIFFICULTIES) {
         decided > 0 ? share(chosen.attacking, decided) : "-",
         decided > 0 ? share(chosen.balanced, decided) : "-",
         decided > 0 ? share(chosen.defensive, decided) : "-",
+        String(careers.filter((career) => !career.plausible).length),
       ].join(" | ")} |`);
     }
   }
