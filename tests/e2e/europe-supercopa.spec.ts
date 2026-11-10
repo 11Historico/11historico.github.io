@@ -82,6 +82,21 @@ async function loadSave(page: Page, save: object) {
   await page.getByRole("button", { name: "Continuar" }).click();
 }
 
+// v0.25.108: al empezar la temporada de carrera se eligen 4 cartas, de 6 boca abajo cada vez.
+async function pickSeasonCards(page: Page) {
+  const dialog = page.getByRole("dialog", { name: /Carta \d de 4/ });
+
+  for (let number = 1; number <= 4; number += 1) {
+    await expect(dialog.getByRole("heading")).toHaveText(`Carta ${number} de 4`);
+    await dialog.getByRole("button", { name: "Carta 1 boca abajo" }).click();
+    await expect(dialog.getByRole("button", { name: /, tu carta$/ })).toBeVisible();
+    await expect(dialog).toContainText("Estas eran las otras cartas.");
+    await dialog.getByRole("button", { name: number < 4 ? "Siguiente carta" : "Seguir" }).click();
+  }
+
+  await expect(dialog).toHaveCount(0);
+}
+
 async function advanceToEuropeanMatch(page: Page) {
   const simulateEuropean = page.getByRole("button", { name: "Simular partido europeo" });
 
@@ -360,10 +375,13 @@ test("la Supercopa se reproduce partido a partido y el veredicto llega al final"
 
   await page.locator(".start-league-button-header").click();
   await expect(page.getByRole("heading", { name: "Supercopa de España" })).toBeVisible();
+  await pickSeasonCards(page);
 
   // v0.25.75: planteamiento para toda la Supercopa, con la previa de la semifinal.
   const preview = page.getByRole("region", { name: "Previa de la semifinal" });
   await expect(preview).toContainText(/Victoria \d+\s%/);
+  // v0.25.108: las 4 cartas de la temporada, en la previa.
+  await expect(preview).toContainText("Tus cartas (4/6)");
   await preview.getByRole("button", { name: "Defensivo" }).click();
   await expect(preview.getByRole("button", { name: "Defensivo" })).toHaveAttribute("aria-pressed", "true");
 

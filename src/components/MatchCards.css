@@ -1,0 +1,230 @@
+/* Cartas de partido (v0.25.108). */
+
+.match-card {
+  --card-accent: #9aa6b8;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  border: 2px solid var(--card-accent);
+  border-radius: 12px;
+  padding: 0.5rem 0.55rem;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03));
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+
+.match-card-common { --card-accent: #9aa6b8; }
+.match-card-rare { --card-accent: #4ea8ff; }
+.match-card-epic { --card-accent: #ffc94d; }
+
+.match-card:disabled {
+  cursor: default;
+}
+
+.match-card-rarity {
+  color: var(--card-accent);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.match-card-name {
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.match-card-description,
+.match-card-unavailable {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.match-card-unavailable {
+  color: #ffd5a8;
+}
+
+/* La mano en la previa */
+.match-cards-hand {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.6rem 0;
+}
+
+.match-cards-hand-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.match-cards-hand-empty small {
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.4;
+}
+
+.match-cards-hand-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 0.45rem;
+}
+
+.match-cards-hand .match-card:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+.match-cards-hand .match-card:disabled {
+  opacity: 0.5;
+}
+
+.match-card-armed {
+  box-shadow: 0 0 0 3px var(--card-accent), 0 8px 22px rgba(0, 0, 0, 0.35);
+  transform: translateY(-2px);
+}
+
+.match-cards-notes {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+}
+
+.match-cards-notes li::before {
+  content: "🃏 ";
+}
+
+/* El sorteo */
+.match-card-draw-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: radial-gradient(circle at top, rgba(227, 6, 19, 0.22), rgba(4, 8, 18, 0.88));
+  backdrop-filter: blur(8px);
+}
+
+.match-card-draw-overlay:focus {
+  outline: none;
+}
+
+.match-card-draw-modal {
+  width: min(760px, 100%);
+  max-height: 92vh;
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 24px;
+  padding: clamp(1rem, 3vw, 1.75rem);
+  background: linear-gradient(145deg, rgba(18, 24, 42, 0.97), rgba(87, 14, 24, 0.95));
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.48);
+  color: #fff;
+  text-align: center;
+}
+
+.match-card-draw-eyebrow {
+  display: inline-flex;
+  margin-bottom: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  color: #ffd5d5;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.match-card-draw-modal h2 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+}
+
+.match-card-draw-modal p {
+  margin: 0 0 1rem;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.match-card-draw-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.match-card-draw-card {
+  min-height: 132px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  animation: match-card-flip 380ms ease both;
+}
+
+.match-card-back {
+  border-color: rgba(255, 255, 255, 0.45);
+  background:
+    repeating-linear-gradient(45deg, rgba(227, 6, 19, 0.55) 0 10px, rgba(150, 0, 12, 0.55) 10px 20px);
+  animation: none;
+}
+
+.match-card-back:not(:disabled):hover {
+  transform: translateY(-4px) rotate(-1deg);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+}
+
+.match-card-back-mark {
+  font-size: 2.2rem;
+  font-weight: 900;
+  opacity: 0.85;
+}
+
+.match-card-picked {
+  box-shadow: 0 0 0 4px var(--card-accent), 0 0 34px 6px rgba(255, 224, 138, 0.45);
+  transform: scale(1.04);
+}
+
+.match-card-not-picked {
+  opacity: 0.72;
+}
+
+.match-card-draw-continue {
+  margin-top: 1.1rem;
+}
+
+@keyframes match-card-flip {
+  from { transform: rotateY(90deg); }
+  to { transform: rotateY(0deg); }
+}
+
+.match-card-picked.match-card-draw-card {
+  animation: match-card-flip-picked 420ms ease both;
+}
+
+@keyframes match-card-flip-picked {
+  from { transform: rotateY(90deg) scale(1.04); }
+  to { transform: rotateY(0deg) scale(1.04); }
+}
+
+@media (max-width: 520px) {
+  .match-card-draw-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .match-card-draw-card {
+    min-height: 104px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .match-card,
+  .match-card-draw-card,
+  .match-card-picked.match-card-draw-card {
+    animation: none;
+    transition: none;
+  }
+}

@@ -54,6 +54,18 @@ import { awardEuropeanTrophyToCareer } from "./career/europeanTrophies";
 import { awardEuropeanPrestigeToCareer } from "./career/europeanPrestige";
 import { shouldResumeInterseasonReward } from "./career/resumeScreen";
 import type { EuropeanPrestigeReward } from "./career/europeanPrestige";
+import {
+  applyMatchCardLineBonus,
+  armMatchCard,
+  closeMatchCardDraw,
+  createSeasonMatchCards,
+  getArmedMatchCardPlay,
+  pickMatchCard,
+  resolveMatchCards,
+  type MatchCardSituation,
+  type MatchCardsState,
+} from "./career/matchCards";
+import { MatchCardDraw, MatchCardsHand } from "./components/MatchCards";
 
 import { resolvePlayerSlotPlacement } from "./domain/positionRules";
 
@@ -104,6 +116,7 @@ import {
   createCareerSupercopaQualification,
   getSupercopaFinalPreview,
   getSupercopaSemifinalPreview,
+  getSupercopaUserOpponent,
   simulateSupercopaFinal,
   simulateSupercopaSemifinals,
 } from "./career/supercopaRules";
@@ -288,6 +301,8 @@ export default function App() {
   const [careerEuropeanPrestigeReward, setCareerEuropeanPrestigeReward] = useState<EuropeanPrestigeReward | undefined>(
     () => savedGame?.careerEuropeanPrestigeReward
   );
+  // Cartas de partido (v0.25.108). Viven aquí porque la Supercopa se juega antes de la Liga.
+  const [careerMatchCards, setCareerMatchCards] = useState<MatchCardsState | undefined>(() => savedGame?.careerMatchCards);
 
   const [gameId, setGameId] = useState<string>(() => savedGame?.gameId ?? createGameId());
   const [phase, setPhase] = useState<GamePhase>(() => savedGame?.phase ?? "formation_selection");
@@ -304,6 +319,26 @@ export default function App() {
   const [teamRating, setTeamRating] = useState<TeamRating | undefined>(() => savedGame?.teamRating);
   // La Supercopa juega con la media visible más la dificultad, sin la compresión de la Liga (v0.25.101).
   const supercopaTeamRating = teamRating && applyDifficultyModifier(teamRating, difficulty);
+  // Cartas en la Supercopa (v0.25.108): el partido que toca, tal como lo enseña la previa.
+  const supercopaCardSituation = useMemo<MatchCardSituation | undefined>(() => {
+    if (!careerMatchCards || !supercopaTeamRating || screen !== "career_supercopa") return undefined;
+
+    const opponent = careerCurrentSupercopaResult
+      ? careerCurrentSupercopaResult.awaitingFinal
+        ? getSupercopaUserOpponent({ rivals: careerLeagueRivals, semifinals: careerCurrentSupercopaResult })
+        : undefined
+      : careerPendingSupercopa && getSupercopaUserOpponent({ rivals: careerLeagueRivals, qualification: careerPendingSupercopa });
+
+    return opponent && {
+      competition: "supercopa",
+      knockout: true,
+      venue: opponent.venue,
+      userOverall: Math.round(supercopaTeamRating.overall),
+      rivalOverall: Math.round(opponent.rival.ratings.overall),
+    };
+  }, [careerCurrentSupercopaResult, careerLeagueRivals, careerMatchCards, careerPendingSupercopa, screen, supercopaTeamRating]);
+  const supercopaCardPlay = getArmedMatchCardPlay(careerMatchCards, supercopaCardSituation);
+  const supercopaMatchRating = supercopaTeamRating && applyMatchCardLineBonus(supercopaTeamRating, supercopaCardPlay?.lineBonus);
   const [leagueContext, setLeagueContext] = useState<UserLeagueSimulationContext | undefined>(() => savedGame?.leagueContext);
   const [pendingSeasonLuckWheelOffer, setPendingSeasonLuckWheelOffer] = useState<SeasonLuckWheelOffer | undefined>(
     () => savedGame?.pendingSeasonLuckWheelOffer
@@ -365,6 +400,7 @@ export default function App() {
       careerCurrentRankingEntry,
       europeanCareer: europeanCareerState,
       careerEuropeanPrestigeReward,
+      careerMatchCards,
       coachBeforeReward,
       replacementDraftSeason,
       replacementRemovedPlayer,
@@ -402,6 +438,7 @@ export default function App() {
       careerCurrentRankingEntry,
       europeanCareerState,
       careerEuropeanPrestigeReward,
+      careerMatchCards,
       coachBeforeReward,
       replacementDraftSeason,
       replacementRemovedPlayer,
@@ -476,6 +513,7 @@ export default function App() {
     setCareerCurrentRankingEntry(undefined);
     setEuropeanCareerState(createEmptyEuropeanCareerState());
     setCareerEuropeanPrestigeReward(undefined);
+    setCareerMatchCards(undefined);
     setReplacementDraftSeason(undefined);
     setReplacementRemovedPlayer(undefined);
     setReplacementOriginalFormation(undefined);
@@ -562,6 +600,7 @@ export default function App() {
     setCareerCurrentRankingEntry(loadedGame.careerCurrentRankingEntry);
     setEuropeanCareerState(normalizeEuropeanCareerState(loadedGame.europeanCareer));
     setCareerEuropeanPrestigeReward(loadedGame.careerEuropeanPrestigeReward);
+    setCareerMatchCards(loadedGame.careerMatchCards);
     setReplacementDraftSeason(loadedGame.replacementDraftSeason);
     setReplacementRemovedPlayer(loadedGame.replacementRemovedPlayer);
     setReplacementOriginalFormation(loadedGame.replacementOriginalFormation);
@@ -739,6 +778,8 @@ export default function App() {
     setTeamRating(ratingWithCareerBonus);
     setCareerSeasonRatingBonus(0);
     setLeagueContext(undefined);
+    // Cartas nuevas cada temporada de carrera: las que sobran caducan (v0.25.108).
+    setCareerMatchCards(isCareerMode ? createSeasonMatchCards(`${gameId}_${careerSeasonLabel}`) : undefined);
     setPendingSeasonLuckWheelOffer(undefined);
 
     if (isCareerMode && careerPendingSupercopa?.userQualified) {
@@ -751,33 +792,52 @@ export default function App() {
     setScreen("league_simulation");
   }
 
+  /** Gasta la carta del partido de Supercopa recién jugado y aplica sus reglas (v0.25.108). */
+  function resolveSupercopaCards(result: CareerSupercopaResult, wonMatch: boolean) {
+    if (!careerMatchCards || !supercopaCardSituation) return;
+
+    const userMatch = [...result.results].reverse().find((match) => match.userTeamPlayed);
+    setCareerMatchCards(resolveMatchCards(careerMatchCards, {
+      situation: supercopaCardSituation,
+      won: wonMatch,
+      lost: !wonMatch,
+      comebackActivated: userMatch?.comebackActivated,
+    }));
+  }
+
   function handleSimulateCareerSupercopa(approach: MatchApproach) {
-    if (!careerPendingSupercopa || !supercopaTeamRating) return;
+    if (!careerPendingSupercopa || !supercopaMatchRating) return;
 
     // v0.25.90: primero las semifinales; si pasas, la final se juega aparte.
     const result = simulateSupercopaSemifinals({
       qualification: careerPendingSupercopa,
-      teamRating: supercopaTeamRating,
+      teamRating: supercopaMatchRating,
       selectedPlayers,
       rivals: careerLeagueRivals,
       approach,
       coachSkills: selectedCoach?.coachSeason.skills,
+      card: supercopaCardPlay?.effect,
     });
 
     setCareerCurrentSupercopaResult(result);
+    resolveSupercopaCards(result, Boolean(result.awaitingFinal));
   }
 
   function handleSimulateCareerSupercopaFinal(approach: MatchApproach) {
-    if (!careerCurrentSupercopaResult?.awaitingFinal || !supercopaTeamRating) return;
+    if (!careerCurrentSupercopaResult?.awaitingFinal || !supercopaMatchRating) return;
 
-    setCareerCurrentSupercopaResult(simulateSupercopaFinal({
+    const result = simulateSupercopaFinal({
       semifinals: careerCurrentSupercopaResult,
-      teamRating: supercopaTeamRating,
+      teamRating: supercopaMatchRating,
       selectedPlayers,
       rivals: careerLeagueRivals,
       approach,
       coachSkills: selectedCoach?.coachSeason.skills,
-    }));
+      card: supercopaCardPlay?.effect,
+    });
+
+    setCareerCurrentSupercopaResult(result);
+    resolveSupercopaCards(result, result.won);
   }
 
   function handleContinueAfterSupercopa() {
@@ -1586,32 +1646,51 @@ export default function App() {
             coachSkills={selectedCoach?.coachSeason.skills}
             pitch={selectedFormation && { formation: selectedFormation, selectedPlayers }}
             getSemifinalPreview={(approach) =>
-              supercopaTeamRating &&
+              supercopaMatchRating &&
               getSupercopaSemifinalPreview({
                 qualification: careerPendingSupercopa,
-                teamRating: supercopaTeamRating,
+                teamRating: supercopaMatchRating,
                 selectedPlayers,
                 rivals: careerLeagueRivals,
                 approach,
                 coachSkills: selectedCoach?.coachSeason.skills,
+                card: supercopaCardPlay?.effect,
               })
             }
             getFinalPreview={(approach) =>
-              supercopaTeamRating &&
+              supercopaMatchRating &&
               careerCurrentSupercopaResult &&
               getSupercopaFinalPreview({
                 semifinals: careerCurrentSupercopaResult,
-                teamRating: supercopaTeamRating,
+                teamRating: supercopaMatchRating,
                 selectedPlayers,
                 rivals: careerLeagueRivals,
                 approach,
                 coachSkills: selectedCoach?.coachSeason.skills,
+                card: supercopaCardPlay?.effect,
               })
             }
             onSimulate={handleSimulateCareerSupercopa}
             onSimulateFinal={handleSimulateCareerSupercopaFinal}
             onContinue={handleContinueAfterSupercopa}
             onRestart={handleRestart}
+            cardsSlot={careerMatchCards && (
+              <MatchCardsHand
+                cards={careerMatchCards}
+                situation={supercopaCardSituation}
+                onArm={(index) => setCareerMatchCards(armMatchCard(careerMatchCards, index))}
+              />
+            )}
+            cardNotes={careerMatchCards?.lastNotes}
+          />
+        )}
+
+        {/* Sorteos de cartas antes de la Supercopa (v0.25.108). En la Liga los enseña LeagueSimulatorView. */}
+        {screen === "career_supercopa" && !careerCurrentSupercopaResult && careerMatchCards && (careerMatchCards.lastDraw || careerMatchCards.pendingDraws.length > 0) && (
+          <MatchCardDraw
+            cards={careerMatchCards}
+            onPick={(index) => setCareerMatchCards(pickMatchCard(careerMatchCards, index))}
+            onClose={() => setCareerMatchCards(closeMatchCardDraw(careerMatchCards))}
           />
         )}
 
@@ -1640,6 +1719,8 @@ export default function App() {
             onEuropeanTournamentChange={(tournament: EuropeanTournamentState) =>
               setEuropeanCareerState((current) => setEuropeanCurrentTournament(current, tournament))
             }
+            matchCards={isCareerMode ? careerMatchCards : undefined}
+            onMatchCardsChange={setCareerMatchCards}
           />
         )}
 

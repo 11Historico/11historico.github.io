@@ -37,6 +37,25 @@ export interface SimulateMatchParams {
   approach?: MatchApproach;
   /** Las habilidades de ataque y defensa del entrenador refuerzan el planteamiento. */
   coachSkills?: CoachSkills;
+  /** Carta de partido (v0.25.108). Sin ella, el partido es el de siempre. */
+  card?: MatchCardEffect;
+}
+
+/**
+ * Lo que una carta de partido cambia en el motor (v0.25.108). La media de más la suma quien
+ * llama, en el rating; aquí va lo demás. Medido en docs/INFORME_TIPOS_CARTAS_v0_25_107.md.
+ */
+export interface MatchCardEffect {
+  /** Multiplica tus goles esperados (Ataque total). */
+  userGoals?: number;
+  /** Multiplica los goles esperados del rival (Defensa total, Ataque total). */
+  rivalGoals?: number;
+  /** Campo neutral fuera de casa (Fortín fuera): sin la penalización del visitante ni la ventaja del local. */
+  neutralVenue?: boolean;
+  /** Remontada: si vas perdiendo al descanso, la segunda parte se juega con esta media de más. */
+  comeback?: number;
+  /** Portero inspirado: la prórroga o los penaltis de una eliminatoria. Lo aplica cada competición. */
+  shootout?: boolean;
 }
 
 interface RandomGenerator {
@@ -144,6 +163,8 @@ function calculateExpectedGoals(params: {
   opponentMentality: number;
   isHome: boolean;
   riskModifier?: number;
+  /** Campo neutral (carta Fortín fuera): la media entre la ventaja del local y la del visitante. */
+  neutralVenue?: boolean;
 }): number {
   const {
     attack,
@@ -154,6 +175,7 @@ function calculateExpectedGoals(params: {
     opponentMentality,
     isHome,
     riskModifier = 0,
+    neutralVenue = false,
   } = params;
 
   /**
@@ -174,7 +196,7 @@ function calculateExpectedGoals(params: {
     opponentMentality * 0.2;
 
   const ratingDiff = attackingPower - defensiveResistance;
-  const homeBonus = isHome ? 0.14 : -0.18;
+  const homeBonus = neutralVenue ? -0.02 : isHome ? 0.14 : -0.18;
 
   const expectedGoals = 1.08 + ratingDiff / 34 + homeBonus;
 
@@ -601,13 +623,17 @@ function playMatch(params: SimulateMatchParams, random: RandomGenerator): MatchR
     selectedPlayers,
     approach,
     coachSkills,
+    card,
   } = params;
 
   const userIsHome = venue === "home";
+  // Fortín fuera (v0.25.108): fuera de casa, el partido se juega como en campo neutral.
+  const neutralVenue = !userIsHome && Boolean(card?.neutralVenue);
+  const playsAsHome = userIsHome || neutralVenue;
   const difficulty = getFixtureDifficultyModifier({
     teamRating,
     rival,
-    userIsHome,
+    userIsHome: playsAsHome,
   });
 
   const userExpectedGoals = calculateExpectedGoals({
@@ -619,6 +645,7 @@ function playMatch(params: SimulateMatchParams, random: RandomGenerator): MatchR
     opponentMentality: rival.ratings.mentality,
     isHome: userIsHome,
     riskModifier: (teamRating.attack - teamRating.defense) * 0.65,
+    neutralVenue,
   });
 
   const rivalExpectedGoals = calculateExpectedGoals({
@@ -630,6 +657,7 @@ function playMatch(params: SimulateMatchParams, random: RandomGenerator): MatchR
     opponentMentality: teamRating.mentality,
     isHome: !userIsHome,
     riskModifier: (rival.ratings.attack - rival.ratings.defense) * 0.65,
+    neutralVenue,
   });
 
   const approachMultipliers = getApproachGoalMultipliers({
@@ -638,8 +666,8 @@ function playMatch(params: SimulateMatchParams, random: RandomGenerator): MatchR
     userAverage: getAverageUserRating(teamRating),
     rivalAverage: getAverageRivalRating(rival),
   });
-  const userMatchExpectedGoals = userExpectedGoals * approachMultipliers.user;
-  const rivalMatchExpectedGoals = rivalExpectedGoals * approachMultipliers.rival;
+  const userMatchExpectedGoals = userExpectedGoals * approachMultipliers.user * (card?.userGoals ?? 1);
+  const rivalMatchExpectedGoals = rivalExpectedGoals * approachMultipliers.rival * (card?.rivalGoals ?? 1);
   let userGoals = sampleGoalsFromExpectedGoals(userMatchExpectedGoals, random);
   let rivalGoals = sampleGoalsFromExpectedGoals(rivalMatchExpectedGoals, random);
 
@@ -648,7 +676,7 @@ function playMatch(params: SimulateMatchParams, random: RandomGenerator): MatchR
     rivalGoals,
     teamRating,
     rival,
-    userIsHome,
+    userIsHome: playsAsHome,
     random,
   });
 
@@ -746,7 +774,86 @@ function playMatch(params: SimulateMatchParams, random: RandomGenerator): MatchR
  */
 export function simulateMatch(params: SimulateMatchParams): MatchResult {
   const random = createRandom(params.seed);
+  const comeback = params.card?.comeback ?? 0;
 
+  if (!comeback) return playWithApproach(params, random);
+
+  // Remontada (v0.25.108): el mismo partido con las mismas tiradas. Si al descanso no vas
+  // perdiendo, no se activa y el partido es el de siempre.
+  const draws: number[] = [];
+  const base = playWithApproach(params, createReplayRandom(random, draws));
+  if (getUserHalfTimeMargin(base) >= 0) return base;
+
+  const boosted = playWithApproach(
+    { ...params, teamRating: addToAllLines(params.teamRating, comeback), card: { ...params.card, comeback: 0 } },
+    createReplayRandom(random, draws),
+  );
+  return mergeComebackSecondHalf(base, boosted);
+}
+
+function addToAllLines(teamRating: TeamRating, value: number): TeamRating {
+  return {
+    ...teamRating,
+    attack: teamRating.attack + value,
+    defense: teamRating.defense + value,
+    control: teamRating.control + value,
+    physical: teamRating.physical + value,
+    mentality: teamRating.mentality + value,
+    goalkeeping: teamRating.goalkeeping + value,
+    overall: teamRating.overall + value,
+  };
+}
+
+function getUserTeamName(result: MatchResult): string {
+  return result.expectedGoals?.userIsHome === false ? result.awayTeamName : result.homeTeamName;
+}
+
+/** Tus goles menos los del rival en la primera parte. */
+export function getUserHalfTimeMargin(result: MatchResult): number {
+  const userTeamName = getUserTeamName(result);
+  const firstHalf = result.goalEvents.filter((goal) => goal.minute <= HALF_TIME_MINUTE);
+  const userGoals = firstHalf.filter((goal) => goal.teamName === userTeamName).length;
+
+  return userGoals - (firstHalf.length - userGoals);
+}
+
+/** La primera parte del partido jugado y la segunda del partido con la media de más. */
+function mergeComebackSecondHalf(base: MatchResult, boosted: MatchResult): MatchResult {
+  const userTeamName = getUserTeamName(base);
+  const userIsHome = base.expectedGoals?.userIsHome !== false;
+  const goalEvents = [
+    ...base.goalEvents.filter((goal) => goal.minute <= HALF_TIME_MINUTE),
+    ...boosted.goalEvents.filter((goal) => goal.minute > HALF_TIME_MINUTE),
+  ].sort((a, b) => a.minute - b.minute);
+  const userGoals = goalEvents.filter((goal) => goal.teamName === userTeamName).length;
+  const rivalGoals = goalEvents.length - userGoals;
+
+  return {
+    ...base,
+    homeGoals: userIsHome ? userGoals : rivalGoals,
+    awayGoals: userIsHome ? rivalGoals : userGoals,
+    goalEvents,
+    userTeamWon: userGoals > rivalGoals,
+    userTeamDrew: userGoals === rivalGoals,
+    userTeamLost: userGoals < rivalGoals,
+    cleanSheetForUserTeam: rivalGoals === 0,
+    keyFactor: getMatchKeyFactor({
+      userGoals,
+      rivalGoals,
+      userIsHome,
+      userAverage: 0,
+      rivalAverage: 0,
+      userIsHugeFavorite: false,
+      rivalClosedGap: false,
+      upset: false,
+    }),
+    // Con otro marcador, la comparación del planteamiento ya no vale.
+    approachEffect: undefined,
+    comebackActivated: true,
+  };
+}
+
+function playWithApproach(params: SimulateMatchParams, random: RandomGenerator): MatchResult {
   if (!params.approach || params.approach === "balanced") {
     return playMatch(params, random);
   }
