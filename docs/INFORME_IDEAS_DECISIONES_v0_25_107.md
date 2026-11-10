@@ -59,6 +59,9 @@ El usuario preguntó si hay alguna acción durante la temporada que afecte de ve
   - `audit:rating` y `audit:europe`, para ver el efecto en las carreras y en Europa.
 - **Permiso:** sí, porque es el simulador de partidos.
 - **Nota:** por sí sola no añade decisiones en Liga, pero hace que valga la pena cualquier decisión que se añada después.
+- **Medida:** no cumple el objetivo. Las líneas se distinguen demasiado poco y la mejor opción sigue saliendo de la diferencia de nivel (`INFORME_PLANTEAMIENTO_LINEAS_v0_25_107.md`).
+
+La I1 la descartó el usuario («no me gusta»).
 
 ### I3. Comodines de descanso en Liga
 
