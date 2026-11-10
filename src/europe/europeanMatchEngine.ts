@@ -15,7 +15,7 @@
 
 import { simulateMatch } from "../simulation/matchEngine";
 import { applyHalfTimeChoice, getAverageUserRating, getMatchLineDuel } from "../simulation/matchEngine";
-import type { MatchOdds } from "../simulation/matchEngine";
+import type { MatchCardEffect, MatchOdds } from "../simulation/matchEngine";
 import type {
   CoachSkills,
   HalfTimeChoice,
@@ -65,6 +65,8 @@ export interface SimulateEuropeanMatchInput {
   selectedPlayers?: SelectedPlayer[];
   /** Decisión del descanso (v0.25.78). Con la misma semilla, la primera parte es la misma. */
   halfTimeChoice?: Exclude<HalfTimeChoice, "keep">;
+  /** Carta de partido (v0.25.108); su media ya va en userTeamRating y userProfile. */
+  card?: MatchCardEffect;
 }
 
 export interface SimulateEuropeanMatchOutput {
@@ -85,6 +87,8 @@ export interface SimulateEuropeanMatchOutput {
   approachEffect?: MatchApproachEffect;
   halfTimeEffect?: MatchHalfTimeEffect;
   expectedGoals?: MatchExpectedGoals;
+  /** La carta Remontada se activó (v0.25.108). */
+  comebackActivated?: boolean;
   /** Solo con `userProfile` y si se decidió en 90 minutos. */
   lineDuel?: MatchLineDuel;
 }
@@ -107,6 +111,9 @@ const PENALTY_PROBABILITY_MIN = 0.65;
 const PENALTY_PROBABILITY_MAX = 0.85;
 const PENALTY_REGULAR_KICKS = 5;
 const PENALTY_MAX_SUDDEN_DEATH_ROUNDS = 20;
+// Carta Portero inspirado (v0.25.108): tus penaltis y los del rival.
+const CARD_PENALTY_USER_PROBABILITY = 0.85;
+const CARD_PENALTY_OPPONENT_PROBABILITY = 0.65;
 
 /** Generador determinista (mulberry32): misma semilla, misma secuencia. */
 function createRng(seed: number): () => number {
@@ -155,10 +162,15 @@ function simulatePenaltyShootout(params: {
   userTeamRating: number;
   opponentRating: number;
   rng: () => number;
+  inspiredGoalkeeper?: boolean;
 }): EuropeanPenaltyShootout {
   const edge = (params.userTeamRating - params.opponentRating) * PENALTY_RATING_EDGE_PER_POINT;
-  const userProbability = Math.max(PENALTY_PROBABILITY_MIN, Math.min(PENALTY_PROBABILITY_MAX, PENALTY_BASE_SCORING_PROBABILITY + edge));
-  const opponentProbability = Math.max(PENALTY_PROBABILITY_MIN, Math.min(PENALTY_PROBABILITY_MAX, PENALTY_BASE_SCORING_PROBABILITY - edge));
+  const userProbability = params.inspiredGoalkeeper
+    ? CARD_PENALTY_USER_PROBABILITY
+    : Math.max(PENALTY_PROBABILITY_MIN, Math.min(PENALTY_PROBABILITY_MAX, PENALTY_BASE_SCORING_PROBABILITY + edge));
+  const opponentProbability = params.inspiredGoalkeeper
+    ? CARD_PENALTY_OPPONENT_PROBABILITY
+    : Math.max(PENALTY_PROBABILITY_MIN, Math.min(PENALTY_PROBABILITY_MAX, PENALTY_BASE_SCORING_PROBABILITY - edge));
 
   let userScored = 0;
   let opponentScored = 0;
@@ -315,7 +327,7 @@ export function getEuropeanLineDuel(
  * goleador y asistente, que solo se muestran en el partido (v0.25.77).
  */
 export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): SimulateEuropeanMatchOutput {
-  const { userTeamRating, opponentRating, opponentStyle, isHome, competition, seed, isKnockout = false, approach, coachSkills, userProfile, selectedPlayers = [], halfTimeChoice } = input;
+  const { userTeamRating, opponentRating, opponentStyle, isHome, competition, seed, isKnockout = false, approach, coachSkills, userProfile, selectedPlayers = [], halfTimeChoice, card } = input;
 
   const teamRating = buildUserTeamRating(userTeamRating, userProfile);
   const rival = buildEuropeanRivalTeam(opponentRating, competition, opponentStyle);
@@ -330,6 +342,7 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
     seed: seedToNumber(seed),
     approach,
     coachSkills,
+    card,
   });
   const numericSeed = seedToNumber(seed);
   const matchResult = halfTimeChoice
@@ -352,13 +365,14 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
   const goalEvents = toEuropeanGoalEvents(matchResult, isHome);
   const { keyFactor, approachEffect, halfTimeEffect, expectedGoals } = matchResult;
   const lineDuel = userProfile && matchResult.lineDuel ? { ...matchResult.lineDuel, rivalHasOnlyOverall: !opponentStyle } : undefined;
+  const comeback = matchResult.comebackActivated ? { comebackActivated: true } : {};
 
   if (!isKnockout) {
-    return { userGoals, opponentGoals, result, goalEvents, keyFactor, approachEffect, halfTimeEffect, expectedGoals, lineDuel };
+    return { userGoals, opponentGoals, result, goalEvents, keyFactor, approachEffect, halfTimeEffect, expectedGoals, lineDuel, ...comeback };
   }
 
   if (result !== "draw") {
-    return { userGoals, opponentGoals, result, decidedBy: "regular_time", goalEvents, keyFactor, approachEffect, halfTimeEffect, expectedGoals, lineDuel };
+    return { userGoals, opponentGoals, result, decidedBy: "regular_time", goalEvents, keyFactor, approachEffect, halfTimeEffect, expectedGoals, lineDuel, ...comeback };
   }
 
   // Empate a los 90' en semifinal/final: prórroga y, si sigue igual, penaltis.
@@ -383,10 +397,11 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
       approachEffect,
       halfTimeEffect,
       expectedGoals,
+      ...comeback,
     };
   }
 
-  const penaltyShootout = simulatePenaltyShootout({ userTeamRating, opponentRating, rng });
+  const penaltyShootout = simulatePenaltyShootout({ userTeamRating, opponentRating, rng, inspiredGoalkeeper: card?.shootout });
 
   return {
     userGoals: finalUserGoals,
@@ -400,5 +415,6 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
     approachEffect,
     halfTimeEffect,
     expectedGoals,
+    ...comeback,
   };
 }

@@ -461,6 +461,8 @@ export interface MatchResult {
   halfTimeEffect?: MatchHalfTimeEffect;
   expectedGoals?: MatchExpectedGoals;
   lineDuel?: MatchLineDuel;
+  /** La carta Remontada se activó: ibas perdiendo al descanso (v0.25.108). */
+  comebackActivated?: boolean;
 }
 
 // ==========================

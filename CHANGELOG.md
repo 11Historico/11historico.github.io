@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.25.108 — Cartas de partido
+
+- **Cartas en el modo carrera:** cada temporada eliges 4 cartas, de 6 en 6 boca abajo. Te quedas la que eliges y después se dan la vuelta las otras 5 para que veas qué había.
+- **Se ganan más** al llegar a cuartos y a la final de Copa, al ganar al líder de Liga, con 8 partidos seguidos sin perder y al ganar en Europa a un rival con más media. Como mucho tienes 6 en la mano y caducan al acabar la temporada.
+- **14 tipos en tres rarezas:**
+  - **comunes:** +2, Ataque total, Portero inspirado, Ojeador y Mediocampo;
+  - **raras:** +4, Defensa total, Clásico, Revancha y Remontada;
+  - **épicas:** +6, Efecto San Mamés, Fortín fuera y Doble o nada.
+- **Se usan en la previa** de cualquier partido de Liga, Copa, Supercopa o Europa, como mucho una por partido. La previa enseña tu media y tus probabilidades con la carta. Las que no valen en ese partido salen apagadas y dicen por qué.
+- **Medido antes de construir** (`docs/INFORME_TIPOS_CARTAS_v0_25_107.md`): con las cartas, las Copas suben un 40 % y la puntuación un 18 %, y ninguna carrera queda rechazada por plausibilidad. Sin cartas, el juego es exactamente el de antes.
+- La partida rápida no tiene cartas. Las partidas guardadas a mitad de temporada las reciben al empezar la siguiente.
+
 ## v0.25.107 — Previa europea del 3.º contra el 4.º
 
 - **Quedar 3.º o 4.º en la fase inicial ya no elimina:** el 3.º y el 4.º juegan una previa a partido único por entrar en semifinales, en casa del 3.º y en la jornada 27. Si hay empate, prórroga y penaltis, como en la semifinal. Los 2 primeros siguen pasando directos.

@@ -25,12 +25,25 @@ import {
   getCoachCompetitionBoost,
   getCupStatusLabel,
   getCurrentLeagueDiagnosis,
+  getNextUserMatchInfo,
   getNextUserMatchPreview,
   getPendingCupFixture,
   simulateNextCupMatch,
   simulateNextUserLeagueMatch,
   type UserLeagueSimulationContext,
+  type UserMatchInfo,
 } from "../simulation/leagueSimulator";
+import {
+  applyMatchCardLineBonus,
+  armMatchCard,
+  closeMatchCardDraw,
+  getArmedMatchCardPlay,
+  pickMatchCard,
+  resolveMatchCards,
+  type MatchCardSituation,
+  type MatchCardsState,
+} from "../career/matchCards";
+import { MatchCardDraw, MatchCardsHand, MatchCardsNotes } from "./MatchCards";
 
 import {
   getDisplayTable,
@@ -125,6 +138,9 @@ interface LeagueSimulatorViewProps {
   onPendingSeasonLuckWheelOfferChange?: (offer: SeasonLuckWheelOffer | undefined) => void;
   /** Partidos de la Supercopa de esta temporada, para el balance de decisiones (v0.25.96). */
   supercopaResults?: MatchResult[];
+  /** Cartas de partido de la temporada (v0.25.108). Sin ellas (partida rápida), no hay cartas. */
+  matchCards?: MatchCardsState;
+  onMatchCardsChange?: (cards: MatchCardsState) => void;
 }
 
 const AUTO_SIMULATION_DELAY_MS = 1300;
@@ -134,9 +150,12 @@ const AUTO_SIMULATION_DELAY_MS = 1300;
  * siguiera igual, así que recargar aquí no permite repetir una primera parte mala.
  */
 type PendingHalfTime =
-  | { kind: "cup"; contextBefore: UserLeagueSimulationContext; regularTimeResult: MatchResult }
-  | { kind: "europe"; tournamentBefore: EuropeanTournamentState; matchId: string; input: SimulateEuropeanMatchInput };
+  | { kind: "cup"; contextBefore: UserLeagueSimulationContext; regularTimeResult: MatchResult; cardsBefore?: MatchCardsState }
+  | { kind: "europe"; tournamentBefore: EuropeanTournamentState; matchId: string; input: SimulateEuropeanMatchInput; cardsBefore?: MatchCardsState; situation?: MatchCardSituation };
 
+function toCardSituation(info: UserMatchInfo): MatchCardSituation {
+  return { competition: info.competition, knockout: info.competition === "cup", venue: info.venue, userOverall: info.userOverall, rivalOverall: info.rivalOverall };
+}
 function getDifficultyLabel(difficulty: GameDifficulty): string {
   if (difficulty === "normal") return "Fácil";
   if (difficulty === "leyenda") return "Leyenda";
@@ -207,6 +226,8 @@ export function LeagueSimulatorView({
   initialPendingSeasonLuckWheelOffer,
   onPendingSeasonLuckWheelOfferChange,
   supercopaResults,
+  matchCards,
+  onMatchCardsChange,
 }: LeagueSimulatorViewProps) {
   const [context, setContext] = useState<UserLeagueSimulationContext>(
     () => normalizeLeagueContext(initialContext, selectedCoach, leagueRivals && applyCareerRivalProgression(leagueRivals, careerCompletedSeasons))
@@ -290,11 +311,6 @@ export function LeagueSimulatorView({
   );
 
   const diagnosis = getCurrentLeagueDiagnosis(shownContext);
-  // Previa del siguiente partido de Liga o Copa (v0.25.74).
-  const matchPreview = useMemo(
-    () => getNextUserMatchPreview({ context, teamRating: effectiveTeamRating, selectedPlayers, approach }),
-    [approach, context, effectiveTeamRating, selectedPlayers]
-  );
   const pendingCupFixture = getPendingCupFixture(context);
   const userRow = userSummary.row;
   const leagueMatchesPlayed = userRow?.played ?? 0;
@@ -322,19 +338,125 @@ export function LeagueSimulatorView({
   const europeanEventMatch = justPlayedEuropeanMatch ?? (hideNextMatch ? undefined : pendingEuropeanMatch);
   // Un entrenador especialista en Europa suma +1, como el de Copa en la Copa (v0.25.75).
   const europeanUserRating = effectiveTeamRating.overall + getCoachCompetitionBoost(context, "europe");
+
+  // Cartas (v0.25.108): el siguiente partido tal como lo enseña la previa, sin la carta. Es el
+  // que se juega antes: Copa pendiente, después Europa y después Liga.
+  const isEuropeNext = Boolean(pendingEuropeanMatch && !pendingCupFixture);
+  const nextMatchInfo = useMemo(
+    () => (matchCards && !isEuropeNext ? getNextUserMatchInfo({ context, teamRating: effectiveTeamRating }) : undefined),
+    [context, effectiveTeamRating, isEuropeNext, matchCards]
+  );
+  const europeanCardSituation = useMemo<MatchCardSituation | undefined>(
+    () => (matchCards && isEuropeNext && pendingEuropeanMatch
+      ? {
+          competition: "europe",
+          knockout: isEuropeanKnockoutMatch(pendingEuropeanMatch),
+          venue: pendingEuropeanMatch.isHome ? "home" : "away",
+          userOverall: Math.round(europeanUserRating),
+          rivalOverall: pendingEuropeanMatch.opponent.rating,
+        }
+      : undefined),
+    [europeanUserRating, isEuropeNext, matchCards, pendingEuropeanMatch]
+  );
+  const nextCardSituation = europeanCardSituation ?? (nextMatchInfo && toCardSituation(nextMatchInfo));
+  const cardPlay = getArmedMatchCardPlay(matchCards, nextCardSituation);
+  const cardLineBonus = cardPlay?.lineBonus;
+  const cardEffect = cardPlay?.effect;
+  // Con la carta: solo para el partido que toca (la previa y su simulación).
+  const matchTeamRating = useMemo(() => applyMatchCardLineBonus(effectiveTeamRating, cardLineBonus), [cardLineBonus, effectiveTeamRating]);
+  const europeanMatchUserRating = europeanUserRating + (matchTeamRating.overall - effectiveTeamRating.overall);
+  const isDrawingCards = Boolean(matchCards && (matchCards.lastDraw || matchCards.pendingDraws.length > 0));
+
+  const commitCards = useCallback((nextCards: MatchCardsState | undefined) => {
+    if (nextCards && nextCards !== matchCards) onMatchCardsChange?.(nextCards);
+  }, [matchCards, onMatchCardsChange]);
+
+  /** Un partido de Liga con la carta elegida, y cómo quedan las cartas después. */
+  const playLeagueMatch = useCallback((targetContext: UserLeagueSimulationContext, cardsBefore: MatchCardsState | undefined) => {
+    const info = cardsBefore ? getNextUserMatchInfo({ context: targetContext, teamRating: effectiveTeamRating }) : undefined;
+    const situation = info && toCardSituation(info);
+    const play = getArmedMatchCardPlay(cardsBefore, situation);
+    const simulation = simulateNextUserLeagueMatch({
+      context: targetContext,
+      teamRating: applyMatchCardLineBonus(effectiveTeamRating, play?.lineBonus),
+      selectedPlayers,
+      card: play?.effect,
+    });
+    const result = simulation.result;
+    const cards = cardsBefore && situation && result
+      ? resolveMatchCards(cardsBefore, {
+          situation,
+          won: Boolean(result.userTeamWon),
+          lost: Boolean(result.userTeamLost),
+          comebackActivated: result.comebackActivated,
+          rivalIsLeader: info?.rivalIsLeader,
+        })
+      : cardsBefore;
+
+    return { simulation, cards };
+  }, [effectiveTeamRating, selectedPlayers]);
+
+  /** Un partido de Copa con la carta elegida. Con `regularTimeResult`, tras la decisión del descanso. */
+  const playCupMatch = useCallback((
+    targetContext: UserLeagueSimulationContext,
+    cardsBefore: MatchCardsState | undefined,
+    matchApproach: MatchApproach | undefined,
+    regularTimeResult?: MatchResult,
+  ) => {
+    const info = cardsBefore ? getNextUserMatchInfo({ context: targetContext, teamRating: effectiveTeamRating }) : undefined;
+    const situation = info && toCardSituation(info);
+    const play = getArmedMatchCardPlay(cardsBefore, situation);
+    const simulation = simulateNextCupMatch({
+      context: targetContext,
+      teamRating: applyMatchCardLineBonus(effectiveTeamRating, play?.lineBonus),
+      selectedPlayers,
+      approach: matchApproach,
+      regularTimeResult,
+      card: play?.effect,
+    });
+    const result = simulation.result;
+    const cards = cardsBefore && situation && result
+      ? resolveMatchCards(cardsBefore, {
+          situation,
+          won: Boolean(result.userTeamWon),
+          lost: Boolean(result.userTeamLost),
+          comebackActivated: (regularTimeResult ?? simulation.regularTimeResult ?? result).comebackActivated,
+          cupRoundId: info?.cupRoundId,
+        })
+      : cardsBefore;
+
+    return { simulation, cards };
+  }, [effectiveTeamRating, selectedPlayers]);
+
+  function resolveEuropeanCards(
+    cardsBefore: MatchCardsState | undefined,
+    situation: MatchCardSituation | undefined,
+    outcome: ReturnType<typeof simulateEuropeanMatch>,
+  ): MatchCardsState | undefined {
+    return cardsBefore && situation
+      ? resolveMatchCards(cardsBefore, { situation, won: outcome.result === "win", lost: outcome.result === "loss", comebackActivated: outcome.comebackActivated })
+      : cardsBefore;
+  }
+
+  // Previa del siguiente partido de Liga o Copa (v0.25.74).
+  const matchPreview = useMemo(
+    () => getNextUserMatchPreview({ context, teamRating: matchTeamRating, selectedPlayers, approach, card: cardEffect }),
+    [approach, cardEffect, context, matchTeamRating, selectedPlayers]
+  );
   const europeanOdds = useMemo(
     () => pendingEuropeanMatch && estimateEuropeanMatchOdds({
-      userTeamRating: europeanUserRating,
+      userTeamRating: europeanMatchUserRating,
       opponentRating: pendingEuropeanMatch.opponent.rating,
       opponentStyle: pendingEuropeanMatch.opponent.style,
       isHome: pendingEuropeanMatch.isHome,
       competition: pendingEuropeanMatch.competition,
       approach,
       coachSkills,
-      userProfile: effectiveTeamRating,
+      userProfile: matchTeamRating,
       selectedPlayers,
+      card: cardEffect,
     }),
-    [approach, coachSkills, effectiveTeamRating, europeanUserRating, pendingEuropeanMatch, selectedPlayers]
+    [approach, cardEffect, coachSkills, europeanMatchUserRating, matchTeamRating, pendingEuropeanMatch, selectedPlayers]
   );
   // v0.25.95: probabilidad de pasar a semifinales. Con el torneo que se ve, para no delatar
   // el partido en juego, y después de pintar, como el rango esperado de Liga.
@@ -515,7 +637,7 @@ export function LeagueSimulatorView({
     setIsAutoSimulating(false);
 
     const input: SimulateEuropeanMatchInput = {
-      userTeamRating: europeanUserRating,
+      userTeamRating: europeanMatchUserRating,
       opponentRating: pendingEuropeanMatch.opponent.rating,
       opponentStyle: pendingEuropeanMatch.opponent.style,
       isHome: pendingEuropeanMatch.isHome,
@@ -524,13 +646,23 @@ export function LeagueSimulatorView({
       isKnockout: isEuropeanKnockoutMatch(pendingEuropeanMatch),
       approach,
       coachSkills,
-      userProfile: effectiveTeamRating,
+      userProfile: matchTeamRating,
       selectedPlayers,
+      card: cardEffect,
     };
+    const outcome = simulateEuropeanMatch(input);
 
     setTournamentBeforeMatch(europeanTournament);
-    commitEuropeanOutcome(europeanTournament, pendingEuropeanMatch.id, simulateEuropeanMatch(input));
-    setPendingHalfTime({ kind: "europe", tournamentBefore: europeanTournament, matchId: pendingEuropeanMatch.id, input });
+    commitEuropeanOutcome(europeanTournament, pendingEuropeanMatch.id, outcome);
+    commitCards(resolveEuropeanCards(matchCards, europeanCardSituation, outcome));
+    setPendingHalfTime({
+      kind: "europe",
+      tournamentBefore: europeanTournament,
+      matchId: pendingEuropeanMatch.id,
+      input,
+      cardsBefore: matchCards,
+      situation: europeanCardSituation,
+    });
   }
 
   function commitEuropeanOutcome(
@@ -553,23 +685,22 @@ export function LeagueSimulatorView({
       if (choice !== "keep") {
         const outcome = simulateEuropeanMatch({ ...pendingHalfTime.input, halfTimeChoice: choice });
         commitEuropeanOutcome(pendingHalfTime.tournamentBefore, pendingHalfTime.matchId, outcome);
+        // Las cartas se resuelven otra vez desde antes del partido, con el resultado nuevo.
+        commitCards(resolveEuropeanCards(pendingHalfTime.cardsBefore, pendingHalfTime.situation, outcome));
       }
       return;
     }
 
-    const { contextBefore, regularTimeResult } = pendingHalfTime;
-    const simulation = choice === "keep"
-      ? { context, result: lastResult }
-      : simulateNextCupMatch({
-          context: contextBefore,
-          teamRating: effectiveTeamRating,
-          selectedPlayers,
-          regularTimeResult: applyHalfTimeChoice({ result: regularTimeResult, choice, selectedPlayers }),
-        });
+    const { contextBefore, regularTimeResult, cardsBefore } = pendingHalfTime;
+    const replayed = choice === "keep"
+      ? undefined
+      : playCupMatch(contextBefore, cardsBefore, undefined, applyHalfTimeChoice({ result: regularTimeResult, choice, selectedPlayers }));
+    const simulation = replayed?.simulation ?? { context, result: lastResult };
 
-    if (choice !== "keep") {
-      commitContext(simulation.context);
-      setLastResult(simulation.result);
+    if (replayed) {
+      commitContext(replayed.simulation.context);
+      setLastResult(replayed.simulation.result);
+      commitCards(replayed.cards);
     }
 
     // La ruleta y el fin de temporada esperan a la decisión: dependen del resultado final.
@@ -592,7 +723,8 @@ export function LeagueSimulatorView({
     // La siguiente jornada espera a que termine la secuencia del partido actual.
     if (!isAutoSimulating || isMatchPlaying) return undefined;
 
-    if (context.state.completed || getPendingCupFixture(context) || pendingEuropeanMatch) {
+    // Una carta ganada para la simulación, como la ruleta: hay que elegirla (v0.25.108).
+    if (context.state.completed || getPendingCupFixture(context) || pendingEuropeanMatch || isDrawingCards) {
       const stopTimeoutId = window.setTimeout(() => {
         setIsAutoSimulating(false);
       }, 0);
@@ -601,13 +733,10 @@ export function LeagueSimulatorView({
     }
 
     const timeoutId = window.setTimeout(() => {
-      const simulation = simulateNextUserLeagueMatch({
-        context,
-        teamRating: effectiveTeamRating,
-        selectedPlayers,
-      });
+      const { simulation, cards } = playLeagueMatch(context, matchCards);
 
       commitContext(simulation.context);
+      commitCards(cards);
       setLastResult(simulation.result);
       setContextBeforeResult(context);
       setJustPlayedEuropeanMatch(undefined);
@@ -635,6 +764,7 @@ export function LeagueSimulatorView({
         Boolean(simulation.stoppedForCup) ||
         simulation.context.state.completed ||
         Boolean(getPendingCupFixture(simulation.context)) ||
+        Boolean(cards?.pendingDraws.length) ||
         finished;
 
       if (shouldStop) {
@@ -643,34 +773,41 @@ export function LeagueSimulatorView({
     }, AUTO_SIMULATION_DELAY_MS * playbackMultiplier);
 
     return () => window.clearTimeout(timeoutId);
-  }, [commitContext, context, effectiveTeamRating, finishIfReady, isAutoSimulating, isMatchPlaying, maybeOfferSeasonLuckWheel, pendingEuropeanMatch, playbackMultiplier, selectedPlayers]);
+  }, [commitCards, commitContext, context, finishIfReady, isAutoSimulating, isDrawingCards, isMatchPlaying, matchCards, maybeOfferSeasonLuckWheel, pendingEuropeanMatch, playLeagueMatch, playbackMultiplier]);
 
   function simulateLeagueUntilNextEvent(params: {
     initialContext: UserLeagueSimulationContext;
+    initialCards: MatchCardsState | undefined;
   }): {
     nextContext: UserLeagueSimulationContext;
     lastResult?: MatchResult;
     contextBeforeLastResult?: UserLeagueSimulationContext;
     wheelOffered: boolean;
+    cards: MatchCardsState | undefined;
   } {
     let nextContext = params.initialContext;
+    let cards = params.initialCards;
     let lastResult: MatchResult | undefined;
     let contextBeforeLastResult: UserLeagueSimulationContext | undefined;
     let wheelOffered = false;
+    const notes: string[] = [];
 
     while (
       !nextContext.state.completed &&
       !getPendingCupFixture(nextContext) &&
-      !shouldPlayEuropeanMatchAtLeagueMatchday(europeanTournament, getLeagueMatchesPlayed(nextContext) + 1)
+      !shouldPlayEuropeanMatchAtLeagueMatchday(europeanTournament, getLeagueMatchesPlayed(nextContext) + 1) &&
+      // Una carta ganada también es un evento: se para para elegirla (v0.25.108).
+      !cards?.pendingDraws.length
     ) {
       const previousContext = nextContext;
-      const simulation = simulateNextUserLeagueMatch({
-        context: nextContext,
-        teamRating: effectiveTeamRating,
-        selectedPlayers,
-      });
+      const played = playLeagueMatch(nextContext, cards);
+      const simulation = played.simulation;
 
       nextContext = simulation.context;
+      if (played.cards && played.cards !== cards) {
+        notes.push(...(played.cards.lastNotes ?? []));
+        cards = played.cards;
+      }
       lastResult = simulation.result;
       contextBeforeLastResult = previousContext;
 
@@ -689,15 +826,16 @@ export function LeagueSimulatorView({
       }
     }
 
-    return { nextContext, lastResult, contextBeforeLastResult, wheelOffered };
+    return { nextContext, lastResult, contextBeforeLastResult, wheelOffered, cards: cards && { ...cards, lastNotes: notes } };
   }
 
   function handleSimulateFullSeason() {
     setIsAutoSimulating(false);
 
-    const simulation = simulateLeagueUntilNextEvent({ initialContext: context });
+    const simulation = simulateLeagueUntilNextEvent({ initialContext: context, initialCards: matchCards });
 
     commitContext(simulation.nextContext);
+    commitCards(simulation.cards);
     setLastResult(simulation.lastResult);
     setContextBeforeResult(simulation.contextBeforeLastResult);
     setJustPlayedEuropeanMatch(undefined);
@@ -710,20 +848,16 @@ export function LeagueSimulatorView({
   function handleSimulateNextCupMatch() {
     setIsAutoSimulating(false);
 
-    const simulation = simulateNextCupMatch({
-      context,
-      teamRating: effectiveTeamRating,
-      selectedPlayers,
-      approach,
-    });
+    const { simulation, cards } = playCupMatch(context, matchCards, approach);
 
     commitContext(simulation.context);
+    commitCards(cards);
     setLastResult(simulation.result);
     setContextBeforeResult(context);
     setJustPlayedEuropeanMatch(undefined);
 
     if (simulation.regularTimeResult) {
-      setPendingHalfTime({ kind: "cup", contextBefore: context, regularTimeResult: simulation.regularTimeResult });
+      setPendingHalfTime({ kind: "cup", contextBefore: context, regularTimeResult: simulation.regularTimeResult, cardsBefore: matchCards });
     }
   }
 
@@ -731,36 +865,42 @@ export function LeagueSimulatorView({
     setIsAutoSimulating(false);
 
     let nextContext = context;
+    let cards = matchCards;
     let lastUserResult: MatchResult | undefined;
     let contextBeforeLastResult: UserLeagueSimulationContext | undefined;
     let wheelOffered = false;
+    const notes: string[] = [];
+    // Una carta ganada para la simulación, como la ruleta (v0.25.108).
+    const cardsToDraw = () => Boolean(cards?.pendingDraws.length);
+    const takeLeagueCards = (leagueCards: MatchCardsState | undefined) => {
+      notes.push(...(leagueCards?.lastNotes ?? []));
+      cards = leagueCards;
+    };
 
-    while (nextContext.cupState.status === "active") {
+    while (nextContext.cupState.status === "active" && !cardsToDraw()) {
       const pendingCup = getPendingCupFixture(nextContext);
 
       if (!pendingCup) {
-        const leagueSimulation = simulateLeagueUntilNextEvent({ initialContext: nextContext });
+        const leagueSimulation = simulateLeagueUntilNextEvent({ initialContext: nextContext, initialCards: cards });
         nextContext = leagueSimulation.nextContext;
+        takeLeagueCards(leagueSimulation.cards);
         if (leagueSimulation.lastResult) {
           lastUserResult = leagueSimulation.lastResult;
           contextBeforeLastResult = leagueSimulation.contextBeforeLastResult;
         }
         wheelOffered = leagueSimulation.wheelOffered;
 
-        if (wheelOffered || !getPendingCupFixture(nextContext)) {
+        if (wheelOffered || cardsToDraw() || !getPendingCupFixture(nextContext)) {
           break;
         }
       }
 
       const previousContext = nextContext;
-      const cupSimulation = simulateNextCupMatch({
-        context: nextContext,
-        teamRating: effectiveTeamRating,
-        selectedPlayers,
-        approach,
-      });
+      const cupPlayed = playCupMatch(nextContext, cards, approach);
+      const cupSimulation = cupPlayed.simulation;
 
       nextContext = cupSimulation.context;
+      if (cupPlayed.cards && cupPlayed.cards !== cards) takeLeagueCards(cupPlayed.cards);
       lastUserResult = cupSimulation.result;
       contextBeforeLastResult = previousContext;
 
@@ -779,9 +919,10 @@ export function LeagueSimulatorView({
       }
     }
 
-    if (!wheelOffered && nextContext.cupState.status !== "active") {
-      const leagueSimulation = simulateLeagueUntilNextEvent({ initialContext: nextContext });
+    if (!wheelOffered && !cardsToDraw() && nextContext.cupState.status !== "active") {
+      const leagueSimulation = simulateLeagueUntilNextEvent({ initialContext: nextContext, initialCards: cards });
       nextContext = leagueSimulation.nextContext;
+      takeLeagueCards(leagueSimulation.cards);
       if (leagueSimulation.lastResult) {
         lastUserResult = leagueSimulation.lastResult;
         contextBeforeLastResult = leagueSimulation.contextBeforeLastResult;
@@ -790,6 +931,7 @@ export function LeagueSimulatorView({
     }
 
     commitContext(nextContext);
+    commitCards(cards && { ...cards, lastNotes: notes });
     setLastResult(lastUserResult);
     setContextBeforeResult(contextBeforeLastResult);
     setJustPlayedEuropeanMatch(undefined);
@@ -800,7 +942,7 @@ export function LeagueSimulatorView({
   }
 
   function handleToggleAutoSimulation() {
-    if (context.state.completed || pendingCupFixture || pendingEuropeanMatch) return;
+    if (context.state.completed || pendingCupFixture || pendingEuropeanMatch || isDrawingCards) return;
     setIsAutoSimulating((current) => !current);
   }
 
@@ -875,6 +1017,15 @@ export function LeagueSimulatorView({
         />
       )}
 
+      {/* Sorteo de cartas (v0.25.108): espera a que acabe el partido, el descanso y la ruleta. */}
+      {matchCards && isDrawingCards && !hideNextMatch && !pendingHalfTime && !pendingWheelOffer && (
+        <MatchCardDraw
+          cards={matchCards}
+          onPick={(index) => commitCards(pickMatchCard(matchCards, index))}
+          onClose={() => commitCards(closeMatchCardDraw(matchCards))}
+        />
+      )}
+
       <header className="league-header">
         <div>
           <p className="eyebrow">LaLiga {seasonLabel} + Copa del Rey</p>
@@ -905,6 +1056,8 @@ export function LeagueSimulatorView({
                     ? `Partido de ${returnedToLeagueFrom} terminado. La Liga no sigue sola: pulsa «Simular» para jugar la jornada ${leagueMatchesPlayed + 1}.`
                     : diagnosis}
               </p>
+              {/* Lo que pasó con las cartas: después del partido, porque dice si ganaste o perdiste. */}
+              {!hideNextMatch && <MatchCardsNotes notes={matchCards?.lastNotes} />}
               {!hideNextMatch && matchPreview && (pendingCupFixture || !pendingEuropeanMatch) && (
                 <section className="next-match-preview" aria-label="Previa del próximo partido">
                   <span>
@@ -919,6 +1072,9 @@ export function LeagueSimulatorView({
                   <MatchLineDuelBars duel={matchPreview.lineDuel} />
                   {matchPreview.competition === "cup" && (
                     <MatchApproachControl value={approach} onChange={setApproach} competition="cup" coachSkills={coachSkills} />
+                  )}
+                  {matchCards && (
+                    <MatchCardsHand cards={matchCards} situation={nextCardSituation} onArm={(index) => commitCards(armMatchCard(matchCards, index))} />
                   )}
                   <MatchOddsBar
                     odds={matchPreview.odds}
@@ -936,23 +1092,26 @@ export function LeagueSimulatorView({
                   </span>
                   {/* v0.25.102: el escudo genérico va pegado al nombre del rival, a la izquierda o a la derecha. */}
                   <strong className="next-match-preview-crest">
-                    {pendingEuropeanMatch.isHome && `${USER_TEAM_NAME} (${Math.round(europeanUserRating)}) vs `}
+                    {pendingEuropeanMatch.isHome && `${USER_TEAM_NAME} (${Math.round(europeanMatchUserRating)}) vs `}
                     <span className="next-match-preview-rival">
                       <EuropeanCrest opponent={pendingEuropeanMatch.opponent} compact />
                       {`${pendingEuropeanMatch.opponent.name} (${pendingEuropeanMatch.opponent.rating})`}
                     </span>
-                    {!pendingEuropeanMatch.isHome && ` vs ${USER_TEAM_NAME} (${Math.round(europeanUserRating)})`}
+                    {!pendingEuropeanMatch.isHome && ` vs ${USER_TEAM_NAME} (${Math.round(europeanMatchUserRating)})`}
                   </strong>
                   <MatchLineDuelBars
                     duel={getEuropeanLineDuel({
-                      userTeamRating: europeanUserRating,
+                      userTeamRating: europeanMatchUserRating,
                       opponentRating: pendingEuropeanMatch.opponent.rating,
                       opponentStyle: pendingEuropeanMatch.opponent.style,
                       competition: pendingEuropeanMatch.competition,
-                      userProfile: effectiveTeamRating,
+                      userProfile: matchTeamRating,
                     })}
                   />
                   <MatchApproachControl value={approach} onChange={setApproach} competition="europe" coachSkills={coachSkills} />
+                  {matchCards && (
+                    <MatchCardsHand cards={matchCards} situation={nextCardSituation} onArm={(index) => commitCards(armMatchCard(matchCards, index))} />
+                  )}
                   <MatchOddsBar
                     odds={europeanOdds}
                     note={isEuropeanKnockoutMatch(pendingEuropeanMatch) ? "en 90 minutos; si hay empate, prórroga y penaltis" : undefined}

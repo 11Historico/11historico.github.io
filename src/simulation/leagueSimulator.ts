@@ -45,6 +45,7 @@ import {
   getMatchLineDuel,
   simulateMatch,
   updateUserPlayerStatsFromMatch,
+  type MatchCardEffect,
   type MatchOdds,
   type MatchVenue,
 } from "./matchEngine";
@@ -71,6 +72,8 @@ export interface SimulateNextUserMatchParams {
   selectedPlayers: SelectedPlayer[];
   userTeamName?: string;
   seed?: number;
+  /** Carta de partido (v0.25.108); su media ya va en teamRating. */
+  card?: MatchCardEffect;
 }
 
 export interface SimulateFullUserLeagueParams {
@@ -91,7 +94,12 @@ export interface SimulateCupParams {
   approach?: MatchApproach;
   /** Los 90 minutos ya jugados, tras la decisión del descanso (v0.25.78). Si se pasa, no se simulan. */
   regularTimeResult?: MatchResult;
+  /** Carta de partido (v0.25.108); su media ya va en teamRating. */
+  card?: MatchCardEffect;
 }
+
+/** Prórroga de Copa con la carta Portero inspirado (v0.25.108, medido en INFORME_TIPOS_CARTAS_v0_25_107). */
+const CARD_SHOOTOUT_WIN_CHANCE = 0.8;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -1043,6 +1051,7 @@ export function simulateNextUserLeagueMatch(
     selectedPlayers,
     userTeamName = USER_TEAM_NAME,
     seed,
+    card,
   } = params;
 
   if (context.state.completed) {
@@ -1087,6 +1096,7 @@ export function simulateNextUserLeagueMatch(
     teamRating,
     selectedPlayers,
     seed: typeof seed === "number" ? seed + context.state.results.length : undefined,
+    card,
   });
 
   const leagueUserResult: MatchResult = {
@@ -1398,8 +1408,10 @@ function adjustCupRivalByVenueAndRound(params: {
   rival: RivalTeam;
   venue: MatchVenue;
   roundId: CupFixture["roundId"];
+  /** Carta Fortín fuera (v0.25.108): el rival pequeño no tiene la ventaja de jugar en casa. */
+  neutralVenue?: boolean;
 }): RivalTeam {
-  const { rival, venue, roundId } = params;
+  const { rival, venue, roundId, neutralVenue = false } = params;
   const overall = rival.ratings.overall;
   const isVerySmall = overall <= 70;
   const isSmall = overall <= 76;
@@ -1417,7 +1429,7 @@ function adjustCupRivalByVenueAndRound(params: {
   // venue === "home": el rival pequeño juega fuera y su sorpresa baja.
   const adjustment =
     venue === "away"
-      ? clamp(homeUnderdogBoost - fatigue, 0, 4)
+      ? (neutralVenue ? 0 : clamp(homeUnderdogBoost - fatigue, 0, 4))
       : -clamp(awayUnderdogPenalty + fatigue, 1, 8);
 
   const adjust = (value: number, min = 45, max = 92) =>
@@ -1436,7 +1448,7 @@ function adjustCupRivalByVenueAndRound(params: {
   };
 }
 
-function getCupRivalFromFixture(fixture: CupFixture): {
+function getCupRivalFromFixture(fixture: CupFixture, neutralVenue = false): {
   rival: RivalTeam;
   venue: MatchVenue;
 } {
@@ -1451,6 +1463,7 @@ function getCupRivalFromFixture(fixture: CupFixture): {
     rival,
     venue,
     roundId: fixture.roundId,
+    neutralVenue,
   });
 
   return {
@@ -1789,6 +1802,7 @@ export function simulateNextCupMatch(
     seed,
     approach,
     regularTimeResult,
+    card,
   } = params;
 
   const pendingCupFixture = getPendingCupFixture(context);
@@ -1801,7 +1815,7 @@ export function simulateNextCupMatch(
   // `seededRandom` una sal de sesión, un valor fijo daría siempre el mismo campeón.
   const cupSimulationSeed = seed ?? createCupPathSeed();
 
-  const { rival, venue } = getCupRivalFromFixture(pendingCupFixture);
+  const { rival, venue } = getCupRivalFromFixture(pendingCupFixture, card?.neutralVenue);
   const cupContext = applyCupRivalContext({
     rival,
     userRating: teamRating,
@@ -1820,6 +1834,7 @@ export function simulateNextCupMatch(
     seed: typeof seed === "number" ? seed + context.cupState.results.length + 1000 : undefined,
     approach,
     coachSkills: context.selectedCoach?.coachSeason.skills,
+    card,
   });
 
   let cupResult: MatchResult = {
@@ -1839,7 +1854,7 @@ export function simulateNextCupMatch(
     const roundTieChaos = getCupRoundChaos(pendingCupFixture.roundId);
     const userAdvantage = (cupContext.userRating.mentality - cupContext.rival.ratings.mentality) / 88;
     const underdogTiePenalty = rivalIsHomeUnderdog ? roundTieChaos * 0.12 : 0;
-    const userWinsTieBreaker = seededRandom(tieBreakerSeed) < clamp(0.5 + userAdvantage - underdogTiePenalty, 0.32, 0.68);
+    const userWinsTieBreaker = seededRandom(tieBreakerSeed) < (card?.shootout ? CARD_SHOOTOUT_WIN_CHANCE : clamp(0.5 + userAdvantage - underdogTiePenalty, 0.32, 0.68));
     // v0.25.74: el gol que deshace el empate se muestra como gol de la prórroga, con su
     // minuto (91'-119'). Usa una tirada aparte: el ganador y el marcador no cambian.
     const extraTimeGoal = {
@@ -2161,18 +2176,72 @@ export interface UserMatchPreview {
  * y, si no, el siguiente de Liga. Usa el mismo rival, campo y ajustes que el
  * partido real, y estima las probabilidades con el motor (ver estimateMatchOdds).
  */
+/** Lo que hace falta para las cartas (v0.25.108): el siguiente partido sin calcular probabilidades. */
+export interface UserMatchInfo {
+  competition: "cup" | "league";
+  venue: MatchVenue;
+  rivalId: string;
+  rivalOverall: number;
+  userOverall: number;
+  cupRoundId?: CupFixture["roundId"];
+  /** Liga: el rival va primero en la clasificación (y no eres tú). */
+  rivalIsLeader: boolean;
+}
+
+export function getNextUserMatchInfo(params: { context: UserLeagueSimulationContext; teamRating: TeamRating }): UserMatchInfo | undefined {
+  const { context, teamRating } = params;
+  const pendingCupFixture = getPendingCupFixture(context);
+
+  if (pendingCupFixture) {
+    const { rival, venue } = getCupRivalFromFixture(pendingCupFixture);
+    const cupContext = applyCupRivalContext({ rival, userRating: teamRating, venue, roundId: pendingCupFixture.roundId });
+    const userRating = applyCoachCompetitionBoostToTeamRating(cupContext.userRating, getCoachCompetitionBoost(context, "cup"));
+
+    return {
+      competition: "cup",
+      venue,
+      rivalId: pendingCupFixture.rivalTeamId,
+      rivalOverall: Math.round(cupContext.rival.ratings.overall),
+      userOverall: Math.round(userRating.overall),
+      cupRoundId: pendingCupFixture.roundId,
+      rivalIsLeader: false,
+    };
+  }
+
+  if (context.state.completed) return undefined;
+
+  const userFixture = getPendingFixturesForCurrentMatchday(context.state).find((fixture) => fixture.includesUserTeam);
+  if (!userFixture) return undefined;
+
+  const { rival, venue } = getRivalFromFixture(userFixture, context.rivals);
+  const formAdjustedRival = applySeasonFormToRival(rival, context.leagueSeasonSalt ?? SIMULATION_SESSION_SALT);
+  const hasPlayed = context.state.results.some((result) => result.userTeamPlayed);
+  const leaderId = hasPlayed ? sortLeagueTable(context.state.table)[0]?.teamId : undefined;
+
+  return {
+    competition: "league",
+    venue,
+    rivalId: rival.id,
+    rivalOverall: Math.round(formAdjustedRival.ratings.overall),
+    userOverall: Math.round(teamRating.overall),
+    rivalIsLeader: Boolean(leaderId && leaderId === rival.id && leaderId !== USER_TEAM_ID),
+  };
+}
+
 export function getNextUserMatchPreview(params: {
   context: UserLeagueSimulationContext;
   teamRating: TeamRating;
   selectedPlayers: SelectedPlayer[];
   /** Solo cuenta en Copa: la Liga se juega sin planteamiento. */
   approach?: MatchApproach;
+  /** Carta de partido (v0.25.108); su media ya va en teamRating. */
+  card?: MatchCardEffect;
 }): UserMatchPreview | undefined {
-  const { context, teamRating, selectedPlayers, approach } = params;
+  const { context, teamRating, selectedPlayers, approach, card } = params;
   const pendingCupFixture = getPendingCupFixture(context);
 
   if (pendingCupFixture) {
-    const { rival, venue } = getCupRivalFromFixture(pendingCupFixture);
+    const { rival, venue } = getCupRivalFromFixture(pendingCupFixture, card?.neutralVenue);
     const cupContext = applyCupRivalContext({ rival, userRating: teamRating, venue, roundId: pendingCupFixture.roundId });
     const userRating = applyCoachCompetitionBoostToTeamRating(cupContext.userRating, getCoachCompetitionBoost(context, "cup"));
 
@@ -2191,6 +2260,7 @@ export function getNextUserMatchPreview(params: {
         selectedPlayers,
         approach,
         coachSkills: context.selectedCoach?.coachSeason.skills,
+        card,
       }),
       lineDuel: getMatchLineDuel(userRating, cupContext.rival),
     };
@@ -2211,7 +2281,7 @@ export function getNextUserMatchPreview(params: {
     rivalOverall: Math.round(formAdjustedRival.ratings.overall),
     userOverall: Math.round(teamRating.overall),
     venue,
-    odds: estimateMatchOdds({ userTeamName: USER_TEAM_NAME, rival: formAdjustedRival, venue, teamRating, selectedPlayers }),
+    odds: estimateMatchOdds({ userTeamName: USER_TEAM_NAME, rival: formAdjustedRival, venue, teamRating, selectedPlayers, card }),
     lineDuel: getMatchLineDuel(teamRating, formAdjustedRival),
   };
 }

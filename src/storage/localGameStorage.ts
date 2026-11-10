@@ -18,6 +18,7 @@ import type { UserLeagueSimulationContext } from "../simulation/leagueSimulator"
 import type { EuropeanCareerState } from "../europe/europeanTypes";
 import type { SeasonLuckWheelOffer } from "../career/seasonLuckWheel";
 import type { EuropeanPrestigeReward } from "../career/europeanPrestige";
+import type { MatchCardsState } from "../career/matchCards";
 
 const STORAGE_KEY = "once_historico_zurigorri_saved_game_v1";
 
@@ -70,6 +71,8 @@ export interface SavedGameState {
   // pantalla perdería el texto narrativo (el bonus de rating en sí ya vive
   // en careerSeasonRatingBonus y no depende de esto).
   careerEuropeanPrestigeReward?: EuropeanPrestigeReward;
+  // Cartas de partido de la temporada (v0.25.108). Las partidas anteriores las reciben al empezar la siguiente.
+  careerMatchCards?: MatchCardsState;
 
   savedAt: string;
 }

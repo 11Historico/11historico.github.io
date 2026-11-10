@@ -18,7 +18,10 @@ import type {
 import { USER_TEAM_ID } from "../data/laliga2526Teams";
 import type { CupBracketRound } from "../simulation/leagueSimulator";
 import { USER_TEAM_NAME } from "../simulation/leagueTable";
-import { estimateMatchOdds, getMatchLineDuel, simulateMatch, type MatchOdds, type MatchVenue } from "../simulation/matchEngine";
+import { estimateMatchOdds, getMatchLineDuel, simulateMatch, type MatchCardEffect, type MatchOdds, type MatchVenue } from "../simulation/matchEngine";
+
+/** Prórroga de la Supercopa con la carta Portero inspirado (v0.25.108), como en la Copa. */
+const CARD_SHOOTOUT_WIN_CHANCE = 0.8;
 
 function sortTable(table: LeagueTableRow[] = []): LeagueTableRow[] {
   return [...table].sort((a, b) => {
@@ -169,8 +172,10 @@ function forceKnockoutWinner(params: {
   teamRating: TeamRating;
   rival: RivalTeam;
   seed: number;
+  /** Carta Portero inspirado (v0.25.108). */
+  inspiredGoalkeeper?: boolean;
 }): { result: MatchResult; winner: CareerSupercopaParticipant } {
-  const { result, userParticipant, rivalParticipant, teamRating, rival, seed } = params;
+  const { result, userParticipant, rivalParticipant, teamRating, rival, seed, inspiredGoalkeeper } = params;
 
   if (!result.userTeamDrew) {
     return {
@@ -179,7 +184,7 @@ function forceKnockoutWinner(params: {
     };
   }
 
-  const userChance = Math.max(0.35, Math.min(0.66, 0.5 + (teamRating.overall - rival.ratings.overall) / 60));
+  const userChance = inspiredGoalkeeper ? CARD_SHOOTOUT_WIN_CHANCE : Math.max(0.35, Math.min(0.66, 0.5 + (teamRating.overall - rival.ratings.overall) / 60));
   const userWins = seededRandom(seed) < userChance;
   const userIsHome = result.homeTeamName === USER_TEAM_NAME;
   const nextResult: MatchResult = {
@@ -238,8 +243,9 @@ function simulateUserSupercopaMatch(params: {
   seed: number;
   approach?: MatchApproach;
   coachSkills?: CoachSkills;
+  card?: MatchCardEffect;
 }): { result: MatchResult; winner: CareerSupercopaParticipant } {
-  const { roundName, home, away, teamRating, selectedPlayers, rivals, seed, approach, coachSkills } = params;
+  const { roundName, home, away, teamRating, selectedPlayers, rivals, seed, approach, coachSkills, card } = params;
   const userIsHome = home.teamId === USER_TEAM_ID;
   const userParticipant = userIsHome ? home : away;
   const rivalParticipant = userIsHome ? away : home;
@@ -256,6 +262,7 @@ function simulateUserSupercopaMatch(params: {
     seed,
     approach,
     coachSkills,
+    card,
   });
 
   return forceKnockoutWinner({
@@ -268,6 +275,7 @@ function simulateUserSupercopaMatch(params: {
     teamRating,
     rival,
     seed: seed + 911,
+    inspiredGoalkeeper: card?.shootout,
   });
 }
 
@@ -321,6 +329,7 @@ function simulateSupercopaMatch(params: {
   seed: number;
   approach?: MatchApproach;
   coachSkills?: CoachSkills;
+  card?: MatchCardEffect;
 }): { result: MatchResult; winner: CareerSupercopaParticipant } {
   const { home, away } = params;
   if (home.teamId === USER_TEAM_ID || away.teamId === USER_TEAM_ID) {
@@ -343,13 +352,15 @@ interface SupercopaUserMatchParams {
   rivals: RivalTeam[];
   approach?: MatchApproach;
   coachSkills?: CoachSkills;
+  /** Carta de partido del usuario (v0.25.108); su media ya va en teamRating. */
+  card?: MatchCardEffect;
 }
 
 function getUserMatchPreview(
   pairing: [CareerSupercopaParticipant, CareerSupercopaParticipant] | undefined,
   params: SupercopaUserMatchParams,
 ): SupercopaSemifinalPreview | undefined {
-  const { teamRating, selectedPlayers, rivals, approach, coachSkills } = params;
+  const { teamRating, selectedPlayers, rivals, approach, coachSkills, card } = params;
 
   if (!pairing || !pairing.some((team) => team.teamId === USER_TEAM_ID)) return undefined;
 
@@ -359,7 +370,7 @@ function getUserMatchPreview(
   return {
     rivalName: rival.name,
     venue,
-    odds: estimateMatchOdds({ userTeamName: USER_TEAM_NAME, rival, venue, teamRating, selectedPlayers, approach, coachSkills }),
+    odds: estimateMatchOdds({ userTeamName: USER_TEAM_NAME, rival, venue, teamRating, selectedPlayers, approach, coachSkills, card }),
     lineDuel: getMatchLineDuel(teamRating, rival),
   };
 }
@@ -392,6 +403,22 @@ export function getSupercopaFinalPreview(
   return getUserMatchPreview(getSupercopaFinalists(params.semifinals), params);
 }
 
+/** El rival y el campo del siguiente partido del usuario, sin calcular probabilidades (cartas, v0.25.108). */
+export function getSupercopaUserOpponent(params: {
+  rivals: RivalTeam[];
+  qualification?: CareerSupercopaQualification;
+  semifinals?: CareerSupercopaResult;
+}): { rival: RivalTeam; venue: MatchVenue } | undefined {
+  const pairing = params.semifinals
+    ? getSupercopaFinalists(params.semifinals)
+    : params.qualification && createPairings(params.qualification.participants).find((pair) => pair.some((team) => team.teamId === USER_TEAM_ID));
+
+  if (!pairing || !pairing.some((team) => team.teamId === USER_TEAM_ID)) return undefined;
+
+  const venue: MatchVenue = pairing[0].teamId === USER_TEAM_ID ? "home" : "away";
+  return { rival: findRival(venue === "home" ? pairing[1] : pairing[0], params.rivals), venue };
+}
+
 interface SupercopaSimulationParams extends SupercopaUserMatchParams {
   qualification: CareerSupercopaQualification;
   seed?: number;
@@ -402,7 +429,7 @@ interface SupercopaSimulationParams extends SupercopaUserMatchParams {
  * juega aparte, con su propio planteamiento. Si no, la final entre rivales se juega a la vez.
  */
 export function simulateSupercopaSemifinals(params: SupercopaSimulationParams): CareerSupercopaResult {
-  const { qualification, teamRating, selectedPlayers, rivals, seed = Date.now(), approach, coachSkills } = params;
+  const { qualification, teamRating, selectedPlayers, rivals, seed = Date.now(), approach, coachSkills, card } = params;
   const pairings = createPairings(qualification.participants);
 
   if (pairings.length < 2) {
@@ -428,6 +455,7 @@ export function simulateSupercopaSemifinals(params: SupercopaSimulationParams): 
       seed: seed + 101 * (index + 1),
       approach,
       coachSkills,
+      card,
     }),
   );
   const semifinals: CareerSupercopaResult = {
@@ -449,7 +477,7 @@ export function simulateSupercopaSemifinals(params: SupercopaSimulationParams): 
 export function simulateSupercopaFinal(
   params: SupercopaUserMatchParams & { semifinals: CareerSupercopaResult; seed?: number },
 ): CareerSupercopaResult {
-  const { semifinals, teamRating, selectedPlayers, rivals, seed = Date.now(), approach, coachSkills } = params;
+  const { semifinals, teamRating, selectedPlayers, rivals, seed = Date.now(), approach, coachSkills, card } = params;
   const finalists = getSupercopaFinalists(semifinals);
 
   if (!finalists) return semifinals;
@@ -464,6 +492,7 @@ export function simulateSupercopaFinal(
     seed: seed + 303,
     approach,
     coachSkills,
+    card,
   });
 
   const userWon = final.winner.teamId === USER_TEAM_ID;
