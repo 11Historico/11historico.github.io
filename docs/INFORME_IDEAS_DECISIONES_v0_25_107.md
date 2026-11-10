@@ -79,6 +79,7 @@ La I1 la descartó el usuario («no me gusta»).
   - `applyHalfTimeChoice`, que ya existe.
 - **Cómo medir:** `audit:league` con un jugador «comodín N», para N = 2, 3 y 5, comparado con el de hoy en temporadas superadas, puntuación y plausibilidad.
 - **Permiso:** sí. Reabre lo decidido en la v0.25.78, cuando la Liga se quedó sin descanso, y toca el equilibrio de la carrera.
+- **Medida:** cada comodín vale unas 0,1 puntos y guardar no rinde más que gastar enseguida, así que no hay decisión de «cuándo» (`INFORME_COMODINES_DESCANSO_v0_25_107.md`).
 
 ### I4. Partidos marcados en Liga
 
