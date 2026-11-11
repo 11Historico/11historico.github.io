@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.109 — Remontada con gol
+
+- **La Remontada cambia:** si vas perdiendo al descanso, marcas un gol en la segunda parte, con goleador y minuto. Antes subía +12 la media de la segunda parte y casi no se notaba: cuando se activaba solo se ganaba el 7 % de esos partidos.
+- **Se gasta siempre**, aunque al descanso no vayas perdiendo. Así vale lo de una carta rara y hay que elegir bien cuándo jugarla: contra un rival mejor o fuera de casa.
+- Medido antes de construir (`docs/INFORME_REMONTADA_v0_25_108.md`): vale como un +4,5 de media en Liga y un +5,5 en eliminatorias. Si solo se gastara al activarse, valdría como un +16.
+- Sin la carta, el juego es exactamente el de antes. Una Remontada que ya estuviera en la mano funciona con la regla nueva.
+
 ## v0.25.108 — Cartas de partido
 
 - **Cartas en el modo carrera:** cada temporada eliges 4 cartas, de 6 en 6 boca abajo. Te quedas la que eliges y después se dan la vuelta las otras 5 para que veas qué había.

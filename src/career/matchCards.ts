@@ -33,7 +33,7 @@ export const MATCH_CARDS: MatchCardDefinition[] = [
   { id: "defense_total", name: "Defensa total", rarity: "rare", description: "El rival marca bastante menos (unos −30 % de goles)." },
   { id: "classic", name: "Clásico", rarity: "rare", description: "+5 contra un rival con más media que tú." },
   { id: "revenge", name: "Revancha", rarity: "rare", description: "+3. Si pierdes, la carta vuelve a tu mano." },
-  { id: "comeback", name: "Remontada", rarity: "rare", description: "Si vas perdiendo al descanso, la segunda parte juegas con +12. Si no, no se gasta." },
+  { id: "comeback", name: "Remontada", rarity: "rare", description: "Si vas perdiendo al descanso, marcas un gol en la segunda parte. Se gasta aunque no vayas perdiendo." },
   { id: "plus6", name: "+6", rarity: "epic", description: "+6 a toda tu media." },
   { id: "san_mames", name: "Efecto San Mamés", rarity: "epic", description: "En casa: subes a la media del rival si es mayor que la tuya." },
   { id: "away_fortress", name: "Fortín fuera", rarity: "epic", description: "Fuera de casa: juegas como en campo neutral." },
@@ -55,8 +55,6 @@ export const MATCH_CARDS_PER_SEASON = 4;
 export const MATCH_CARD_HAND_LIMIT = 6;
 export const MATCH_CARD_DRAW_SIZE = 6;
 export const MATCH_CARD_UNBEATEN_STREAK = 8;
-/** Remontada: media de más en la segunda parte. */
-const COMEBACK_BONUS = 12;
 
 export type MatchCardDrawReason = "season_start" | "cup_quarter_final" | "cup_final" | "league_leader" | "unbeaten_streak" | "european_giant";
 
@@ -225,7 +223,7 @@ export function getMatchCardPlay(id: MatchCardId, situation: MatchCardSituation)
     case "midfield": return { play: { lineBonus: { ...all(2), control: 6 } } };
     case "attack_total": return { play: { lineBonus: {}, effect: { userGoals: 1.4, rivalGoals: 1.1 } } };
     case "defense_total": return { play: { lineBonus: {}, effect: { rivalGoals: 0.6 } } };
-    case "comeback": return { play: { lineBonus: {}, effect: { comeback: COMEBACK_BONUS } } };
+    case "comeback": return { play: { lineBonus: {}, effect: { comebackGoal: true } } };
     case "scout": return { unavailableReason: "Se usa sola en tu siguiente sorteo." };
     case "inspired_keeper":
       return situation.knockout ? { play: { lineBonus: {}, effect: { shootout: true } } } : { unavailableReason: "Solo en eliminatorias." };
@@ -299,13 +297,19 @@ export function resolveMatchCards(state: MatchCardsState, outcome: MatchCardOutc
 
   if (armedId && armedPlay && state.armedIndex !== undefined) {
     const name = getMatchCard(armedId).name;
-    const keep = (armedId === "comeback" && !outcome.comebackActivated) || (armedId === "revenge" && outcome.lost);
 
-    if (keep) {
-      notes.push(armedId === "comeback" ? `${name}: no ibas perdiendo al descanso, la carta vuelve a tu mano.` : `${name}: has perdido, la carta vuelve a tu mano.`);
+    if (armedId === "revenge" && outcome.lost) {
+      notes.push(`${name}: has perdido, la carta vuelve a tu mano.`);
     } else {
+      // La Remontada se gasta siempre (v0.25.109): solo vale si al descanso ibas perdiendo.
       hand.splice(state.armedIndex, 1);
-      notes.push(armedId === "comeback" ? `${name} activada: ibas perdiendo al descanso.` : `Has jugado con la carta ${name}.`);
+      notes.push(
+        armedId !== "comeback"
+          ? `Has jugado con la carta ${name}.`
+          : outcome.comebackActivated
+            ? `${name}: ibas perdiendo al descanso y marcas en la segunda parte.`
+            : `${name}: no ibas perdiendo al descanso, la carta se ha gastado.`,
+      );
     }
 
     if (armedId === "double_or_nothing" && outcome.lost && hand.length > 0) {

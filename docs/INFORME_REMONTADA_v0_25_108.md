@@ -16,6 +16,8 @@ La Remontada del juego (+12 en la segunda parte) casi no hace nada (`docs/INFORM
 
 **Script:** `npm run audit:game-cards -- "--only=hoy|Remontada"`, en `scripts/auditGameCards.ts`.
 
+> **Desde la v0.25.109** la Remontada con gol que se gasta siempre ya está en el juego, y la auditoría deja de tener las variantes. Estos números se reproducen con el commit `e758e04`.
+
 - **Las variantes nuevas** solo existen en la auditoría, con un gancho en el motor (`comebackGoal` en `scripts/auditCardTypes.vite.ts`). Si vas perdiendo al descanso, se añade un gol tuyo en la segunda parte, con goleador y minuto. Sin el gancho, el partido es el de siempre.
 - **Las filas de los informes anteriores salen idénticas.**
 
