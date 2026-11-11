@@ -8,6 +8,7 @@
 
 import {
   MATCH_CARDS,
+  applyMatchCardLineBonus,
   armMatchCard,
   closeMatchCardDraw,
   createSeasonMatchCards,
@@ -22,9 +23,12 @@ import {
   type MatchCardSituation,
   type MatchCardsState,
 } from "../src/career/matchCards";
+import { applyDifficultyToTeamRating } from "../src/career/teamPower";
 import { FORMATIONS } from "../src/data/formations";
+import { simulateEuropeanMatch } from "../src/europe/europeanMatchEngine";
+import { simulateMatch, type MatchCardEffect } from "../src/simulation/matchEngine";
 import { calculateTeamRating } from "../src/simulation/teamRating";
-import type { GameDifficulty } from "../src/types/game";
+import type { GameDifficulty, RivalTeam, SelectedPlayer, TeamRating } from "../src/types/game";
 
 import { draftTeam, mean, meanWithMargin, playCareer, seedCareer, share, type CardHook, type CardMatch, type DraftStyle, type Policy } from "./auditCareerRunner";
 
@@ -53,7 +57,135 @@ const AVERAGE_VALUE = mean(MATCH_CARDS.filter((card) => card.id !== "scout").map
 const LAST_LEAGUE_MATCHDAYS_FROM = 36;
 
 type Use = "smart" | "next";
-interface CardPolicy { label: string; use: Use }
+/** Remontada: la del juego (+12 la segunda parte), con +24, o con un gol en la segunda parte (propuesta A). */
+type ComebackVariant = "plus12" | "plus24" | "goal" | "goalAlways" | "goalHalf";
+interface CardPolicy { label: string; use: Use; comeback?: ComebackVariant }
+
+const COMEBACK_EFFECT: Record<ComebackVariant, MatchCardEffect> = {
+  plus12: { comeback: 12 },
+  plus24: { comeback: 24 },
+  goal: { comebackGoal: true } as MatchCardEffect,
+  // Con gol, pero la carta se gasta aunque no vayas perdiendo.
+  goalAlways: { comebackGoal: true } as MatchCardEffect,
+  // Con un 50 % de marcar; se gasta si ibas perdiendo.
+  goalHalf: { comebackGoal: 0.5 } as MatchCardEffect,
+};
+
+const COMEBACK_LABEL: Record<ComebackVariant, string> = {
+  plus12: "+12 la segunda parte (juego)",
+  plus24: "+24 la segunda parte",
+  goal: "Un gol en la segunda parte (A)",
+  goalAlways: "Un gol, pero se gasta siempre",
+  goalHalf: "50 % de marcar un gol",
+};
+
+// ---------------------------------------------------------------------------------------------
+// Sonda de la Remontada: cada variante en un partido suelto, como la sonda de INFORME_TIPOS_CARTAS.
+// ---------------------------------------------------------------------------------------------
+
+const PROBE_SEEDS = Number(process.argv.find((arg) => arg.startsWith("--probe="))?.split("=")[1] ?? 250);
+const BONUS_CURVE = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12];
+
+interface ProbeCell { knockout: boolean; gap: number; venue: "home" | "away" }
+
+function uniformRival(overall: number): RivalTeam {
+  return { id: "probe_rival", name: "Rival", shirtIcon: "⚽", ratings: { attack: overall, midfield: overall, defense: overall, goalkeeping: overall, mentality: overall, overall } };
+}
+
+/** Liga: puntos. Eliminatoria (motor europeo, con prórroga y penaltis): pasar. */
+function probeMatch(cell: ProbeCell, team: { rating: TeamRating; selectedPlayers: SelectedPlayer[] }, bonus: number, card: MatchCardEffect | undefined, seed: number) {
+  const userOverall = Math.round(team.rating.overall);
+  const rating = applyMatchCardLineBonus(team.rating, bonus ? { attack: bonus, defense: bonus, control: bonus, physical: bonus, mentality: bonus, goalkeeping: bonus } : undefined);
+
+  if (cell.knockout) {
+    const outcome = simulateEuropeanMatch({ userTeamRating: rating.overall, opponentRating: userOverall + cell.gap, isHome: cell.venue === "home", competition: "champions_league", seed: `probe_${seed}`, isKnockout: true, userProfile: rating, selectedPlayers: team.selectedPlayers, card });
+    return { value: outcome.result === "win" ? 1 : 0, activated: Boolean(outcome.comebackActivated) };
+  }
+
+  const result = simulateMatch({ fixtureId: "probe", matchday: 1, rival: uniformRival(userOverall + cell.gap), venue: cell.venue, teamRating: rating, selectedPlayers: team.selectedPlayers, seed, card });
+  return { value: result.userTeamWon ? 3 : result.userTeamDrew ? 1 : 0, activated: Boolean(result.comebackActivated) };
+}
+
+function equivalent(delta: number, curve: number[]): number {
+  if (delta <= 0) return delta / Math.max(1e-9, curve[1] - curve[0]);
+  for (let index = 1; index < curve.length; index += 1) {
+    if (delta <= curve[index] - curve[0]) {
+      const low = curve[index - 1] - curve[0];
+      const high = curve[index] - curve[0];
+      return BONUS_CURVE[index - 1] + ((delta - low) / Math.max(1e-9, high - low)) * (BONUS_CURVE[index] - BONUS_CURVE[index - 1]);
+    }
+  }
+  return BONUS_CURVE[BONUS_CURVE.length - 1];
+}
+
+/** Valor de cada variante de la Remontada, por partido en que se juega (se active o no). */
+function probeComeback(): Record<ComebackVariant, { league: number; knockout: number }> {
+  seedCareer(424242);
+  const teams = Array.from({ length: 12 }, (_, index) => {
+    const team = draftTeam(FORMATIONS[index % FORMATIONS.length], "best");
+    return { rating: applyDifficultyToTeamRating(calculateTeamRating(team), "dificil", true), selectedPlayers: team.selectedPlayers };
+  });
+  const values = {} as Record<ComebackVariant, { league: number; knockout: number }>;
+
+  console.log("## Sonda de la Remontada\n");
+  console.log(`12 equipos (draft de mejor media, Normal), ${PROBE_SEEDS} partidos por equipo y caso; rivales de tu media −4, igual, +4 y +8, en casa y fuera.`);
+  console.log("Liga en puntos por partido; eliminatoria en probabilidad de pasar. «Si se activa»: solo los partidos que ibas perdiendo al descanso.\n");
+  console.log("| Remontada | Se activa | Liga: + puntos por partido | Liga: si se activa | Liga: equivale a | Eliminatoria: + pasar | Eliminatoria: si se activa | Eliminatoria: equivale a | Por carta gastada (Liga · eliminatoria) |");
+  console.log("| --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+
+  const signed = (value: number, digits: number) => `${value >= 0 ? "+" : ""}${value.toFixed(digits)}`;
+
+  // Los partidos sin carta y la curva +0…+12, una vez para todas las variantes.
+  const kinds = [false, true].map((knockout) => {
+    const samples: { cell: ProbeCell; team: (typeof teams)[number]; seed: number; base: number }[] = [];
+    const curve = BONUS_CURVE.map(() => 0);
+    for (const cell of [-4, 0, 4, 8].flatMap((gap) => (["home", "away"] as const).map((venue): ProbeCell => ({ knockout, gap, venue })))) {
+      for (const team of teams) {
+        for (let seed = 1; seed <= PROBE_SEEDS; seed += 1) {
+          const base = probeMatch(cell, team, 0, undefined, seed).value;
+          samples.push({ cell, team, seed, base });
+          BONUS_CURVE.forEach((bonus, index) => { curve[index] += index === 0 ? base : probeMatch(cell, team, bonus, undefined, seed).value; });
+        }
+      }
+    }
+    return { samples, curve: curve.map((point) => point / samples.length) };
+  });
+
+  for (const variant of Object.keys(COMEBACK_LABEL) as ComebackVariant[]) {
+    const [league, knockout] = kinds.map(({ samples, curve }) => {
+      let delta = 0;
+      let activatedDelta = 0;
+      let activated = 0;
+      for (const { cell, team, seed, base } of samples) {
+        const withCard = probeMatch(cell, team, 0, COMEBACK_EFFECT[variant], seed);
+        delta += withCard.value - base;
+        if (withCard.activated) {
+          activated += 1;
+          activatedDelta += withCard.value - base;
+        }
+      }
+      const perMatch = delta / samples.length;
+      return { delta: perMatch, activatedDelta: activatedDelta / Math.max(1, activated), equivalent: equivalent(perMatch, curve), rate: activated / samples.length };
+    });
+
+    values[variant] = { league: league.equivalent, knockout: knockout.equivalent };
+    // Por carta gastada: la que se gasta siempre, lo de un partido; las demás, solo cuando se activan.
+    const perSpent = (kind: typeof league) => (variant === "goalAlways" ? kind.equivalent : kind.equivalent / Math.max(1e-9, kind.rate));
+    console.log(`| ${[
+      COMEBACK_LABEL[variant],
+      share(Math.round(((league.rate + knockout.rate) / 2) * 1000), 1000),
+      signed(league.delta, 3),
+      signed(league.activatedDelta, 2),
+      signed(league.equivalent, 1),
+      `${signed(knockout.delta * 100, 1)} pts`,
+      `${signed(knockout.activatedDelta * 100, 1)} pts`,
+      signed(knockout.equivalent, 1),
+      `${signed(perSpent(league), 1)} · ${signed(perSpent(knockout), 1)}`,
+    ].join(" | ")} |`);
+  }
+
+  return values;
+}
 
 interface Stats {
   seasons: number;
@@ -102,8 +234,12 @@ function valueFor(id: MatchCardId, situation: MatchCardSituation): number {
 }
 
 /** Una carrera con las cartas del juego. */
-function createGameCards(policy: CardPolicy, seed: number, stats: Stats): CardHook {
+function createGameCards(policy: CardPolicy, seed: number, stats: Stats, comebackValues?: Record<ComebackVariant, { league: number; knockout: number }>): CardHook {
   let cards: MatchCardsState | undefined;
+  // Con variante, la Remontada vale lo que mide la sonda; sin ella, el valor del informe anterior (+1,6 / +1,5).
+  const comebackValue = policy.comeback && comebackValues?.[policy.comeback];
+  const cardValue = (id: MatchCardId, current: MatchCardSituation) =>
+    id === "comeback" && comebackValue ? (current.knockout ? comebackValue.knockout : comebackValue.league) : valueFor(id, current);
   let season = 0;
   let situation: MatchCardSituation | undefined;
 
@@ -136,7 +272,7 @@ function createGameCards(policy: CardPolicy, seed: number, stats: Stats): CardHo
       if (!cards || !situation) return 0;
       const current = situation;
 
-      const playable = cards.hand.map((id, index) => ({ id, index, value: valueFor(id, current) })).filter((card) => card.value > 0);
+      const playable = cards.hand.map((id, index) => ({ id, index, value: cardValue(id, current) })).filter((card) => card.value > 0);
       if (playable.length === 0) return 0;
 
       const ahead = match.knockoutsAhead ?? 0;
@@ -152,14 +288,16 @@ function createGameCards(policy: CardPolicy, seed: number, stats: Stats): CardHo
 
       stats.used += 1;
       if (match.knockout) stats.usedKnockout += 1;
-      return { lines: play.lineBonus, engine: play.effect };
+      return { lines: play.lineBonus, engine: chosen.id === "comeback" && policy.comeback ? COMEBACK_EFFECT[policy.comeback] : play.effect };
     },
     afterMatch(match, won, lost, cameBack) {
       if (!cards || !situation) return;
 
       const armedId = getArmedMatchCard(cards);
       const pendingBefore = cards.pendingDraws.length;
-      cards = resolveMatchCards(cards, { situation, won, lost, comebackActivated: cameBack, rivalIsLeader: match.rivalIsLeader, cupRoundId: match.roundId });
+      // "Se gasta siempre": la carta cuenta como activada aunque no fueras perdiendo.
+      const spentAnyway = policy.comeback === "goalAlways" && armedId === "comeback";
+      cards = resolveMatchCards(cards, { situation, won, lost, comebackActivated: cameBack || spentAnyway, rivalIsLeader: match.rivalIsLeader, cupRoundId: match.roundId });
       const notes = cards.lastNotes ?? [];
 
       for (const reason of cards.pendingDraws.slice(pendingBefore)) stats.earned[reason] += 1;
@@ -190,7 +328,18 @@ const POLICIES: (CardPolicy | null)[] = [
   null,
   { label: "Cartas del juego, uso sensato", use: "smart" },
   { label: "Cartas del juego, en el siguiente partido", use: "next" },
+  // Remontada medida de nuevo (2026-11-11). La primera fila es la del juego con su valor real.
+  { label: "Remontada del juego (+12), uso sensato", use: "smart", comeback: "plus12" },
+  { label: "Remontada +24, uso sensato", use: "smart", comeback: "plus24" },
+  { label: "Remontada con gol, uso sensato", use: "smart", comeback: "goal" },
+  { label: "Remontada con gol, en el siguiente partido", use: "next", comeback: "goal" },
+  { label: "Remontada con gol que se gasta siempre, uso sensato", use: "smart", comeback: "goalAlways" },
+  { label: "Remontada con 50 % de gol, uso sensato", use: "smart", comeback: "goalHalf" },
 ];
+
+// La sonda solo hace falta para las filas con variante de la Remontada.
+const ACTIVE_POLICIES = POLICIES.filter((item) => !ONLY || ONLY.split("|").some((part) => (item?.label ?? "Sin cartas (hoy)").includes(part)));
+const comebackValues = ACTIVE_POLICIES.some((policy) => policy?.comeback) ? probeComeback() : undefined;
 
 const CUPS_WELL: Policy = { label: "Decide bien", approach: "best", halfTime: "good" };
 const DIFFICULTIES: { label: string; value: GameDifficulty }[] = [
@@ -215,14 +364,14 @@ for (const { label: difficultyLabel, value: difficulty } of DIFFICULTIES) {
     console.log("| Cartas | Ganadas por temporada (al empezar · cuartos · final · líder · racha · Europa) | Perdidas por mano llena | Usadas · en eliminatorias · caducadas · vuelven · quemadas | Temporadas superadas | Pasa la 1.ª | Puntos en la 1.ª | Copas por temporada | Títulos europeos por temporada | Títulos por temporada | Puntuación | Rechazadas |");
     console.log("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
 
-    for (const policy of POLICIES.filter((item) => !ONLY || ONLY.split("|").some((part) => (item?.label ?? "Sin cartas (hoy)").includes(part)))) {
+    for (const policy of ACTIVE_POLICIES) {
       const label = policy?.label ?? "Sin cartas (hoy)";
       const stats = emptyStats();
       const careers = Array.from({ length: CAREERS_PER_CELL }, (_, index) => {
         const seed = index + 1;
         seedCareer(seed + 7_000_000);
         const team = draftTeam(FORMATIONS[index % FORMATIONS.length], style);
-        return playCareer({ policy: CUPS_WELL, seed, difficulty, team: { ...team, teamRating: calculateTeamRating(team) }, cards: policy ? createGameCards(policy, seed, stats) : undefined });
+        return playCareer({ policy: CUPS_WELL, seed, difficulty, team: { ...team, teamRating: calculateTeamRating(team) }, cards: policy ? createGameCards(policy, seed, stats, comebackValues) : undefined });
       });
       const seasons = careers.reduce((sum, career) => sum + career.completedSeasons + 1, 0);
       const count = (pick: (trophies: (typeof careers)[number]["trophies"]) => number) => careers.reduce((sum, career) => sum + pick(career.trophies), 0) / Math.max(1, seasons);
