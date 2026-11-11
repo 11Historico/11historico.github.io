@@ -134,14 +134,19 @@ describe("cartas: después del partido", () => {
     expect(armMatchCard(armed, 1).armedIndex).toBeUndefined();
   });
 
-  it("Revancha vuelve si pierdes; Remontada solo se gasta si se activa", () => {
+  it("Revancha vuelve si pierdes; la Remontada se gasta siempre (v0.25.109)", () => {
     const revenge = armMatchCard(withHand(["revenge"]), 0);
     expect(resolveMatchCards(revenge, { situation: league(), won: false, lost: true }).hand).toEqual(["revenge"]);
     expect(resolveMatchCards(revenge, { situation: league(), won: true, lost: false }).hand).toEqual([]);
 
     const comeback = armMatchCard(withHand(["comeback"]), 0);
-    expect(resolveMatchCards(comeback, { situation: league(), won: true, lost: false }).hand).toEqual(["comeback"]);
-    expect(resolveMatchCards(comeback, { situation: league(), won: true, lost: false, comebackActivated: true }).hand).toEqual([]);
+    const notActivated = resolveMatchCards(comeback, { situation: league(), won: true, lost: false });
+    expect(notActivated.hand).toEqual([]);
+    expect(notActivated.lastNotes).toEqual(["Remontada: no ibas perdiendo al descanso, la carta se ha gastado."]);
+    const activated = resolveMatchCards(comeback, { situation: league(), won: false, lost: false, comebackActivated: true });
+    expect(activated.hand).toEqual([]);
+    expect(activated.lastNotes?.[0]).toContain("marcas en la segunda parte");
+    expect(getMatchCardPlay("comeback", league()).play?.effect).toEqual({ comebackGoal: true });
   });
 
   it("Doble o nada: si pierdes, pierdes otra carta", () => {
@@ -220,20 +225,37 @@ describe("cartas: el motor", () => {
     expect(run({ neutralVenue: true }, team, "home")).toEqual(run(undefined, team, "home"));
   });
 
-  it("Remontada: solo cambia los partidos que ibas perdiendo al descanso, y no la primera parte", () => {
+  it("Remontada: si vas perdiendo al descanso, un gol tuyo en la segunda parte; si no, el partido de siempre", () => {
     let activated = 0;
     for (let seed = 1; seed <= 600; seed += 1) {
-      const params = { fixtureId: "f", matchday: 1, rival: uniformRival(86), venue: "home" as const, teamRating: uniformTeam(84), selectedPlayers, seed };
+      const venue = seed % 2 ? ("home" as const) : ("away" as const);
+      const params = { fixtureId: "f", matchday: 1, rival: uniformRival(86), venue, teamRating: uniformTeam(84), selectedPlayers, seed };
       const plain = simulateMatch(params);
-      const comeback = simulateMatch({ ...params, card: { comeback: 12 } });
+      const comeback = simulateMatch({ ...params, card: { comebackGoal: true } });
 
       if (getUserHalfTimeMargin(plain) >= 0) {
         expect(comeback).toEqual(plain);
         continue;
       }
       activated += 1;
+      const userGoals = (result: typeof plain) => (venue === "home" ? result.homeGoals : result.awayGoals);
+      const rivalGoals = (result: typeof plain) => (venue === "home" ? result.awayGoals : result.homeGoals);
+      const userName = venue === "home" ? plain.homeTeamName : plain.awayTeamName;
+      const remaining = plain.goalEvents.map((goal) => JSON.stringify(goal));
+      const added = comeback.goalEvents.filter((goal) => {
+        const index = remaining.indexOf(JSON.stringify(goal));
+        if (index < 0) return true;
+        remaining.splice(index, 1);
+        return false;
+      });
+
       expect(comeback.comebackActivated).toBe(true);
-      expect(comeback.goalEvents.filter((goal) => goal.minute <= 45)).toEqual(plain.goalEvents.filter((goal) => goal.minute <= 45));
+      expect(userGoals(comeback)).toBe(userGoals(plain) + 1);
+      expect(rivalGoals(comeback)).toBe(rivalGoals(plain));
+      expect(added).toHaveLength(1);
+      expect(added[0].teamName).toBe(userName);
+      expect(added[0].minute).toBeGreaterThan(45);
+      expect(added[0].scorerName).toBeTruthy();
     }
     expect(activated).toBeGreaterThan(50);
   });

@@ -52,8 +52,8 @@ export interface MatchCardEffect {
   rivalGoals?: number;
   /** Campo neutral fuera de casa (Fortín fuera): sin la penalización del visitante ni la ventaja del local. */
   neutralVenue?: boolean;
-  /** Remontada: si vas perdiendo al descanso, la segunda parte se juega con esta media de más. */
-  comeback?: number;
+  /** Remontada (v0.25.109): si vas perdiendo al descanso, marcas un gol en la segunda parte. */
+  comebackGoal?: boolean;
   /** Portero inspirado: la prórroga o los penaltis de una eliminatoria. Lo aplica cada competición. */
   shootout?: boolean;
 }
@@ -773,35 +773,8 @@ function playMatch(params: SimulateMatchParams, random: RandomGenerator): MatchR
  * Simula un partido individual del Athletic histórico contra un rival 25/26.
  */
 export function simulateMatch(params: SimulateMatchParams): MatchResult {
-  const random = createRandom(params.seed);
-  const comeback = params.card?.comeback ?? 0;
-
-  if (!comeback) return playWithApproach(params, random);
-
-  // Remontada (v0.25.108): el mismo partido con las mismas tiradas. Si al descanso no vas
-  // perdiendo, no se activa y el partido es el de siempre.
-  const draws: number[] = [];
-  const base = playWithApproach(params, createReplayRandom(random, draws));
-  if (getUserHalfTimeMargin(base) >= 0) return base;
-
-  const boosted = playWithApproach(
-    { ...params, teamRating: addToAllLines(params.teamRating, comeback), card: { ...params.card, comeback: 0 } },
-    createReplayRandom(random, draws),
-  );
-  return mergeComebackSecondHalf(base, boosted);
-}
-
-function addToAllLines(teamRating: TeamRating, value: number): TeamRating {
-  return {
-    ...teamRating,
-    attack: teamRating.attack + value,
-    defense: teamRating.defense + value,
-    control: teamRating.control + value,
-    physical: teamRating.physical + value,
-    mentality: teamRating.mentality + value,
-    goalkeeping: teamRating.goalkeeping + value,
-    overall: teamRating.overall + value,
-  };
+  const result = playWithApproach(params, createRandom(params.seed));
+  return params.card?.comebackGoal ? addComebackGoal(result, params) : result;
 }
 
 function getUserTeamName(result: MatchResult): string {
@@ -817,26 +790,33 @@ export function getUserHalfTimeMargin(result: MatchResult): number {
   return userGoals - (firstHalf.length - userGoals);
 }
 
-/** La primera parte del partido jugado y la segunda del partido con la media de más. */
-function mergeComebackSecondHalf(base: MatchResult, boosted: MatchResult): MatchResult {
-  const userTeamName = getUserTeamName(base);
-  const userIsHome = base.expectedGoals?.userIsHome !== false;
-  const goalEvents = [
-    ...base.goalEvents.filter((goal) => goal.minute <= HALF_TIME_MINUTE),
-    ...boosted.goalEvents.filter((goal) => goal.minute > HALF_TIME_MINUTE),
-  ].sort((a, b) => a.minute - b.minute);
-  const userGoals = goalEvents.filter((goal) => goal.teamName === userTeamName).length;
+// Tiradas propias del gol de la Remontada: no mueven las del partido.
+const COMEBACK_GOAL_SEED_OFFSET = 4243;
+
+/**
+ * Remontada (v0.25.109): si vas perdiendo al descanso, marcas un gol en la segunda parte, con
+ * goleador y minuto. El partido ya jugado no cambia. Medido en docs/INFORME_REMONTADA_v0_25_108.md.
+ */
+function addComebackGoal(result: MatchResult, params: SimulateMatchParams): MatchResult {
+  if (getUserHalfTimeMargin(result) >= 0) return result;
+
+  const random = createRandom(typeof params.seed === "number" ? params.seed + COMEBACK_GOAL_SEED_OFFSET : undefined);
+  const userIsHome = result.expectedGoals?.userIsHome !== false;
+  const userTeamName = getUserTeamName(result);
+  const [goal] = generateUserGoalEvents({ goals: 1, teamName: userTeamName, selectedPlayers: params.selectedPlayers, random });
+  const goalEvents = [...result.goalEvents, { ...goal, minute: HALF_TIME_MINUTE + 1 + Math.floor(random.next() * HALF_TIME_MINUTE) }]
+    .sort((a, b) => a.minute - b.minute);
+  const userGoals = goalEvents.filter((event) => event.teamName === userTeamName).length;
   const rivalGoals = goalEvents.length - userGoals;
 
   return {
-    ...base,
+    ...result,
     homeGoals: userIsHome ? userGoals : rivalGoals,
     awayGoals: userIsHome ? rivalGoals : userGoals,
     goalEvents,
     userTeamWon: userGoals > rivalGoals,
     userTeamDrew: userGoals === rivalGoals,
     userTeamLost: userGoals < rivalGoals,
-    cleanSheetForUserTeam: rivalGoals === 0,
     keyFactor: getMatchKeyFactor({
       userGoals,
       rivalGoals,
