@@ -57,6 +57,8 @@ export const MATCH_CARDS_PER_SEASON = 4;
 export const MATCH_CARD_HAND_LIMIT = 6;
 export const MATCH_CARD_DRAW_SIZE = 6;
 export const MATCH_CARD_UNBEATEN_STREAK = 8;
+/** Ganar al líder da carta desde esta jornada (v0.25.111): antes, el líder es cualquiera que ganara la primera. */
+export const MATCH_CARD_LEADER_FROM_MATCHDAY = 5;
 
 export type MatchCardDrawReason = "season_start" | "cup_quarter_final" | "cup_final" | "league_leader" | "unbeaten_streak" | "european_giant";
 
@@ -330,6 +332,8 @@ export interface MatchCardOutcome {
   comebackActivated?: boolean;
   /** Liga: el rival iba primero (y no eras tú). */
   rivalIsLeader?: boolean;
+  /** Liga: la jornada jugada (v0.25.111). */
+  leagueMatchday?: number;
   /** Copa: la ronda jugada. */
   cupRoundId?: string;
 }
@@ -384,7 +388,7 @@ export function resolveMatchCards(state: MatchCardsState, outcome: MatchCardOutc
   const { competition } = outcome.situation;
   if (competition === "cup" && outcome.won && outcome.cupRoundId === "round_of_16") earn("cup_quarter_final");
   if (competition === "cup" && outcome.won && outcome.cupRoundId === "semi_final") earn("cup_final");
-  if (competition === "league" && outcome.won && outcome.rivalIsLeader) earn("league_leader");
+  if (competition === "league" && outcome.won && outcome.rivalIsLeader && (outcome.leagueMatchday ?? 0) >= MATCH_CARD_LEADER_FROM_MATCHDAY) earn("league_leader");
   if (competition === "europe" && outcome.won && outcome.situation.rivalOverall > outcome.situation.userOverall) earn("european_giant");
 
   return { ...state, hand, armedIndex: undefined, pendingDraws, unbeatenStreak, lastNotes: notes };

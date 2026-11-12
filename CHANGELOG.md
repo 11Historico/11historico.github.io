@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.25.111 — Ganar al líder, desde la jornada 5
+
+- **La carta por ganar al líder cuenta desde la jornada 5.** Antes contaba desde la jornada 2, cuando el líder es cualquiera que ganara la primera, y la carta salía casi regalada. Lo pidió el usuario («sí, desde la jornada 5»).
+- La portada y la mano vacía lo dicen: «al ganar al líder (desde la jornada 5)».
+
 ## v0.25.110 — Cartas que se notan
 
 - **Las cartas valen el doble:** +4, +8 y +12; Clásico +10, Revancha +6, Doble o nada +12 y Mediocampo +12 en el control y +4 en el resto. Ataque total da unos +50 % de goles y Defensa total deja al rival en menos de la mitad. Un +4 solo cambiaba el resultado en 1 de cada 7 partidos; un +8 lo cambia en 2 de cada 7.

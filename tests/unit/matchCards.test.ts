@@ -165,7 +165,9 @@ describe("cartas: después del partido", () => {
     expect(cup("quarter_final")).toEqual([]);
     expect(cup("round_of_16", false)).toEqual([]);
 
-    expect(resolveMatchCards(withHand([]), { situation: league(), won: true, lost: false, rivalIsLeader: true }).pendingDraws).toEqual(["league_leader"]);
+    // v0.25.111: ganar al líder cuenta desde la jornada 5.
+    expect(resolveMatchCards(withHand([]), { situation: league(), won: true, lost: false, rivalIsLeader: true, leagueMatchday: 5 }).pendingDraws).toEqual(["league_leader"]);
+    expect(resolveMatchCards(withHand([]), { situation: league(), won: true, lost: false, rivalIsLeader: true, leagueMatchday: 4 }).pendingDraws).toEqual([]);
     const europe = (rivalOverall: number) => resolveMatchCards(withHand([]), { situation: league({ competition: "europe", rivalOverall }), won: true, lost: false }).pendingDraws;
     expect(europe(85)).toEqual(["european_giant"]);
     expect(europe(84)).toEqual([]);
@@ -181,7 +183,7 @@ describe("cartas: después del partido", () => {
 
   it("con la mano llena no se gana carta", () => {
     const full = withHand(Array.from({ length: MATCH_CARD_HAND_LIMIT - 1 }, () => "plus2" as const), { pendingDraws: ["season_start"] });
-    const after = resolveMatchCards(full, { situation: league(), won: true, lost: false, rivalIsLeader: true });
+    const after = resolveMatchCards(full, { situation: league(), won: true, lost: false, rivalIsLeader: true, leagueMatchday: 10 });
     expect(after.pendingDraws).toEqual(["season_start"]);
     expect(after.lastNotes?.some((note) => note.includes("mano llena"))).toBe(true);
   });

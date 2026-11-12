@@ -53,7 +53,7 @@ export function MatchCardsHand({
       <div className="match-cards-hand match-cards-hand-empty">
         <span className="match-cards-hand-title">Tus cartas (0/{MATCH_CARD_HAND_LIMIT})</span>
         <small>
-          Ganas cartas al llegar a cuartos o a la final de Copa, al ganar al líder, con 8 partidos sin perder o al
+          Ganas cartas al llegar a cuartos o a la final de Copa, al ganar al líder (desde la jornada 5), con 8 partidos sin perder o al
           ganar en Europa a un rival con más media.
         </small>
       </div>

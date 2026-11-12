@@ -396,6 +396,7 @@ export function LeagueSimulatorView({
           lost: Boolean(result.userTeamLost),
           comebackActivated: result.comebackActivated,
           rivalIsLeader: info?.rivalIsLeader,
+          leagueMatchday: info?.leagueMatchday,
         })
       : cardsBefore;
 
