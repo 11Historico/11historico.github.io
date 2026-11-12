@@ -69,8 +69,18 @@
 
 .match-cards-hand-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-auto-rows: 1fr;
   gap: 0.45rem;
+}
+
+/* v0.25.112: todas de la misma altura; la descripción, en 3 líneas como mucho (entera, al pasar el ratón). */
+.match-cards-hand .match-card-description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
 }
 
 .match-cards-hand .match-card:not(:disabled):hover {
@@ -242,6 +252,11 @@
 }
 
 @media (max-width: 520px) {
+  /* Dos cartas por fila en el móvil (v0.25.112). */
+  .match-cards-hand-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .match-card-draw-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
