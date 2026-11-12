@@ -4,7 +4,8 @@
 // audit:career y audit:linecap.
 //
 // Simplificaciones respecto a una carrera real: el once no cambia entre temporadas
-// (ni premios de plantilla ni formación) y la ruleta de temporada siempre se rechaza.
+// (ni premios de plantilla ni formación) y la ruleta de temporada se rechaza, salvo con `wheel`
+// (audit:wheel-risk), que solo mueve la media.
 
 import { readFileSync } from "node:fs";
 
@@ -22,6 +23,7 @@ import {
   simulateSupercopaSemifinals,
   type SupercopaSemifinalPreview,
 } from "../src/career/supercopaRules";
+import { applySeasonLuckWheelRatingDelta } from "../src/career/seasonLuckWheel";
 import { applyCareerRatingBonus, applyDifficultyModifier, applyDifficultyToTeamRating } from "../src/career/teamPower";
 import { ATHLETIC_SEASONS } from "../src/data/athletic/seasons";
 import { getAvailableSlotsForPlayer, isPlayerAlreadySelected, resolvePlayerSlotPlacement } from "../src/domain/positionRules";
@@ -227,6 +229,12 @@ export interface CardEffect {
   comeback?: number;
 }
 
+/** La ruleta de temporada, en los mismos momentos que el juego (LeagueSimulatorView). */
+export interface WheelHook {
+  /** El cambio de media visible hasta final de temporada; 0 si se rechaza. */
+  spin(info: { season: number; trigger: "mid_season" | "copa_elimination"; leaguePlayed: number; leaguePosition: number }): number;
+}
+
 export interface CardHook {
   /** Con previa (campo, medias, líder) y Supercopa con cartas. Sin él, como en audit:cards. */
   detailed?: boolean;
@@ -387,27 +395,44 @@ function playSeason(params: {
   completedSeasons: number;
   tournament: EuropeanTournamentState | null | undefined;
   cards?: CardHook;
+  wheel?: WheelHook;
 }) {
-  const { policy, gameId, baseRating, lineShift, simulationRating, difficulty, formationName, selectedPlayers, selectedCoach, rivals, completedSeasons, cards } = params;
-  const compressedRating = simulationRating ? simulationRating(baseRating, difficulty) : applyDifficultyToTeamRating(baseRating, difficulty, true);
-  const effectiveRating = lineShift
-    ? {
-      ...compressedRating,
-      attack: compressedRating.attack + (lineShift.attack ?? 0),
-      defense: compressedRating.defense + (lineShift.defense ?? 0),
-      control: compressedRating.control + (lineShift.control ?? 0),
-    }
-    : compressedRating;
+  const { policy, gameId, baseRating, lineShift, simulationRating, difficulty, formationName, selectedPlayers, selectedCoach, rivals, completedSeasons, cards, wheel } = params;
+  const toEffective = (seasonRating: TeamRating) => {
+    const compressedRating = simulationRating ? simulationRating(seasonRating, difficulty) : applyDifficultyToTeamRating(seasonRating, difficulty, true);
+    return lineShift
+      ? {
+        ...compressedRating,
+        attack: compressedRating.attack + (lineShift.attack ?? 0),
+        defense: compressedRating.defense + (lineShift.defense ?? 0),
+        control: compressedRating.control + (lineShift.control ?? 0),
+      }
+      : compressedRating;
+  };
+  let effectiveRating = toEffective(baseRating);
   const coachSkills = selectedCoach.coachSeason.skills;
   let tournament = params.tournament;
   let context: ReturnType<typeof createUserLeagueSimulation> = {
     ...createUserLeagueSimulation({ rivals: applyCareerRivalProgression(rivals, completedSeasons) }),
     selectedCoach,
   };
+  // La ruleta: una vez por temporada, hasta los 2/3 de la Liga, como en el juego. Antes de
+  // aplicarse, la media visible (applySeasonLuckWheelRatingDelta) y después, la compresión.
+  let wheelUsed = false;
+  const offerWheel = (trigger: "mid_season" | "copa_elimination") => {
+    const userPlayed = context.state.table.find((row) => row.teamId === USER_TEAM_ID)?.played ?? 0;
+    const maxMatchday = Math.max(...context.state.fixtures.map((fixture) => fixture.matchday), 38);
+    if (!wheel || wheelUsed || userPlayed > Math.floor(maxMatchday * 2 / 3)) return;
+    wheelUsed = true;
+    const leaguePosition = getDisplayTable(context.state.table).findIndex((row) => row.teamId === USER_TEAM_ID) + 1;
+    const delta = wheel.spin({ season: completedSeasons, trigger, leaguePlayed: userPlayed, leaguePosition });
+    if (delta !== 0) effectiveRating = toEffective(applySeasonLuckWheelRatingDelta(baseRating, delta));
+  };
 
   for (let guard = 0; guard < 200; guard += 1) {
     const pendingCup = getPendingCupFixture(context);
     const leaguePlayed = context.state.table.find((row) => row.teamId === USER_TEAM_ID)?.played ?? 0;
+    if (leaguePlayed >= 19) offerWheel("mid_season");
 
     if (pendingCup) {
       const preview = cards?.detailed ? getNextUserMatchPreview({ context, teamRating: effectiveRating, selectedPlayers }) : undefined;
@@ -445,6 +470,7 @@ function playSeason(params: {
       const { outcome, cameBack } = playWithComeback(card, playCup, ({ firstHalf }) => (firstHalf ? getHalfTimeMargin(firstHalf) : 0));
 
       context = outcome.decided.context;
+      if (outcome.decided.result?.userTeamLost) offerWheel("copa_elimination");
       cards?.afterMatch(cupMatch, Boolean(outcome.decided.result?.userTeamWon), Boolean(outcome.decided.result?.userTeamLost), cameBack || Boolean(outcome.decided.result?.comebackActivated));
       continue;
     }
@@ -589,8 +615,9 @@ export function playCareer(params: {
   difficulty: GameDifficulty;
   team: CareerTeam;
   cards?: CardHook;
+  wheel?: WheelHook;
 }) {
-  const { policy, seed, difficulty, team, cards } = params;
+  const { policy, seed, difficulty, team, cards, wheel } = params;
   const gameId = auditGameId(seed);
   let completedSeasons = 0;
   let trophies: CareerTrophyCounts = { champions: 0, liga: 0, europaLeague: 0, copa: 0, conference: 0, supercopa: 0 };
@@ -651,6 +678,7 @@ export function playCareer(params: {
       completedSeasons,
       tournament: europeanCareer.currentTournament,
       cards,
+      wheel,
     });
     europeanCareer = setEuropeanCurrentTournament(europeanCareer, tournament ?? null);
     leaguePositions += summary.leaguePosition;
