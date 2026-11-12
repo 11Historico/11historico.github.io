@@ -213,7 +213,7 @@ function createGameCards(policy: CardPolicy, seed: number, stats: Stats): CardHo
 
       const armedId = getArmedMatchCard(cards);
       const pendingBefore = cards.pendingDraws.length;
-      cards = resolveMatchCards(cards, { situation, won, lost, comebackActivated: cameBack, rivalIsLeader: match.rivalIsLeader, cupRoundId: match.roundId });
+      cards = resolveMatchCards(cards, { situation, won, lost, comebackActivated: cameBack, rivalIsLeader: match.rivalIsLeader, leagueMatchday: match.leagueMatchday, cupRoundId: match.roundId });
       const notes = cards.lastNotes ?? [];
 
       for (const reason of cards.pendingDraws.slice(pendingBefore)) stats.earned[reason] += 1;

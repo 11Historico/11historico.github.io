@@ -2198,6 +2198,8 @@ export interface UserMatchInfo {
   cupRoundId?: CupFixture["roundId"];
   /** Liga: el rival va primero en la clasificación (y no eres tú). */
   rivalIsLeader: boolean;
+  /** Liga: la jornada que se juega (v0.25.111). */
+  leagueMatchday?: number;
 }
 
 export function getNextUserMatchInfo(params: { context: UserLeagueSimulationContext; teamRating: TeamRating }): UserMatchInfo | undefined {
@@ -2237,6 +2239,7 @@ export function getNextUserMatchInfo(params: { context: UserLeagueSimulationCont
     rivalOverall: Math.round(formAdjustedRival.ratings.overall),
     userOverall: Math.round(teamRating.overall),
     rivalIsLeader: Boolean(leaderId && leaderId === rival.id && leaderId !== USER_TEAM_ID),
+    leagueMatchday: userFixture.matchday,
   };
 }
 
