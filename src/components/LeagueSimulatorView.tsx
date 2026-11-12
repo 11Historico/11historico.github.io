@@ -37,7 +37,9 @@ import {
   applyMatchCardLineBonus,
   armMatchCard,
   closeMatchCardDraw,
+  getArmedMatchCard,
   getArmedMatchCardPlay,
+  getMatchCardHalftimePlay,
   pickMatchCard,
   resolveMatchCards,
   type MatchCardSituation,
@@ -50,7 +52,7 @@ import {
   getUserLeagueSummary,
   USER_TEAM_NAME,
 } from "../simulation/leagueTable";
-import { applyHalfTimeChoice } from "../simulation/matchEngine";
+import { applyHalfTimeChoice, applyHalftimeCard } from "../simulation/matchEngine";
 import { applyDifficultyToTeamRating } from "../career/teamPower";
 import { applyCareerRivalProgression } from "../career/careerRules";
 import {
@@ -150,7 +152,7 @@ const AUTO_SIMULATION_DELAY_MS = 1300;
  * siguiera igual, así que recargar aquí no permite repetir una primera parte mala.
  */
 type PendingHalfTime =
-  | { kind: "cup"; contextBefore: UserLeagueSimulationContext; regularTimeResult: MatchResult; cardsBefore?: MatchCardsState }
+  | { kind: "cup"; contextBefore: UserLeagueSimulationContext; regularTimeResult: MatchResult; cardsBefore?: MatchCardsState; situation?: MatchCardSituation }
   | { kind: "europe"; tournamentBefore: EuropeanTournamentState; matchId: string; input: SimulateEuropeanMatchInput; cardsBefore?: MatchCardsState; situation?: MatchCardSituation };
 
 function toCardSituation(info: UserMatchInfo): MatchCardSituation {
@@ -249,6 +251,8 @@ export function LeagueSimulatorView({
   const [approach, setApproach] = useState<MatchApproach>("balanced");
   const coachSkills = selectedCoach.coachSeason.skills;
   const [pendingHalfTime, setPendingHalfTime] = useState<PendingHalfTime | undefined>();
+  // Carta elegida en el descanso de Copa o Europa (v0.25.110), hasta decidir.
+  const [halftimeCardIndex, setHalftimeCardIndex] = useState<number | undefined>();
   // Torneo antes del partido europeo: se enseña mientras se juega, como shownContext en Liga (v0.25.78).
   const [tournamentBeforeMatch, setTournamentBeforeMatch] = useState<EuropeanTournamentState | undefined>();
   const [isEuropeanSequencePlaying, setIsEuropeanSequencePlaying] = useState(false);
@@ -381,6 +385,8 @@ export function LeagueSimulatorView({
       teamRating: applyMatchCardLineBonus(effectiveTeamRating, play?.lineBonus),
       selectedPlayers,
       card: play?.effect,
+      // Con carta, el mismo partido sin ella para la crónica (v0.25.110).
+      teamRatingWithoutCard: play ? effectiveTeamRating : undefined,
     });
     const result = simulation.result;
     const cards = cardsBefore && situation && result
@@ -413,6 +419,7 @@ export function LeagueSimulatorView({
       approach: matchApproach,
       regularTimeResult,
       card: play?.effect,
+      teamRatingWithoutCard: play ? effectiveTeamRating : undefined,
     });
     const result = simulation.result;
     const cards = cardsBefore && situation && result
@@ -649,6 +656,7 @@ export function LeagueSimulatorView({
       userProfile: matchTeamRating,
       selectedPlayers,
       card: cardEffect,
+      ...(cardPlay ? { userTeamRatingWithoutCard: europeanUserRating, userProfileWithoutCard: effectiveTeamRating } : {}),
     };
     const outcome = simulateEuropeanMatch(input);
 
@@ -675,26 +683,45 @@ export function LeagueSimulatorView({
     setJustPlayedEuropeanMatch(nextTournament.matches.find((match) => match.id === matchId));
   }
 
-  // Seguir igual no recalcula nada. Arriesgar y cerrar sustituyen el resultado ya guardado.
+  // Seguir igual sin carta no recalcula nada. Arriesgar, cerrar o una carta sustituyen el resultado ya guardado.
   function handleHalfTimeChoice(choice: HalfTimeChoice) {
     if (!pendingHalfTime) return;
 
+    const halftimeIndex = halftimeCardIndex;
     setPendingHalfTime(undefined);
+    setHalftimeCardIndex(undefined);
+
+    // Carta del descanso (v0.25.110): solo si no jugaste ninguna antes del partido.
+    const { cardsBefore, situation } = pendingHalfTime;
+    const halftimeCards = halftimeIndex !== undefined && cardsBefore && cardsBefore.armedIndex === undefined ? armMatchCard(cardsBefore, halftimeIndex) : undefined;
+    const halftimeId = getArmedMatchCard(halftimeCards);
+    const halftimePlay = halftimeId && situation ? getMatchCardHalftimePlay(halftimeId, situation).play : undefined;
+    // Las cartas se resuelven otra vez desde antes del partido, con el resultado nuevo.
+    const cardsForResult = halftimePlay ? halftimeCards : cardsBefore;
 
     if (pendingHalfTime.kind === "europe") {
-      if (choice !== "keep") {
-        const outcome = simulateEuropeanMatch({ ...pendingHalfTime.input, halfTimeChoice: choice });
+      if (choice !== "keep" || halftimePlay) {
+        const outcome = simulateEuropeanMatch({
+          ...pendingHalfTime.input,
+          ...(choice !== "keep" ? { halfTimeChoice: choice } : {}),
+          ...(halftimePlay ? { halftimeCard: halftimePlay.effect } : {}),
+        });
         commitEuropeanOutcome(pendingHalfTime.tournamentBefore, pendingHalfTime.matchId, outcome);
-        // Las cartas se resuelven otra vez desde antes del partido, con el resultado nuevo.
-        commitCards(resolveEuropeanCards(pendingHalfTime.cardsBefore, pendingHalfTime.situation, outcome));
+        commitCards(resolveEuropeanCards(cardsForResult, situation, outcome));
       }
       return;
     }
 
-    const { contextBefore, regularTimeResult, cardsBefore } = pendingHalfTime;
-    const replayed = choice === "keep"
+    const { contextBefore, regularTimeResult } = pendingHalfTime;
+    const afterChoice = choice === "keep" ? regularTimeResult : applyHalfTimeChoice({ result: regularTimeResult, choice, selectedPlayers });
+    const replayed = choice === "keep" && !halftimePlay
       ? undefined
-      : playCupMatch(contextBefore, cardsBefore, undefined, applyHalfTimeChoice({ result: regularTimeResult, choice, selectedPlayers }));
+      : playCupMatch(
+          contextBefore,
+          cardsForResult,
+          undefined,
+          halftimePlay ? applyHalftimeCard({ result: afterChoice, effect: halftimePlay.effect, selectedPlayers }) : afterChoice,
+        );
     const simulation = replayed?.simulation ?? { context, result: lastResult };
 
     if (replayed) {
@@ -826,7 +853,8 @@ export function LeagueSimulatorView({
       }
     }
 
-    return { nextContext, lastResult, contextBeforeLastResult, wheelOffered, cards: cards && { ...cards, lastNotes: notes } };
+    // Las notas solo cambian si se jugó algún partido: así no se borran las del último.
+    return { nextContext, lastResult, contextBeforeLastResult, wheelOffered, cards: cards && lastResult ? { ...cards, lastNotes: notes } : cards };
   }
 
   function handleSimulateFullSeason() {
@@ -857,7 +885,7 @@ export function LeagueSimulatorView({
     setJustPlayedEuropeanMatch(undefined);
 
     if (simulation.regularTimeResult) {
-      setPendingHalfTime({ kind: "cup", contextBefore: context, regularTimeResult: simulation.regularTimeResult, cardsBefore: matchCards });
+      setPendingHalfTime({ kind: "cup", contextBefore: context, regularTimeResult: simulation.regularTimeResult, cardsBefore: matchCards, situation: nextCardSituation });
     }
   }
 
@@ -931,7 +959,7 @@ export function LeagueSimulatorView({
     }
 
     commitContext(nextContext);
-    commitCards(cards && { ...cards, lastNotes: notes });
+    commitCards(cards && lastUserResult ? { ...cards, lastNotes: notes } : cards);
     setLastResult(lastUserResult);
     setContextBeforeResult(contextBeforeLastResult);
     setJustPlayedEuropeanMatch(undefined);
@@ -945,6 +973,17 @@ export function LeagueSimulatorView({
     if (context.state.completed || pendingCupFixture || pendingEuropeanMatch || isDrawingCards) return;
     setIsAutoSimulating((current) => !current);
   }
+
+  // En el descanso (v0.25.110): tus cartas para la segunda parte, si no jugaste ninguna antes del partido.
+  const halftimeCardsBefore = pendingHalfTime?.cardsBefore;
+  const halfTimeCards = halftimeCardsBefore && halftimeCardsBefore.armedIndex === undefined && pendingHalfTime?.situation ? (
+    <MatchCardsHand
+      halftime
+      cards={{ ...halftimeCardsBefore, armedIndex: halftimeCardIndex }}
+      situation={pendingHalfTime.situation}
+      onArm={setHalftimeCardIndex}
+    />
+  ) : undefined;
 
   // Una tarjeta por competición. Lo pendiente usa la tarjeta completa; lo que viene después, una compacta.
   const eventCards: Record<LeagueEventKind, ReactNode> = {
@@ -980,6 +1019,7 @@ export function LeagueSimulatorView({
         userTeamRating={europeanUserRating}
         pitch={{ formation, selectedPlayers }}
         onHalfTimeChoice={pendingHalfTime?.kind === "europe" ? handleHalfTimeChoice : undefined}
+        halfTimeCards={pendingHalfTime?.kind === "europe" ? halfTimeCards : undefined}
         onPlayingChange={setIsEuropeanSequencePlaying}
         onContinue={handleContinueAfterEuropeanMatch}
       />
@@ -1003,6 +1043,7 @@ export function LeagueSimulatorView({
         onPlayingChange={setIsSequencePlaying}
         pitch={{ formation, selectedPlayers }}
         onHalfTimeChoice={pendingHalfTime?.kind === "cup" ? handleHalfTimeChoice : undefined}
+        halfTimeCards={pendingHalfTime?.kind === "cup" ? halfTimeCards : undefined}
       />
     ),
   };

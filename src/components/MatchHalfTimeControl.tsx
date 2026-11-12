@@ -1,7 +1,7 @@
 // src/components/MatchHalfTimeControl.tsx
 // Decisión en el descanso (v0.25.78): el partido se para a los 45' en Copa y Europa.
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 import type { HalfTimeChoice } from "../types/game";
 import { MatchIcon, type MatchIconKind } from "./MatchIcon";
@@ -14,7 +14,7 @@ const OPTIONS: { value: HalfTimeChoice; label: string; icon: MatchIconKind }[] =
   { value: "close", label: "Cerrar el partido", icon: "defensive" },
 ];
 
-export function MatchHalfTimeControl({ onChoice }: { onChoice: (choice: HalfTimeChoice) => void }) {
+export function MatchHalfTimeControl({ onChoice, cards }: { onChoice: (choice: HalfTimeChoice) => void; /** Tus cartas para la segunda parte (v0.25.110). */ cards?: ReactNode }) {
   const controlRef = useRef<HTMLDivElement>(null);
 
   // El botón de simular queda lejos de la tarjeta: sin esto, la decisión puede quedar fuera de la pantalla.
@@ -26,6 +26,7 @@ export function MatchHalfTimeControl({ onChoice }: { onChoice: (choice: HalfTime
     <div ref={controlRef} className="match-approach match-half-time">
       <strong className="match-half-time-title">Descanso: el partido está en pausa</strong>
       <p>Elige cómo jugar la segunda parte para continuar.</p>
+      {cards}
       <div className="match-approach-options" role="group" aria-label="Decisión del descanso">
         {OPTIONS.map((option) => (
           <button key={option.value} type="button" className="match-approach-option" onClick={() => onChoice(option.value)}>

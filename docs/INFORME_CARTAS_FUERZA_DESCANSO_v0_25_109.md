@@ -35,6 +35,8 @@ Cuando cambia, casi siempre es a mejor. Lo que da la carta es real, pero en un p
 ## 2) Carreras
 
 **Script:** `npm run audit:game-cards -- "--only=hoy|uso sensato"`, en `scripts/auditGameCards.ts`.
+
+> **Desde la v0.25.110** la fuerza ×2 y el descanso ya están en el juego, y la auditoría mide el juego real. Las filas de este informe se reproducen con el commit `135cd5d`.
 - Usa las cartas del juego (`matchCards.ts`, v0.25.109) y el motor del juego.
 - 300 carreras por caso: dificultad Normal y Fácil, con draft de mejor media y al azar.
 - 8.400 carreras en total.

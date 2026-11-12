@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.25.110 — Cartas que se notan
+
+- **Las cartas valen el doble:** +4, +8 y +12; Clásico +10, Revancha +6, Doble o nada +12 y Mediocampo +12 en el control y +4 en el resto. Ataque total da unos +50 % de goles y Defensa total deja al rival en menos de la mitad. Un +4 solo cambiaba el resultado en 1 de cada 7 partidos; un +8 lo cambia en 2 de cada 7.
+- **Cartas en el descanso (Copa y Europa):** si no jugaste ninguna antes del partido, en la pausa del descanso puedes jugar una para la segunda parte. Las de media dan probabilidad de marcar un gol más (un +8, un 48 %); Defensa total anula casi todos los goles del rival; Portero inspirado vale para la prórroga o los penaltis. La Remontada no se puede jugar en el descanso.
+- **La crónica dice qué hizo la carta:** «Tu carta cambió el partido: sin ella habrías empatado 1-1». Es el mismo partido sin la carta y con la misma suerte, como la comparación del planteamiento.
+- **La carta en uso se ve:** lleva la etiqueta «EN USO» en dorado y las demás se apagan.
+- **Rarezas:** el Efecto San Mamés y el Fortín fuera, que no se duplican, pasan de épicas a raras.
+- Medido antes de construir (`docs/INFORME_CARTAS_FUERZA_DESCANSO_v0_25_109.md`). Sin cartas, el juego es exactamente el de antes; las cartas que ya tengas en la mano pasan a valer el doble.
+
 ## v0.25.109 — Remontada con gol
 
 - **La Remontada cambia:** si vas perdiendo al descanso, marcas un gol en la segunda parte, con goleador y minuto. Antes subía +12 la media de la segunda parte y casi no se notaba: cuando se activaba solo se ganaba el 7 % de esos partidos.

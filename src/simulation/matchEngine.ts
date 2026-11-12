@@ -5,6 +5,7 @@ import type {
   GoalEvent,
   HalfTimeChoice,
   MatchApproach,
+  MatchCardComparison,
   MatchKeyFactor,
   MatchLineDuel,
   MatchResult,
@@ -39,6 +40,18 @@ export interface SimulateMatchParams {
   coachSkills?: CoachSkills;
   /** Carta de partido (v0.25.108). Sin ella, el partido es el de siempre. */
   card?: MatchCardEffect;
+  /** Partido de verdad con carta (v0.25.110): tu rating sin ella, para comparar en la crónica. */
+  teamRatingWithoutCard?: TeamRating;
+}
+
+/** Carta jugada en el descanso (v0.25.110): actúa sobre los goles de la segunda parte. */
+export interface MatchHalftimeCardEffect {
+  /** Probabilidad de marcar un gol más en la segunda parte. */
+  extraGoalChance?: number;
+  /** Probabilidad de que no llegue cada gol del rival en la segunda parte (Defensa total). */
+  cancelRivalChance?: number;
+  /** Portero inspirado: la prórroga o los penaltis. Lo aplica cada competición. */
+  shootout?: boolean;
 }
 
 /**
@@ -773,12 +786,35 @@ function playMatch(params: SimulateMatchParams, random: RandomGenerator): MatchR
  * Simula un partido individual del Athletic histórico contra un rival 25/26.
  */
 export function simulateMatch(params: SimulateMatchParams): MatchResult {
-  const result = playWithApproach(params, createRandom(params.seed));
+  if (!params.teamRatingWithoutCard) return playWithCard(params, createRandom(params.seed));
+
+  // Partido de verdad con carta (v0.25.110): el mismo partido sin ella y con las mismas tiradas,
+  // para que la crónica diga qué cambió la carta. Como la comparación del planteamiento.
+  const draws: number[] = [];
+  const random = createRandom(params.seed);
+  const result = playWithCard(params, createReplayRandom(random, draws));
+  const without = playWithApproach({ ...params, teamRating: params.teamRatingWithoutCard, card: undefined }, createReplayRandom(random, draws));
+  return { ...result, cardEffect: compareCardResult(result, without) };
+}
+
+function playWithCard(params: SimulateMatchParams, random: RandomGenerator): MatchResult {
+  const result = playWithApproach(params, random);
   return params.card?.comebackGoal ? addComebackGoal(result, params) : result;
 }
 
 function getUserTeamName(result: MatchResult): string {
   return result.expectedGoals?.userIsHome === false ? result.awayTeamName : result.homeTeamName;
+}
+
+function getUserAndRivalGoals(result: MatchResult): { userGoals: number; rivalGoals: number } {
+  const userIsHome = result.expectedGoals?.userIsHome !== false;
+  return { userGoals: userIsHome ? result.homeGoals : result.awayGoals, rivalGoals: userIsHome ? result.awayGoals : result.homeGoals };
+}
+
+function compareCardResult(result: MatchResult, without: MatchResult, halftime = false): MatchCardComparison {
+  const withCard = getUserAndRivalGoals(result);
+  const withoutCard = getUserAndRivalGoals(without);
+  return { ...withCard, withoutUserGoals: withoutCard.userGoals, withoutRivalGoals: withoutCard.rivalGoals, ...(halftime ? { halftime } : {}) };
 }
 
 /** Tus goles menos los del rival en la primera parte. */
@@ -788,6 +824,43 @@ export function getUserHalfTimeMargin(result: MatchResult): number {
   const userGoals = firstHalf.filter((goal) => goal.teamName === userTeamName).length;
 
   return userGoals - (firstHalf.length - userGoals);
+}
+
+/** El partido con otros goles: el marcador, el resultado y el factor salen de ellos. */
+function withGoalEvents(result: MatchResult, events: GoalEvent[]): MatchResult {
+  const userIsHome = result.expectedGoals?.userIsHome !== false;
+  const userTeamName = getUserTeamName(result);
+  const goalEvents = [...events].sort((a, b) => a.minute - b.minute);
+  const userGoals = goalEvents.filter((event) => event.teamName === userTeamName).length;
+  const rivalGoals = goalEvents.length - userGoals;
+
+  return {
+    ...result,
+    homeGoals: userIsHome ? userGoals : rivalGoals,
+    awayGoals: userIsHome ? rivalGoals : userGoals,
+    goalEvents,
+    userTeamWon: userGoals > rivalGoals,
+    userTeamDrew: userGoals === rivalGoals,
+    userTeamLost: userGoals < rivalGoals,
+    cleanSheetForUserTeam: rivalGoals === 0,
+    keyFactor: getMatchKeyFactor({
+      userGoals,
+      rivalGoals,
+      userIsHome,
+      userAverage: 0,
+      rivalAverage: 0,
+      userIsHugeFavorite: false,
+      rivalClosedGap: false,
+      upset: false,
+    }),
+    // Con otro marcador, la comparación del planteamiento ya no vale.
+    approachEffect: undefined,
+  };
+}
+
+function secondHalfUserGoal(result: MatchResult, selectedPlayers: SelectedPlayer[], random: RandomGenerator): GoalEvent {
+  const [goal] = generateUserGoalEvents({ goals: 1, teamName: getUserTeamName(result), selectedPlayers, random });
+  return { ...goal, minute: HALF_TIME_MINUTE + 1 + Math.floor(random.next() * HALF_TIME_MINUTE) };
 }
 
 // Tiradas propias del gol de la Remontada: no mueven las del partido.
@@ -801,38 +874,38 @@ function addComebackGoal(result: MatchResult, params: SimulateMatchParams): Matc
   if (getUserHalfTimeMargin(result) >= 0) return result;
 
   const random = createRandom(typeof params.seed === "number" ? params.seed + COMEBACK_GOAL_SEED_OFFSET : undefined);
-  const userIsHome = result.expectedGoals?.userIsHome !== false;
-  const userTeamName = getUserTeamName(result);
-  const [goal] = generateUserGoalEvents({ goals: 1, teamName: userTeamName, selectedPlayers: params.selectedPlayers, random });
-  const goalEvents = [...result.goalEvents, { ...goal, minute: HALF_TIME_MINUTE + 1 + Math.floor(random.next() * HALF_TIME_MINUTE) }]
-    .sort((a, b) => a.minute - b.minute);
-  const userGoals = goalEvents.filter((event) => event.teamName === userTeamName).length;
-  const rivalGoals = goalEvents.length - userGoals;
-
-  return {
-    ...result,
-    homeGoals: userIsHome ? userGoals : rivalGoals,
-    awayGoals: userIsHome ? rivalGoals : userGoals,
-    goalEvents,
-    userTeamWon: userGoals > rivalGoals,
-    userTeamDrew: userGoals === rivalGoals,
-    userTeamLost: userGoals < rivalGoals,
-    keyFactor: getMatchKeyFactor({
-      userGoals,
-      rivalGoals,
-      userIsHome,
-      userAverage: 0,
-      rivalAverage: 0,
-      userIsHugeFavorite: false,
-      rivalClosedGap: false,
-      upset: false,
-    }),
-    // Con otro marcador, la comparación del planteamiento ya no vale.
-    approachEffect: undefined,
-    comebackActivated: true,
-  };
+  return { ...withGoalEvents(result, [...result.goalEvents, secondHalfUserGoal(result, params.selectedPlayers, random)]), comebackActivated: true };
 }
 
+// Tiradas propias de la carta del descanso.
+const HALFTIME_CARD_SEED_OFFSET = 5151;
+
+/**
+ * Carta jugada en el descanso (v0.25.110, Copa y Europa): actúa sobre los goles de la segunda parte.
+ * Puede anular goles del rival (Defensa total) o darte uno más. La primera parte no cambia.
+ * Medido en docs/INFORME_CARTAS_FUERZA_DESCANSO_v0_25_109.md.
+ */
+export function applyHalftimeCard(params: {
+  result: MatchResult;
+  effect: MatchHalftimeCardEffect;
+  selectedPlayers: SelectedPlayer[];
+  seed?: number;
+}): MatchResult {
+  const { result, effect, selectedPlayers, seed } = params;
+  const random = createRandom(typeof seed === "number" ? seed + HALFTIME_CARD_SEED_OFFSET : undefined);
+  const userTeamName = getUserTeamName(result);
+  const cancel = effect.cancelRivalChance ?? 0;
+  const events = result.goalEvents.filter((goal) => goal.minute <= HALF_TIME_MINUTE || goal.teamName === userTeamName || random.next() >= cancel);
+  let changed = events.length !== result.goalEvents.length;
+  const { userGoals } = getUserAndRivalGoals(result);
+  if (userGoals < MAX_MATCH_GOALS && random.next() < (effect.extraGoalChance ?? 0)) {
+    events.push(secondHalfUserGoal(result, selectedPlayers, random));
+    changed = true;
+  }
+
+  const next = changed ? withGoalEvents(result, events) : result;
+  return { ...next, cardEffect: compareCardResult(next, result, true) };
+}
 function playWithApproach(params: SimulateMatchParams, random: RandomGenerator): MatchResult {
   if (!params.approach || params.approach === "balanced") {
     return playMatch(params, random);
@@ -935,6 +1008,7 @@ export function applyHalfTimeChoice(params: {
       upset: false,
     }),
     approachEffect: undefined,
+    cardEffect: undefined,
     halfTimeEffect,
   };
 }

@@ -8,6 +8,7 @@ import {
   armMatchCard,
   closeMatchCardDraw,
   createSeasonMatchCards,
+  getMatchCardHalftimePlay,
   getMatchCardPlay,
   getPendingMatchCardDraw,
   pickMatchCard,
@@ -17,7 +18,8 @@ import {
   type MatchCardsState,
 } from "../../src/career/matchCards";
 import { simulateEuropeanMatch } from "../../src/europe/europeanMatchEngine";
-import { getUserHalfTimeMargin, simulateMatch, type MatchCardEffect } from "../../src/simulation/matchEngine";
+import { applyHalfTimeChoice, applyHalftimeCard, getUserHalfTimeMargin, simulateMatch, type MatchCardEffect } from "../../src/simulation/matchEngine";
+import { getMatchCardEffectText } from "../../src/components/matchSequenceTimeline";
 import { getInitialCareerLeagueRivals } from "../../src/simulation/leagueSimulator";
 import type { RivalTeam, SelectedPlayer, TeamRating } from "../../src/types/game";
 
@@ -46,14 +48,15 @@ function withHand(hand: MatchCardId[], overrides: Partial<MatchCardsState> = {})
   return { ...createSeasonMatchCards("test_27/28"), pendingDraws: [], hand, ...overrides };
 }
 
-// v0.25.108: el mazo retocado de docs/INFORME_TIPOS_CARTAS_v0_25_107.md.
+// v0.25.108: el mazo retocado de docs/INFORME_TIPOS_CARTAS_v0_25_107.md; v0.25.110: al doble de fuerza.
 describe("cartas: el mazo", () => {
   it("tiene los 14 tipos con la rareza medida", () => {
     expect(MATCH_CARDS).toHaveLength(14);
     const byRarity = (rarity: string) => MATCH_CARDS.filter((card) => card.rarity === rarity).map((card) => card.id).sort();
     expect(byRarity("common")).toEqual(["attack_total", "inspired_keeper", "midfield", "plus2", "scout"]);
-    expect(byRarity("rare")).toEqual(["classic", "comeback", "defense_total", "plus4", "revenge"]);
-    expect(byRarity("epic")).toEqual(["away_fortress", "double_or_nothing", "plus6", "san_mames"]);
+    expect(byRarity("rare")).toEqual(["away_fortress", "classic", "comeback", "defense_total", "plus4", "revenge", "san_mames"]);
+    expect(byRarity("epic")).toEqual(["double_or_nothing", "plus6"]);
+    expect(MATCH_CARDS.filter((card) => ["plus2", "plus4", "plus6"].includes(card.id)).map((card) => card.name)).toEqual(["+4", "+8", "+12"]);
   });
 
   it("las condicionales solo valen donde toca", () => {
@@ -62,18 +65,18 @@ describe("cartas: el mazo", () => {
     expect(getMatchCardPlay("inspired_keeper", league()).play).toBeUndefined();
     expect(getMatchCardPlay("inspired_keeper", league({ competition: "cup", knockout: true })).play?.effect).toEqual({ shootout: true });
     expect(getMatchCardPlay("classic", league({ rivalOverall: 84 })).play).toBeUndefined();
-    expect(getMatchCardPlay("classic", league({ rivalOverall: 86 })).play?.lineBonus.attack).toBe(5);
+    expect(getMatchCardPlay("classic", league({ rivalOverall: 86 })).play?.lineBonus.attack).toBe(10);
     expect(getMatchCardPlay("san_mames", league({ venue: "away", rivalOverall: 90 })).play).toBeUndefined();
     expect(getMatchCardPlay("san_mames", league({ rivalOverall: 91 })).play?.lineBonus.defense).toBe(7);
     expect(getMatchCardPlay("scout", league()).play).toBeUndefined();
   });
 
   it("la media de la carta sube la media que enseña la previa", () => {
-    expect(applyMatchCardLineBonus(teamRating, getMatchCardPlay("plus4", league()).play?.lineBonus).overall).toBe(teamRating.overall + 4);
+    expect(applyMatchCardLineBonus(teamRating, getMatchCardPlay("plus4", league()).play?.lineBonus).overall).toBe(teamRating.overall + 8);
     const midfield = applyMatchCardLineBonus(teamRating, getMatchCardPlay("midfield", league()).play?.lineBonus);
-    expect(midfield.control).toBe(teamRating.control + 6);
-    expect(midfield.attack).toBe(teamRating.attack + 2);
-    expect(midfield.overall).toBeCloseTo(teamRating.overall + 2.72, 5);
+    expect(midfield.control).toBe(teamRating.control + 12);
+    expect(midfield.attack).toBe(teamRating.attack + 4);
+    expect(midfield.overall).toBeCloseTo(teamRating.overall + 5.44, 5);
     expect(applyMatchCardLineBonus(teamRating, {})).toBe(teamRating);
   });
 });
@@ -274,5 +277,72 @@ describe("cartas: el motor", () => {
     }
     expect(shootouts).toBeGreaterThan(50);
     expect(keeperWins / shootouts).toBeGreaterThan(plainWins / shootouts + 0.2);
+  });
+});
+
+// v0.25.110: docs/INFORME_CARTAS_FUERZA_DESCANSO_v0_25_109.md.
+describe("cartas: en el descanso", () => {
+  it("las de media dan un 6 % de gol por punto; Defensa total, Portero y la Remontada, lo suyo", () => {
+    const cup = league({ competition: "cup", knockout: true, rivalOverall: 88 });
+    expect(getMatchCardHalftimePlay("plus4", cup).play).toEqual({ effect: { extraGoalChance: 0.48 }, text: "48 % de marcar un gol más en la segunda parte." });
+    expect(getMatchCardHalftimePlay("plus6", cup).play?.effect.extraGoalChance).toBeCloseTo(0.72, 5);
+    expect(getMatchCardHalftimePlay("classic", cup).play?.effect.extraGoalChance).toBeCloseTo(0.6, 5);
+    expect(getMatchCardHalftimePlay("defense_total", cup).play?.effect).toEqual({ cancelRivalChance: 0.9 });
+    expect(getMatchCardHalftimePlay("inspired_keeper", cup).play?.effect).toEqual({ shootout: true });
+    expect(getMatchCardHalftimePlay("comeback", cup).play).toBeUndefined();
+    expect(getMatchCardHalftimePlay("comeback", cup).unavailableReason).toContain("ya sabes si vas perdiendo");
+    expect(getMatchCardHalftimePlay("away_fortress", cup).play).toBeUndefined();
+  });
+
+  it("no cambia la primera parte; con un 100 % marcas uno más y Defensa total anula goles del rival", () => {
+    let cancelled = 0;
+    for (let seed = 1; seed <= 300; seed += 1) {
+      const plain = simulateMatch({ fixtureId: "f", matchday: 1, rival: uniformRival(86), venue: "home", teamRating: uniformTeam(84), selectedPlayers, seed });
+      const firstHalf = (result: typeof plain) => result.goalEvents.filter((goal) => goal.minute <= 45);
+
+      const goal = applyHalftimeCard({ result: plain, effect: { extraGoalChance: 1 }, selectedPlayers, seed });
+      expect(firstHalf(goal)).toEqual(firstHalf(plain));
+      expect(goal.homeGoals).toBe(plain.homeGoals + (plain.homeGoals < 6 ? 1 : 0));
+      expect(goal.awayGoals).toBe(plain.awayGoals);
+      expect(goal.cardEffect).toMatchObject({ halftime: true, userGoals: goal.homeGoals, withoutUserGoals: plain.homeGoals });
+
+      const defense = applyHalftimeCard({ result: plain, effect: { cancelRivalChance: 1 }, selectedPlayers, seed });
+      expect(firstHalf(defense)).toEqual(firstHalf(plain));
+      expect(defense.awayGoals).toBe(firstHalf(plain).filter((event) => event.teamName === plain.awayTeamName).length);
+      cancelled += plain.awayGoals - defense.awayGoals;
+    }
+    expect(cancelled).toBeGreaterThan(30);
+  });
+});
+
+describe("cartas: la crónica dice qué cambió la carta", () => {
+  it("con el rating sin la carta, el mismo partido sin ella; sin él, el partido de siempre", () => {
+    for (let seed = 1; seed <= 200; seed += 1) {
+      const params = { fixtureId: "f", matchday: 1, rival: uniformRival(84), venue: "away" as const, teamRating: uniformTeam(84), selectedPlayers, seed };
+      const plain = simulateMatch(params);
+      const withCard = simulateMatch({ ...params, teamRating: uniformTeam(92), teamRatingWithoutCard: uniformTeam(84) });
+      const sameRating = simulateMatch({ ...params, teamRatingWithoutCard: uniformTeam(84) });
+
+      expect(plain.cardEffect).toBeUndefined();
+      expect(simulateMatch({ ...params, teamRating: uniformTeam(92) })).toEqual({ ...withCard, cardEffect: undefined });
+      expect(withCard.cardEffect).toEqual({ userGoals: withCard.awayGoals, rivalGoals: withCard.homeGoals, withoutUserGoals: plain.awayGoals, withoutRivalGoals: plain.homeGoals });
+      expect(sameRating.cardEffect).toEqual({ userGoals: plain.awayGoals, rivalGoals: plain.homeGoals, withoutUserGoals: plain.awayGoals, withoutRivalGoals: plain.homeGoals });
+    }
+  });
+
+  it("si la decisión del descanso cambia el marcador, la comparación de antes del partido ya no vale", () => {
+    for (let seed = 1; seed <= 200; seed += 1) {
+      const result = simulateMatch({ fixtureId: "f", matchday: 1, rival: uniformRival(84), venue: "home", teamRating: uniformTeam(92), teamRatingWithoutCard: uniformTeam(84), selectedPlayers, seed });
+      const closed = applyHalfTimeChoice({ result, choice: "close", selectedPlayers, seed });
+      expect(closed.cardEffect).toEqual(closed.homeGoals === result.homeGoals && closed.awayGoals === result.awayGoals ? result.cardEffect : undefined);
+    }
+  });
+
+  it("los textos", () => {
+    expect(getMatchCardEffectText(undefined)).toBeUndefined();
+    expect(getMatchCardEffectText({ userGoals: 1, rivalGoals: 1, withoutUserGoals: 1, withoutRivalGoals: 1 })).toBe("Tu carta no cambió el marcador: sin ella también habría acabado 1-1 a los 90 minutos.");
+    expect(getMatchCardEffectText({ userGoals: 2, rivalGoals: 1, withoutUserGoals: 1, withoutRivalGoals: 1 })).toBe("Tu carta cambió el partido: sin ella habrías empatado 1-1 a los 90 minutos.");
+    expect(getMatchCardEffectText({ userGoals: 3, rivalGoals: 1, withoutUserGoals: 2, withoutRivalGoals: 1 })).toBe("Tu carta cambió el marcador, pero no el resultado: sin ella también habrías ganado, 2-1 a los 90 minutos.");
+    expect(getMatchCardEffectText({ userGoals: 2, rivalGoals: 2, withoutUserGoals: 1, withoutRivalGoals: 2, halftime: true })).toBe("Tu carta del descanso cambió el partido: sin ella habrías perdido 1-2.");
   });
 });

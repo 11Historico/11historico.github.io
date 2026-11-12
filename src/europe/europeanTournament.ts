@@ -23,7 +23,7 @@ import { getEuropeanMatchdaySlots } from "./europeanCalendar";
 import { buildEuropeanLeaguePhaseTable } from "./europeanLeagueTable";
 import { pickEuropeanOpponents, pickSingleEuropeanOpponent } from "./europeanOpponents";
 import { getEuropeanCompetitionLabel } from "./europeanQualification";
-import type { MatchApproachEffect, MatchExpectedGoals, MatchHalfTimeEffect, MatchKeyFactor, MatchLineDuel } from "../types/game";
+import type { MatchApproachEffect, MatchCardComparison, MatchExpectedGoals, MatchHalfTimeEffect, MatchKeyFactor, MatchLineDuel } from "../types/game";
 import type {
   EuropeanCompetition,
   EuropeanGoalEvent,
@@ -138,6 +138,8 @@ export interface EuropeanMatchResultInput {
   halfTimeEffect?: MatchHalfTimeEffect;
   expectedGoals?: MatchExpectedGoals;
   lineDuel?: MatchLineDuel;
+  /** Qué cambió la carta (v0.25.110). */
+  cardEffect?: MatchCardComparison;
 }
 
 function createFollowUpMatch(params: {
@@ -266,6 +268,7 @@ export function applyEuropeanMatchResult(
     ...(outcome.halfTimeEffect ? { halfTimeEffect: outcome.halfTimeEffect } : {}),
     ...(outcome.expectedGoals ? { expectedGoals: outcome.expectedGoals } : {}),
     ...(outcome.lineDuel ? { lineDuel: outcome.lineDuel } : {}),
+    ...(outcome.cardEffect ? { cardEffect: outcome.cardEffect } : {}),
   };
 
   const matches = [...tournament.matches];

@@ -817,6 +817,8 @@ export default function App() {
       approach,
       coachSkills: selectedCoach?.coachSeason.skills,
       card: supercopaCardPlay?.effect,
+      // Con carta, el mismo partido sin ella para la crónica (v0.25.110).
+      teamRatingWithoutCard: supercopaCardPlay ? supercopaTeamRating : undefined,
     });
 
     setCareerCurrentSupercopaResult(result);
@@ -834,6 +836,7 @@ export default function App() {
       approach,
       coachSkills: selectedCoach?.coachSeason.skills,
       card: supercopaCardPlay?.effect,
+      teamRatingWithoutCard: supercopaCardPlay ? supercopaTeamRating : undefined,
     });
 
     setCareerCurrentSupercopaResult(result);

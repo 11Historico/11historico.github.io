@@ -14,13 +14,14 @@
 // tocar `matchEngine.ts` ni sus probabilidades.
 
 import { simulateMatch } from "../simulation/matchEngine";
-import { applyHalfTimeChoice, getAverageUserRating, getMatchLineDuel } from "../simulation/matchEngine";
-import type { MatchCardEffect, MatchOdds } from "../simulation/matchEngine";
+import { applyHalfTimeChoice, applyHalftimeCard, getAverageUserRating, getMatchLineDuel } from "../simulation/matchEngine";
+import type { MatchCardEffect, MatchHalftimeCardEffect, MatchOdds } from "../simulation/matchEngine";
 import type {
   CoachSkills,
   HalfTimeChoice,
   MatchApproach,
   MatchApproachEffect,
+  MatchCardComparison,
   MatchExpectedGoals,
   MatchHalfTimeEffect,
   MatchKeyFactor,
@@ -67,6 +68,11 @@ export interface SimulateEuropeanMatchInput {
   halfTimeChoice?: Exclude<HalfTimeChoice, "keep">;
   /** Carta de partido (v0.25.108); su media ya va en userTeamRating y userProfile. */
   card?: MatchCardEffect;
+  /** Con carta (v0.25.110): tu media y tus líneas sin ella, para la crónica. */
+  userTeamRatingWithoutCard?: number;
+  userProfileWithoutCard?: TeamRating;
+  /** Carta jugada en el descanso (v0.25.110): se aplica tras la decisión del descanso. */
+  halftimeCard?: MatchHalftimeCardEffect;
 }
 
 export interface SimulateEuropeanMatchOutput {
@@ -89,6 +95,8 @@ export interface SimulateEuropeanMatchOutput {
   expectedGoals?: MatchExpectedGoals;
   /** La carta Remontada se activó (v0.25.108). */
   comebackActivated?: boolean;
+  /** Qué cambió la carta, a los 90 minutos (v0.25.110). */
+  cardEffect?: MatchCardComparison;
   /** Solo con `userProfile` y si se decidió en 90 minutos. */
   lineDuel?: MatchLineDuel;
 }
@@ -327,7 +335,7 @@ export function getEuropeanLineDuel(
  * goleador y asistente, que solo se muestran en el partido (v0.25.77).
  */
 export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): SimulateEuropeanMatchOutput {
-  const { userTeamRating, opponentRating, opponentStyle, isHome, competition, seed, isKnockout = false, approach, coachSkills, userProfile, selectedPlayers = [], halfTimeChoice, card } = input;
+  const { userTeamRating, opponentRating, opponentStyle, isHome, competition, seed, isKnockout = false, approach, coachSkills, userProfile, selectedPlayers = [], halfTimeChoice, card, userTeamRatingWithoutCard, userProfileWithoutCard, halftimeCard } = input;
 
   const teamRating = buildUserTeamRating(userTeamRating, userProfile);
   const rival = buildEuropeanRivalTeam(opponentRating, competition, opponentStyle);
@@ -343,9 +351,10 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
     approach,
     coachSkills,
     card,
+    teamRatingWithoutCard: userTeamRatingWithoutCard === undefined ? undefined : buildUserTeamRating(userTeamRatingWithoutCard, userProfileWithoutCard ?? userProfile),
   });
   const numericSeed = seedToNumber(seed);
-  const matchResult = halfTimeChoice
+  const afterHalfTime = halfTimeChoice
     ? applyHalfTimeChoice({
         result: fullMatch,
         choice: halfTimeChoice,
@@ -353,6 +362,10 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
         seed: numericSeed === undefined ? undefined : numericSeed + 7919,
       })
     : fullMatch;
+  // La carta del descanso va después de la decisión del descanso: así la comparación es exacta.
+  const matchResult = halftimeCard
+    ? applyHalftimeCard({ result: afterHalfTime, effect: halftimeCard, selectedPlayers, seed: numericSeed })
+    : afterHalfTime;
 
   const userGoals = isHome ? matchResult.homeGoals : matchResult.awayGoals;
   const opponentGoals = isHome ? matchResult.awayGoals : matchResult.homeGoals;
@@ -365,7 +378,10 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
   const goalEvents = toEuropeanGoalEvents(matchResult, isHome);
   const { keyFactor, approachEffect, halfTimeEffect, expectedGoals } = matchResult;
   const lineDuel = userProfile && matchResult.lineDuel ? { ...matchResult.lineDuel, rivalHasOnlyOverall: !opponentStyle } : undefined;
-  const comeback = matchResult.comebackActivated ? { comebackActivated: true } : {};
+  const comeback = {
+    ...(matchResult.comebackActivated ? { comebackActivated: true } : {}),
+    ...(matchResult.cardEffect ? { cardEffect: matchResult.cardEffect } : {}),
+  };
 
   if (!isKnockout) {
     return { userGoals, opponentGoals, result, goalEvents, keyFactor, approachEffect, halfTimeEffect, expectedGoals, lineDuel, ...comeback };
@@ -401,7 +417,7 @@ export function simulateEuropeanMatch(input: SimulateEuropeanMatchInput): Simula
     };
   }
 
-  const penaltyShootout = simulatePenaltyShootout({ userTeamRating, opponentRating, rng, inspiredGoalkeeper: card?.shootout });
+  const penaltyShootout = simulatePenaltyShootout({ userTeamRating, opponentRating, rng, inspiredGoalkeeper: card?.shootout || halftimeCard?.shootout });
 
   return {
     userGoals: finalUserGoals,

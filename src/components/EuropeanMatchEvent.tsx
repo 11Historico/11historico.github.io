@@ -7,7 +7,7 @@
 // los títulos europeos sí se suman al palmarés, al cerrar la temporada
 // (ver src/career/europeanTrophies.ts).
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 
 import { getEuropeanCompetitionIconKind, getEuropeanCompetitionLabel } from "../europe/europeanQualification";
 import { USER_TEAM_NAME } from "../simulation/leagueTable";
@@ -46,6 +46,7 @@ import {
   getHalfTimeEffectText,
   getLineDuelText,
   getMatchApproachEffectText,
+  getMatchCardEffectText,
   getMatchKeyFactorIcon,
   getMatchKeyFactorText,
 } from "./matchSequenceTimeline";
@@ -61,6 +62,8 @@ interface EuropeanMatchEventProps {
   pitch?: EuropeanMatchPitch;
   /** Mientras hay decisión pendiente, el partido se para a los 45' (v0.25.78). */
   onHalfTimeChoice?: (choice: HalfTimeChoice) => void;
+  /** Tus cartas para la segunda parte (v0.25.110). */
+  halfTimeCards?: ReactNode;
   /** Mientras se juega, la vista enseña el torneo sin este partido, para no adelantar el resultado. */
   onPlayingChange?: (playing: boolean) => void;
   onContinue: () => void;
@@ -146,12 +149,14 @@ function EuropeanMatchSequence({
   match,
   pitch,
   onHalfTimeChoice,
+  halfTimeCards,
   onPlayingChange,
   verdict,
 }: {
   match: EuropeanTournamentMatch;
   pitch?: EuropeanMatchPitch;
   onHalfTimeChoice?: (choice: HalfTimeChoice) => void;
+  halfTimeCards?: ReactNode;
   onPlayingChange?: (playing: boolean) => void;
   /** Solo se enseña al final del partido, para no adelantar el resultado (v0.25.86). */
   verdict?: MatchVerdict;
@@ -239,6 +244,7 @@ function EuropeanMatchSequence({
           )}
           {lineDuelText && <p className="match-line-duel">{lineDuelText}</p>}
           {getMatchApproachEffectText(match.approachEffect) && <p className="match-approach-effect">{getMatchApproachEffectText(match.approachEffect)}</p>}
+          {getMatchCardEffectText(match.cardEffect) && <p className="match-approach-effect match-card-effect">{getMatchCardEffectText(match.cardEffect)}</p>}
           {getHalfTimeEffectText(match.halfTimeEffect) && <p className="match-approach-effect">{getHalfTimeEffectText(match.halfTimeEffect)}</p>}
         </>
       ) : (
@@ -254,6 +260,7 @@ function EuropeanMatchSequence({
           </div>
           {isAtHalfTime && onHalfTimeChoice ? (
             <MatchHalfTimeControl
+              cards={halfTimeCards}
               onChoice={(choice) => {
                 if (reducedMotion) setElapsedMs(durationMs);
                 onHalfTimeChoice(choice);
@@ -323,6 +330,7 @@ export function EuropeanMatchEvent({
   userTeamRating,
   pitch,
   onHalfTimeChoice,
+  halfTimeCards,
   onPlayingChange,
   onContinue,
 }: EuropeanMatchEventProps) {
@@ -393,7 +401,7 @@ export function EuropeanMatchEvent({
 
       {isPlayed && (
         <div className="european-match-event-result">
-          <EuropeanMatchSequence key={match.id} match={match} pitch={pitch} onHalfTimeChoice={onHalfTimeChoice} onPlayingChange={onPlayingChange} verdict={getEuropeanVerdict(tournament, match)} />
+          <EuropeanMatchSequence key={match.id} match={match} pitch={pitch} onHalfTimeChoice={onHalfTimeChoice} halfTimeCards={halfTimeCards} onPlayingChange={onPlayingChange} verdict={getEuropeanVerdict(tournament, match)} />
         </div>
       )}
 

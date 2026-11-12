@@ -51,7 +51,7 @@ import {
 } from "../src/simulation/leagueSimulator";
 import { USER_TEAM_ID } from "../src/data/laliga2526Teams";
 import { getDisplayTable, getPendingFixturesForCurrentMatchday } from "../src/simulation/leagueTable";
-import { applyHalfTimeChoice, getAverageUserRating, type MatchCardEffect, type MatchOdds } from "../src/simulation/matchEngine";
+import { applyHalfTimeChoice, applyHalftimeCard, getAverageUserRating, type MatchCardEffect, type MatchHalftimeCardEffect, type MatchOdds } from "../src/simulation/matchEngine";
 import type { CareerSupercopaQualification, CareerSupercopaResult, CareerTrophyCounts } from "../src/types/career";
 import type { FinalGameSummary, Formation, FormationSlot, GameDifficulty, HalfTimeChoice, MatchApproach, MatchResult, PlayerSeason, RivalTeam, SeasonId, SelectedCoach, SelectedPlayer, TeamRating } from "../src/types/game";
 import { auditGameId } from "./auditSeeds";
@@ -241,21 +241,13 @@ export interface CardHook {
   halftime?(match: CardMatch): HalftimeDecider | undefined;
 }
 
-/** Una carta jugada en el descanso: actúa sobre los goles de la segunda parte (solo en auditorías). */
-export interface HalftimeCardEffect {
-  /** Probabilidad de marcar un gol más en la segunda parte. */
-  extraGoalChance?: number;
-  /** Probabilidad de que no llegue cada gol del rival en la segunda parte. */
-  cancelRivalChance?: number;
-  /** Portero inspirado: la prórroga o los penaltis. */
-  shootout?: boolean;
-}
+/** Con tu ventaja al descanso (tus goles menos los del rival), la carta que juegas en el descanso o ninguna (v0.25.110). */
+export type HalftimeDecider = (margin: number) => MatchHalftimeCardEffect | undefined;
 
-/** Con tu ventaja al descanso (tus goles menos los del rival), la carta que juegas o ninguna. */
-export type HalftimeDecider = (margin: number) => HalftimeCardEffect | undefined;
-
-function setHalftimeDecider(decider: HalftimeDecider | undefined): void {
-  (globalThis as { __auditHalftime?: HalftimeDecider }).__auditHalftime = decider;
+/** Portero inspirado jugado en el descanso: la prórroga de Copa lo lee del gancho del motor. */
+function addShootoutToCardEngine(): void {
+  const audit = globalThis as { __auditCard?: CardEffect["engine"] };
+  audit.__auditCard = { ...(audit.__auditCard ?? {}), shootout: true };
 }
 
 const LINE_WEIGHTS = { attack: 0.22, defense: 0.22, control: 0.18, physical: 0.1, mentality: 0.13, goalkeeping: 0.15 } as const;
@@ -436,16 +428,18 @@ function playSeason(params: {
           advanceValue,
         );
         const base = { context: before, teamRating: cupRating, selectedPlayers, approach };
-        setHalftimeDecider(cupHalftime);
         const played = simulateNextCupMatch(base);
         const regular = played.regularTimeResult;
         const choice = regular
           ? pickHalfTime(policy.halfTime, getHalfTimeMargin(regular), (regular.expectedGoals?.user ?? 0) < (regular.expectedGoals?.rival ?? 0))
           : "keep";
-        const decided = regular && choice !== "keep"
-          ? simulateNextCupMatch({ ...base, regularTimeResult: applyHalfTimeChoice({ result: regular, choice, selectedPlayers }) })
+        // Carta del descanso (v0.25.110), como en el juego: después de la decisión del descanso.
+        const halftimeCard = regular ? cupHalftime?.(getHalfTimeMargin(regular)) : undefined;
+        if (halftimeCard?.shootout) addShootoutToCardEngine();
+        const afterChoice = regular && choice !== "keep" ? applyHalfTimeChoice({ result: regular, choice, selectedPlayers }) : regular;
+        const decided = afterChoice && (choice !== "keep" || halftimeCard)
+          ? simulateNextCupMatch({ ...base, regularTimeResult: halftimeCard ? applyHalftimeCard({ result: afterChoice, effect: halftimeCard, selectedPlayers }) : afterChoice })
           : played;
-        setHalftimeDecider(undefined);
         return { decided, firstHalf: regular ?? played.result };
       };
       const { outcome, cameBack } = playWithComeback(card, playCup, ({ firstHalf }) => (firstHalf ? getHalfTimeMargin(firstHalf) : 0));
@@ -494,13 +488,15 @@ function playSeason(params: {
           isKnockout ? advanceValue : pointsValue,
         );
         const input: SimulateEuropeanMatchInput = { ...shared, approach, isKnockout, seed: `${gameId}_${pendingEuropean.id}` };
-        setHalftimeDecider(europeHalftime);
         const base = simulateEuropeanMatch(input);
         const firstHalf = base.goalEvents.filter((goal) => goal.minute <= 45);
         const margin = firstHalf.filter((goal) => goal.isUserGoal).length - firstHalf.filter((goal) => !goal.isUserGoal).length;
         const choice = pickHalfTime(policy.halfTime, margin, (base.expectedGoals?.user ?? 0) < (base.expectedGoals?.rival ?? 0));
-        const outcome = choice === "keep" ? base : simulateEuropeanMatch({ ...input, halfTimeChoice: choice });
-        setHalftimeDecider(undefined);
+        // Carta del descanso (v0.25.110), como en el juego.
+        const halftimeCard = europeHalftime?.(margin);
+        const outcome = choice === "keep" && !halftimeCard
+          ? base
+          : simulateEuropeanMatch({ ...input, ...(choice !== "keep" ? { halfTimeChoice: choice } : {}), ...(halftimeCard ? { halftimeCard } : {}) });
         return { outcome, margin };
       };
       const { outcome: played, cameBack } = playWithComeback(card, playEurope, ({ margin }) => margin);

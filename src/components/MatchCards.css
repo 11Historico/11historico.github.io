@@ -81,9 +81,40 @@
   opacity: 0.5;
 }
 
+/* v0.25.110: la carta en uso se ve igual en todas las rarezas (dorado) y las demás se apagan. */
 .match-card-armed {
-  box-shadow: 0 0 0 3px var(--card-accent), 0 8px 22px rgba(0, 0, 0, 0.35);
+  border-color: #ffd447;
+  background: linear-gradient(160deg, rgba(255, 212, 71, 0.28), rgba(255, 212, 71, 0.08));
+  box-shadow: 0 0 0 3px #ffd447, 0 0 22px 2px rgba(255, 212, 71, 0.45), 0 8px 22px rgba(0, 0, 0, 0.35);
   transform: translateY(-2px);
+}
+
+.match-card-in-use {
+  align-self: flex-start;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  background: #ffd447;
+  color: #2a1a00;
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.match-cards-hand-has-armed .match-card:not(.match-card-armed) {
+  opacity: 0.5;
+}
+
+.match-cards-hand-armed-name {
+  color: #ffd447;
+}
+
+.match-card-effect {
+  font-weight: 700;
+}
+
+.match-half-time .match-cards-hand {
+  margin: 0.4rem 0 0.6rem;
 }
 
 .match-cards-notes {
