@@ -107,8 +107,8 @@
 /* Próximo paso */
 .league-actions-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: start;
   gap: 22px;
   padding: 20px;
   border-radius: 26px;
@@ -133,12 +133,29 @@
   box-shadow: 0 18px 48px rgba(255, 224, 138, 0.12), 0 16px 44px rgba(0, 0, 0, 0.22);
 }
 
+/* v0.25.112: arriba el estado y, al lado, los botones con la velocidad; la previa, debajo y a todo el ancho. */
+.league-actions-side {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+.league-actions-side .playback-speed-control {
+  margin-top: 0;
+  justify-content: flex-end;
+}
+
+.league-actions-card > .next-match-preview {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
 .league-buttons {
   display: grid;
   grid-template-columns: 1fr;
   gap: 10px;
   justify-self: end;
-  width: 360px;
+  width: 340px;
 }
 
 .league-buttons button {
@@ -249,6 +266,70 @@
 
 .next-match-preview > strong {
   overflow-wrap: anywhere;
+}
+
+/* El enfrentamiento como un marcador (v0.25.112): el local a la izquierda, los nombres sin partir. */
+.next-match-preview-teams {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  font-size: 1.05rem;
+}
+
+.next-match-preview-team {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.next-match-preview-team:last-child {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.next-match-preview-team-name {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.next-match-preview-team b {
+  flex: none;
+  color: #ffffff;
+  font-size: 1.25rem;
+  white-space: nowrap;
+}
+
+.next-match-preview-vs {
+  color: #f2d2d7;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+/* En el móvil, un equipo por línea, con su media a la derecha. */
+@media (max-width: 560px) {
+  .next-match-preview-teams {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .next-match-preview-team,
+  .next-match-preview-team:last-child {
+    justify-content: space-between;
+    text-align: left;
+  }
+
+  .next-match-preview-vs {
+    justify-self: start;
+  }
+}
+@media (min-width: 760px) {
+  .next-match-preview .line-duel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 28px;
+  }
 }
 
 /* Previa europea (v0.25.102): el escudo genérico del rival, siempre en la misma línea que su nombre. */
@@ -613,6 +694,16 @@
 
   .league-actions-card {
     grid-template-columns: 1fr;
+  }
+
+  /* En una columna, los botones después de la previa y las cartas, como antes. */
+  .league-actions-side {
+    order: 3;
+    justify-items: stretch;
+  }
+
+  .league-actions-side .playback-speed-control {
+    justify-content: flex-start;
   }
 
   .league-buttons {

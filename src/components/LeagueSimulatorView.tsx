@@ -185,6 +185,39 @@ function PlaybackSpeedControl() {
   );
 }
 
+/**
+ * El enfrentamiento de la previa (v0.25.112), como un marcador: el local a la izquierda. Con una
+ * carta elegida, tu media enseña de cuánto a cuánto sube.
+ */
+function PreviewTeams({ userIsHome, userOverall, userBaseOverall, rival, rivalOverall }: {
+  userIsHome: boolean;
+  userOverall: number;
+  userBaseOverall?: number;
+  rival: ReactNode;
+  rivalOverall: number;
+}) {
+  const user = (
+    <span className="next-match-preview-team next-match-preview-team-user">
+      <span className="next-match-preview-team-name">{USER_TEAM_NAME}</span>
+      <b>{userBaseOverall !== undefined && userBaseOverall !== userOverall ? `${userBaseOverall} → ${userOverall}` : userOverall}</b>
+    </span>
+  );
+  const rivalTeam = (
+    <span className="next-match-preview-team">
+      <span className="next-match-preview-team-name">{rival}</span>
+      <b>{rivalOverall}</b>
+    </span>
+  );
+
+  return (
+    <strong className="next-match-preview-teams">
+      {userIsHome ? user : rivalTeam}
+      <span className="next-match-preview-vs">vs</span>
+      {userIsHome ? rivalTeam : user}
+    </strong>
+  );
+}
+
 // Antes, la clasificación se mueve demasiado para comparar con el rango esperado (v0.25.88).
 const EXPECTED_RANGE_COMPARE_FROM = 10;
 
@@ -451,6 +484,11 @@ export function LeagueSimulatorView({
     () => getNextUserMatchPreview({ context, teamRating: matchTeamRating, selectedPlayers, approach, card: cardEffect }),
     [approach, cardEffect, context, matchTeamRating, selectedPlayers]
   );
+  // v0.25.112: con una carta elegida, las probabilidades sin ella, para enseñar cuánto suma.
+  const matchPreviewWithoutCard = useMemo(
+    () => (cardPlay ? getNextUserMatchPreview({ context, teamRating: effectiveTeamRating, selectedPlayers, approach }) : undefined),
+    [approach, cardPlay, context, effectiveTeamRating, selectedPlayers]
+  );
   const europeanOdds = useMemo(
     () => pendingEuropeanMatch && estimateEuropeanMatchOdds({
       userTeamRating: europeanMatchUserRating,
@@ -465,6 +503,20 @@ export function LeagueSimulatorView({
       card: cardEffect,
     }),
     [approach, cardEffect, coachSkills, europeanMatchUserRating, matchTeamRating, pendingEuropeanMatch, selectedPlayers]
+  );
+  const europeanOddsWithoutCard = useMemo(
+    () => cardPlay && pendingEuropeanMatch && estimateEuropeanMatchOdds({
+      userTeamRating: europeanUserRating,
+      opponentRating: pendingEuropeanMatch.opponent.rating,
+      opponentStyle: pendingEuropeanMatch.opponent.style,
+      isHome: pendingEuropeanMatch.isHome,
+      competition: pendingEuropeanMatch.competition,
+      approach,
+      coachSkills,
+      userProfile: effectiveTeamRating,
+      selectedPlayers,
+    }),
+    [approach, cardPlay, coachSkills, effectiveTeamRating, europeanUserRating, pendingEuropeanMatch, selectedPlayers]
   );
   // v0.25.95: probabilidad de pasar a semifinales. Con el torneo que se ve, para no delatar
   // el partido en juego, y después de pintar, como el rango esperado de Liga.
@@ -1088,8 +1140,9 @@ export function LeagueSimulatorView({
 
       <div className="league-layout">
         <main className="league-main-panel">
+          {/* v0.25.112: arriba el estado y los botones; debajo, a todo el ancho, la previa y las cartas. */}
           <div className={`league-actions-card ${isAutoSimulating ? "league-actions-card-running" : ""}`}>
-            <div>
+            <div className="league-actions-head">
               <h2>{hideNextMatch ? "Partido en juego" : pendingCupFixture ? "Toca Copa del Rey" : pendingEuropeanMatch ? "Noche europea" : context.state.completed ? "Liga terminada" : returnedToLeagueFrom ? "Sigue la Liga" : "Próximo paso"}</h2>
               <p>
                 {isAutoSimulating
@@ -1100,116 +1153,126 @@ export function LeagueSimulatorView({
               </p>
               {/* Lo que pasó con las cartas: después del partido, porque dice si ganaste o perdiste. */}
               {!hideNextMatch && <MatchCardsNotes notes={matchCards?.lastNotes} />}
-              {!hideNextMatch && matchPreview && (pendingCupFixture || !pendingEuropeanMatch) && (
-                <section className="next-match-preview" aria-label="Previa del próximo partido">
-                  <span>
-                    Próximo partido · {matchPreview.competition === "cup" ? "Copa del Rey" : "LaLiga"} · {matchPreview.label} ·{" "}
-                    {matchPreview.venue === "home" ? "En San Mamés" : "Fuera de casa"}
-                  </span>
-                  <strong>
-                    {matchPreview.venue === "home"
-                      ? `${USER_TEAM_NAME} (${matchPreview.userOverall}) vs ${matchPreview.rivalName} (${matchPreview.rivalOverall})`
-                      : `${matchPreview.rivalName} (${matchPreview.rivalOverall}) vs ${USER_TEAM_NAME} (${matchPreview.userOverall})`}
-                  </strong>
-                  <MatchLineDuelBars duel={matchPreview.lineDuel} />
-                  {matchPreview.competition === "cup" && (
-                    <MatchApproachControl value={approach} onChange={setApproach} competition="cup" coachSkills={coachSkills} />
+            </div>
+
+            <div className="league-actions-side">
+              {pendingCupFixture ? (
+                <div className="league-buttons">
+                  <button type="button" onClick={handleSimulateNextCupMatch} disabled={isMatchPlaying}>
+                    Simular partido de Copa
+                  </button>
+
+                  <button
+                    type="button"
+                    className="secondary-league-button"
+                    onClick={handleSimulateFullCupAndFinishSeason}
+                    disabled={isMatchPlaying}
+                  >
+                    Simular Copa y terminar temporada
+                  </button>
+                </div>
+              ) : (
+                <div className="league-buttons">
+                  {pendingEuropeanMatch && (
+                    <button type="button" onClick={handleSimulateEuropeanMatch} disabled={isMatchPlaying}>
+                      Simular partido europeo
+                    </button>
                   )}
-                  {matchCards && (
-                    <MatchCardsHand cards={matchCards} situation={nextCardSituation} onArm={(index) => commitCards(armMatchCard(matchCards, index))} />
-                  )}
-                  <MatchOddsBar
-                    odds={matchPreview.odds}
-                    note={matchPreview.competition === "cup" ? "en 90 minutos; si hay empate, prórroga" : undefined}
-                  />
-                </section>
-              )}
-              {!hideNextMatch && pendingEuropeanMatch && europeanOdds && !pendingCupFixture && (
-                <section className="next-match-preview" aria-label="Previa del próximo partido">
-                  <span>
-                    Próximo partido · {getEuropeanCompetitionLabel(pendingEuropeanMatch.competition)} ·{" "}
-                    {getEuropeanTournamentPhaseLabel(pendingEuropeanMatch.phase)} · {pendingEuropeanMatch.isHome ? "En San Mamés" : "Fuera de casa"} ·
-                    Rival de {pendingEuropeanMatch.opponent.country}
-                    {pendingEuropeanMatch.opponent.style && `, de estilo ${EUROPEAN_STYLE_LABEL[pendingEuropeanMatch.opponent.style]}`}
-                  </span>
-                  {/* v0.25.102: el escudo genérico va pegado al nombre del rival, a la izquierda o a la derecha. */}
-                  <strong className="next-match-preview-crest">
-                    {pendingEuropeanMatch.isHome && `${USER_TEAM_NAME} (${Math.round(europeanMatchUserRating)}) vs `}
-                    <span className="next-match-preview-rival">
-                      <EuropeanCrest opponent={pendingEuropeanMatch.opponent} compact />
-                      {`${pendingEuropeanMatch.opponent.name} (${pendingEuropeanMatch.opponent.rating})`}
-                    </span>
-                    {!pendingEuropeanMatch.isHome && ` vs ${USER_TEAM_NAME} (${Math.round(europeanMatchUserRating)})`}
-                  </strong>
-                  <MatchLineDuelBars
-                    duel={getEuropeanLineDuel({
-                      userTeamRating: europeanMatchUserRating,
-                      opponentRating: pendingEuropeanMatch.opponent.rating,
-                      opponentStyle: pendingEuropeanMatch.opponent.style,
-                      competition: pendingEuropeanMatch.competition,
-                      userProfile: matchTeamRating,
-                    })}
-                  />
-                  <MatchApproachControl value={approach} onChange={setApproach} competition="europe" coachSkills={coachSkills} />
-                  {matchCards && (
-                    <MatchCardsHand cards={matchCards} situation={nextCardSituation} onArm={(index) => commitCards(armMatchCard(matchCards, index))} />
-                  )}
-                  <MatchOddsBar
-                    odds={europeanOdds}
-                    note={isEuropeanKnockoutMatch(pendingEuropeanMatch) ? "en 90 minutos; si hay empate, prórroga y penaltis" : undefined}
-                  />
-                  {pendingEuropeanMatch.phase === "league_phase" && semifinalChanceText && (
-                    <small className="european-semifinal-chance">{semifinalChanceText}</small>
-                  )}
-                </section>
+
+                  <button
+                    type="button"
+                    className={isAutoSimulating ? "stop-league-button" : returnedToLeagueFrom ? undefined : "secondary-league-button"}
+                    onClick={handleToggleAutoSimulation}
+                    disabled={context.state.completed || Boolean(pendingWheelOffer) || Boolean(pendingEuropeanMatch) || Boolean(pendingHalfTime)}
+                  >
+                    {isAutoSimulating ? "Parar simulación" : "Simular"}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="tertiary-league-button"
+                    onClick={handleSimulateFullSeason}
+                    disabled={context.state.completed || isAutoSimulating || Boolean(pendingWheelOffer) || Boolean(pendingEuropeanMatch) || Boolean(pendingHalfTime)}
+                  >
+                    Saltar hasta próximo evento
+                  </button>
+                </div>
               )}
               <PlaybackSpeedControl />
             </div>
 
-            {pendingCupFixture ? (
-              <div className="league-buttons">
-                <button type="button" onClick={handleSimulateNextCupMatch} disabled={isMatchPlaying}>
-                  Simular partido de Copa
-                </button>
-
-                <button
-                  type="button"
-                  className="secondary-league-button"
-                  onClick={handleSimulateFullCupAndFinishSeason}
-                  disabled={isMatchPlaying}
-                >
-                  Simular Copa y terminar temporada
-                </button>
-              </div>
-            ) : (
-              <div className="league-buttons">
-                {pendingEuropeanMatch && (
-                  <button type="button" onClick={handleSimulateEuropeanMatch} disabled={isMatchPlaying}>
-                    Simular partido europeo
-                  </button>
+            {!hideNextMatch && matchPreview && (pendingCupFixture || !pendingEuropeanMatch) && (
+              <section className="next-match-preview" aria-label="Previa del próximo partido">
+                <span>
+                  Próximo partido · {matchPreview.competition === "cup" ? "Copa del Rey" : "LaLiga"} · {matchPreview.label} ·{" "}
+                  {matchPreview.venue === "home" ? "En San Mamés" : "Fuera de casa"}
+                </span>
+                <PreviewTeams
+                  userIsHome={matchPreview.venue === "home"}
+                  userOverall={matchPreview.userOverall}
+                  userBaseOverall={cardPlay ? nextMatchInfo?.userOverall : undefined}
+                  rival={matchPreview.rivalName}
+                  rivalOverall={matchPreview.rivalOverall}
+                />
+                <MatchLineDuelBars duel={matchPreview.lineDuel} />
+                {matchPreview.competition === "cup" && (
+                  <MatchApproachControl value={approach} onChange={setApproach} competition="cup" coachSkills={coachSkills} />
                 )}
-
-                <button
-                  type="button"
-                  className={isAutoSimulating ? "stop-league-button" : returnedToLeagueFrom ? undefined : "secondary-league-button"}
-                  onClick={handleToggleAutoSimulation}
-                  disabled={context.state.completed || Boolean(pendingWheelOffer) || Boolean(pendingEuropeanMatch) || Boolean(pendingHalfTime)}
-                >
-                  {isAutoSimulating ? "Parar simulación" : "Simular"}
-                </button>
-
-                <button
-                  type="button"
-                  className="tertiary-league-button"
-                  onClick={handleSimulateFullSeason}
-                  disabled={context.state.completed || isAutoSimulating || Boolean(pendingWheelOffer) || Boolean(pendingEuropeanMatch) || Boolean(pendingHalfTime)}
-                >
-                  Saltar hasta próximo evento
-                </button>
-              </div>
+                <MatchOddsBar
+                  odds={matchPreview.odds}
+                  baseline={cardPlay ? matchPreviewWithoutCard?.odds : undefined}
+                  note={matchPreview.competition === "cup" ? "en 90 minutos; si hay empate, prórroga" : undefined}
+                />
+                {matchCards && (
+                  <MatchCardsHand cards={matchCards} situation={nextCardSituation} onArm={(index) => commitCards(armMatchCard(matchCards, index))} />
+                )}
+              </section>
+            )}
+            {!hideNextMatch && pendingEuropeanMatch && europeanOdds && !pendingCupFixture && (
+              <section className="next-match-preview" aria-label="Previa del próximo partido">
+                <span>
+                  Próximo partido · {getEuropeanCompetitionLabel(pendingEuropeanMatch.competition)} ·{" "}
+                  {getEuropeanTournamentPhaseLabel(pendingEuropeanMatch.phase)} · {pendingEuropeanMatch.isHome ? "En San Mamés" : "Fuera de casa"} ·
+                  Rival de {pendingEuropeanMatch.opponent.country}
+                  {pendingEuropeanMatch.opponent.style && `, de estilo ${EUROPEAN_STYLE_LABEL[pendingEuropeanMatch.opponent.style]}`}
+                </span>
+                {/* v0.25.102: el escudo genérico va pegado al nombre del rival. */}
+                <PreviewTeams
+                  userIsHome={pendingEuropeanMatch.isHome}
+                  userOverall={Math.round(europeanMatchUserRating)}
+                  userBaseOverall={cardPlay ? Math.round(europeanUserRating) : undefined}
+                  rival={(
+                    <span className="next-match-preview-rival">
+                      <EuropeanCrest opponent={pendingEuropeanMatch.opponent} compact />
+                      {pendingEuropeanMatch.opponent.name}
+                    </span>
+                  )}
+                  rivalOverall={pendingEuropeanMatch.opponent.rating}
+                />
+                <MatchLineDuelBars
+                  duel={getEuropeanLineDuel({
+                    userTeamRating: europeanMatchUserRating,
+                    opponentRating: pendingEuropeanMatch.opponent.rating,
+                    opponentStyle: pendingEuropeanMatch.opponent.style,
+                    competition: pendingEuropeanMatch.competition,
+                    userProfile: matchTeamRating,
+                  })}
+                />
+                <MatchApproachControl value={approach} onChange={setApproach} competition="europe" coachSkills={coachSkills} />
+                <MatchOddsBar
+                  odds={europeanOdds}
+                  baseline={cardPlay ? europeanOddsWithoutCard : undefined}
+                  note={isEuropeanKnockoutMatch(pendingEuropeanMatch) ? "en 90 minutos; si hay empate, prórroga y penaltis" : undefined}
+                />
+                {pendingEuropeanMatch.phase === "league_phase" && semifinalChanceText && (
+                  <small className="european-semifinal-chance">{semifinalChanceText}</small>
+                )}
+                {matchCards && (
+                  <MatchCardsHand cards={matchCards} situation={nextCardSituation} onArm={(index) => commitCards(armMatchCard(matchCards, index))} />
+                )}
+              </section>
             )}
           </div>
-
           <div className="league-consult-tabs" role="tablist" aria-label="Consultar">
             <button
               type="button"

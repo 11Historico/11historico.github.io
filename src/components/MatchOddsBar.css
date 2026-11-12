@@ -32,3 +32,8 @@
 .match-odds small {
   opacity: 0.8;
 }
+
+/* Cuánto suma la carta elegida (v0.25.112). */
+.match-odds-card {
+  color: #ffd447;
+}

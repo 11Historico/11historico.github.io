@@ -15,10 +15,12 @@ function getFavoriteText(odds: MatchOdds): string {
   return "Partido igualado";
 }
 
-export function MatchOddsBar({ odds, note }: { odds: MatchOdds; note?: string }) {
+/** Con aseline (v0.25.112): las probabilidades sin la carta elegida, para decir cuánto suma. */
+export function MatchOddsBar({ odds, note, baseline }: { odds: MatchOdds; note?: string; baseline?: MatchOdds | null }) {
   const win = toPercent(odds.win);
   const draw = toPercent(odds.draw);
   const loss = Math.max(0, 100 - win - draw);
+  const cardDelta = baseline ? win - toPercent(baseline.win) : undefined;
 
   return (
     <div className="match-odds">
@@ -28,7 +30,9 @@ export function MatchOddsBar({ odds, note }: { odds: MatchOdds; note?: string })
         <span className="match-odds-loss" style={{ width: `${loss}%` }} />
       </div>
       <p>
-        <strong>{getFavoriteText(odds)}</strong> · Victoria {win}{"\u00a0"}% · Empate {draw}{"\u00a0"}% · Derrota {loss}{"\u00a0"}%
+        <strong>{getFavoriteText(odds)}</strong> · Victoria {win}{"\u00a0"}%
+        {cardDelta !== undefined && <b className="match-odds-card"> ({cardDelta >= 0 ? "+" : "−"}{Math.abs(cardDelta)} con la carta)</b>}
+        {" · "}Empate {draw}{"\u00a0"}% · Derrota {loss}{"\u00a0"}%
         {note && <small> ({note})</small>}
       </p>
     </div>

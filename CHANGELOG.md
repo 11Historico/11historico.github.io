@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.25.112 — La previa, ordenada
+
+- **Arriba, el estado y los botones:** el título y el diagnóstico a la izquierda; a la derecha, Simular, Saltar y la velocidad, juntos.
+- **El partido a todo el ancho:** la cabecera en una línea, el enfrentamiento como un marcador (el local a la izquierda), los dos duelos de líneas uno al lado del otro y las probabilidades justo debajo, antes de las cartas.
+- **Lo que suma la carta, en la previa:** con una carta elegida, tu media de cuánto a cuánto («88 → 96») y la victoria con cuánto sube («+18 con la carta»).
+- **Las cartas en su fila:** todas de la misma altura, con la descripción en 3 líneas como mucho; 4 por fila en escritorio y 2 en el móvil.
+- **En el móvil** cada equipo va en su línea con su media, y los botones después de la previa, como antes.
+- Vale para la previa de Liga, Copa y Europa. No cambia nada del juego.
+
 ## v0.25.111 — Ganar al líder, desde la jornada 5
 
 - **La carta por ganar al líder cuenta desde la jornada 5.** Antes contaba desde la jornada 2, cuando el líder es cualquiera que ganara la primera, y la carta salía casi regalada. Lo pidió el usuario («sí, desde la jornada 5»).
