@@ -1,7 +1,7 @@
 // src/components/MatchSequence.tsx
 // Secuencia de partido de Liga, Copa y Supercopa (previa, minutos y goles).
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 
 import { USER_TEAM_NAME } from "../simulation/leagueTable";
 import type { Formation, HalfTimeChoice, MatchResult, SelectedPlayer } from "../types/game";
@@ -23,6 +23,7 @@ import {
   getLineDuelText,
   getMatchSequenceDurationMs,
   getMatchApproachEffectText,
+  getMatchCardEffectText,
   getMatchKeyFactorIcon,
   getMatchKeyFactorText,
   getMatchSequenceFrame,
@@ -47,6 +48,7 @@ export function MatchSequence({
   onFinished,
   pitch,
   onHalfTimeChoice,
+  halfTimeCards,
 }: {
   result: MatchResult;
   /** También avisa con false al desmontarse: necesita una función estable. */
@@ -60,6 +62,8 @@ export function MatchSequence({
   pitch?: { formation: Formation; selectedPlayers: SelectedPlayer[] };
   /** Mientras hay decisión pendiente, el partido se para a los 45' (v0.25.78). */
   onHalfTimeChoice?: (choice: HalfTimeChoice) => void;
+  /** Tus cartas para la segunda parte (v0.25.110). */
+  halfTimeCards?: ReactNode;
 }) {
   const playbackMultiplier = getMatchPlaybackMultiplier(useMatchPlaybackSpeed());
   // El tiempo se cuenta a velocidad normal: cambiar de velocidad no adelanta ni atrasa el partido.
@@ -148,6 +152,7 @@ export function MatchSequence({
 
       {isAtHalfTime && onHalfTimeChoice && (
         <MatchHalfTimeControl
+          cards={halfTimeCards}
           onChoice={(choice) => {
             if (reducedMotion) setElapsedMs(durationMs);
             onHalfTimeChoice(choice);
@@ -168,6 +173,10 @@ export function MatchSequence({
 
       {isFinal && getMatchApproachEffectText(result.approachEffect) && (
         <p className="match-approach-effect">{getMatchApproachEffectText(result.approachEffect)}</p>
+      )}
+
+      {isFinal && getMatchCardEffectText(result.cardEffect) && (
+        <p className="match-approach-effect match-card-effect">{getMatchCardEffectText(result.cardEffect)}</p>
       )}
 
       {isFinal && getHalfTimeEffectText(result.halfTimeEffect) && (

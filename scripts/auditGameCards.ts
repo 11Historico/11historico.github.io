@@ -3,8 +3,8 @@
 // Las cartas tal como están en el juego: el mazo, los sorteos, el efecto de cada carta y lo que pasa
 // después del partido salen de src/career/matchCards.ts, y el motor es el del juego. El jugador de la
 // auditoría decide qué carta usar y cuándo. No cambia el juego.
-// Desde el 2026-11-12 mide también cartas más fuertes y cartas jugadas en el descanso de Copa y Europa
-// (estas, con un gancho del motor solo para auditorías: scripts/auditCardTypes.vite.ts).
+// Desde la v0.25.110 mide también las cartas jugadas en el descanso de Copa y Europa, con las
+// funciones del juego (getMatchCardHalftimePlay y applyHalftimeCard).
 // Reproducible: npm run audit:game-cards (o node .audit-dist/auditGameCards.js --careers=N --only=texto)
 
 import {
@@ -14,6 +14,7 @@ import {
   createSeasonMatchCards,
   getArmedMatchCard,
   getArmedMatchCardPlay,
+  getMatchCardHalftimePlay,
   getMatchCardPlay,
   getPendingMatchCardDraw,
   pickMatchCard,
@@ -21,10 +22,10 @@ import {
   type MatchCardDrawReason,
   type MatchCardId,
   type MatchCardSituation,
-  type MatchCardPlay,
   type MatchCardsState,
 } from "../src/career/matchCards";
 import { FORMATIONS } from "../src/data/formations";
+import type { MatchHalftimeCardEffect } from "../src/simulation/matchEngine";
 import { calculateTeamRating } from "../src/simulation/teamRating";
 import type { GameDifficulty } from "../src/types/game";
 
@@ -35,11 +36,9 @@ import {
   playCareer,
   seedCareer,
   share,
-  type CardEffect,
   type CardHook,
   type CardMatch,
   type DraftStyle,
-  type HalftimeCardEffect,
   type Policy,
 } from "./auditCareerRunner";
 
@@ -47,67 +46,34 @@ const CAREERS_PER_CELL = Number(process.argv.find((arg) => arg.startsWith("--car
 const ONLY = process.argv.find((arg) => arg.startsWith("--only="))?.split("=")[1] ?? "";
 
 // Para decidir qué carta jugar: «+N de media equivalente» de la sonda del informe
-// (INFORME_TIPOS_CARTAS_v0_25_107, con los retoques). Clásico y San Mamés valen su media.
+// (INFORME_TIPOS_CARTAS_v0_25_107, con los retoques), al doble desde la v0.25.110 en las que se
+// duplicaron. Clásico y San Mamés valen su media.
 const VALUE: Record<MatchCardId, { league: number; knockout: number }> = {
-  plus2: { league: 2, knockout: 2 },
-  attack_total: { league: 2.2, knockout: 2.1 },
+  plus2: { league: 4, knockout: 4 },
+  attack_total: { league: 4.4, knockout: 4.2 },
   inspired_keeper: { league: 0, knockout: 2.2 },
   scout: { league: 0, knockout: 0 },
-  midfield: { league: 2.5, knockout: 2.7 },
-  plus4: { league: 4, knockout: 4 },
-  defense_total: { league: 4.7, knockout: 4.2 },
-  classic: { league: 5, knockout: 5 },
-  revenge: { league: 3, knockout: 3 },
-  // v0.25.109: la Remontada con gol, medida en INFORME_REMONTADA_v0_25_108 («se gasta siempre»).
+  midfield: { league: 5, knockout: 5.4 },
+  plus4: { league: 8, knockout: 8 },
+  defense_total: { league: 9.4, knockout: 8.4 },
+  classic: { league: 10, knockout: 10 },
+  revenge: { league: 6, knockout: 6 },
+  // La Remontada con gol, medida en INFORME_REMONTADA_v0_25_108 («se gasta siempre»).
   comeback: { league: 4.5, knockout: 5.5 },
-  plus6: { league: 6, knockout: 6 },
+  plus6: { league: 12, knockout: 12 },
   san_mames: { league: 0, knockout: 0 },
   away_fortress: { league: 7.4, knockout: 6.3 },
-  double_or_nothing: { league: 6, knockout: 6 },
-};
-const AVERAGE_VALUE = mean(MATCH_CARDS.filter((card) => card.id !== "scout").map((card) => VALUE[card.id].knockout));
+  double_or_nothing: { league: 12, knockout: 12 },
+};const AVERAGE_VALUE = mean(MATCH_CARDS.filter((card) => card.id !== "scout").map((card) => VALUE[card.id].knockout));
 const LAST_LEAGUE_MATCHDAYS_FROM = 36;
 
 type Use = "smart" | "next";
 interface CardPolicy {
   label: string;
   use: Use;
-  /** Multiplica la fuerza de las cartas de media, Ataque total y Defensa total (propuesta B). */
-  strength?: number;
-  /** En Copa y Europa se guarda la carta para el descanso y se juega si no vas ganando. */
+  /** En Copa y Europa se guarda la carta para el descanso y se juega si no vas ganando (v0.25.110). */
   halftime?: boolean;
 }
-
-// Fuerza: estas no se escalan (San Mamés iguala medias; las demás no son media).
-const UNSCALED: MatchCardId[] = ["san_mames", "away_fortress", "inspired_keeper", "comeback", "scout"];
-// En el descanso, cada punto de media equivalente es un 6 % de marcar un gol más en la segunda parte.
-const HALFTIME_GOAL_PER_POINT = 0.06;
-const HALFTIME_CANCEL_RIVAL = 0.5;
-
-function scaledPlay(id: MatchCardId, play: MatchCardPlay, strength: number): CardEffect {
-  if (strength === 1 || UNSCALED.includes(id)) return { lines: play.lineBonus, engine: play.effect };
-
-  const lines = Object.fromEntries(Object.entries(play.lineBonus).map(([line, value]) => [line, value * strength])) as CardEffect["lines"];
-  const effect = play.effect && {
-    ...play.effect,
-    ...(play.effect.userGoals ? { userGoals: 1 + (play.effect.userGoals - 1) * strength } : {}),
-    ...(play.effect.rivalGoals ? { rivalGoals: Math.max(0.2, 1 + (play.effect.rivalGoals - 1) * strength) } : {}),
-  };
-  return { lines, engine: effect };
-}
-
-/** La carta jugada en el descanso: actúa sobre los goles de la segunda parte. La Remontada no se puede. */
-function halftimeCard(id: MatchCardId, situation: MatchCardSituation, strength: number): { effect: HalftimeCardEffect; value: number } | undefined {
-  if (id === "comeback" || id === "scout") return undefined;
-  const play = getMatchCardPlay(id, situation).play;
-  if (!play) return undefined;
-  if (id === "inspired_keeper") return { effect: { shootout: true }, value: VALUE[id].knockout };
-  if (id === "defense_total") return { effect: { cancelRivalChance: Math.min(0.9, HALFTIME_CANCEL_RIVAL * strength) }, value: VALUE[id].knockout * strength };
-
-  const points = id === "san_mames" ? (play.lineBonus.attack ?? 0) : (id === "classic" ? 5 : VALUE[id].knockout) * (UNSCALED.includes(id) ? 1 : strength);
-  return { effect: { extraGoalChance: Math.min(0.9, points * HALFTIME_GOAL_PER_POINT) }, value: points };
-}
-
 interface Stats {
   seasons: number;
   earned: Record<MatchCardDrawReason, number>;
@@ -161,8 +127,7 @@ function createGameCards(policy: CardPolicy, seed: number, stats: Stats): CardHo
   let cards: MatchCardsState | undefined;
   let season = 0;
   let situation: MatchCardSituation | undefined;
-  const strength = policy.strength ?? 1;
-  const cardValue = (id: MatchCardId, current: MatchCardSituation) => valueFor(id, current) * (UNSCALED.includes(id) ? 1 : strength);
+  const cardValue = valueFor;
   // Copa y Europa con descanso: la carta se guarda para el descanso.
   const holdsForHalftime = (match: CardMatch) => Boolean(policy.halftime) && (match.competition === "copa" || match.competition === "europe");
 
@@ -212,12 +177,12 @@ function createGameCards(policy: CardPolicy, seed: number, stats: Stats): CardHo
 
       stats.used += 1;
       if (match.knockout) stats.usedKnockout += 1;
-      return scaledPlay(chosen.id, play, strength);
+      return { lines: play.lineBonus, engine: play.effect };
     },
     halftime(match) {
       if (!holdsForHalftime(match)) return undefined;
       let decided = false;
-      let chosen: HalftimeCardEffect | undefined;
+      let chosen: MatchHalftimeCardEffect | undefined;
 
       // Se llama una vez por partido jugado (y otra, con las mismas tiradas, si cambia el descanso).
       return (margin) => {
@@ -226,19 +191,20 @@ function createGameCards(policy: CardPolicy, seed: number, stats: Stats): CardHo
         if (margin > 0 || !cards || !situation) return undefined;
         const current = situation;
 
+        // La carta del descanso del juego (getMatchCardHalftimePlay); para elegir, lo que vale.
         const playable = cards.hand
-          .map((id, index) => ({ id, index, card: halftimeCard(id, current, strength) }))
-          .filter((item): item is { id: MatchCardId; index: number; card: { effect: HalftimeCardEffect; value: number } } => Boolean(item.card));
+          .map((id, index) => ({ id, index, effect: getMatchCardHalftimePlay(id, current).play?.effect, value: cardValue(id, current) }))
+          .filter((item): item is { id: MatchCardId; index: number; effect: MatchHalftimeCardEffect; value: number } => Boolean(item.effect));
         // Fuera de las eliminatorias, solo con cartas de sobra, como antes del partido.
         const ahead = match.knockoutsAhead ?? 0;
         if (playable.length === 0 || (!match.knockout && playable.length <= ahead)) return undefined;
 
-        const best = [...playable].sort((a, b) => b.card.value - a.card.value)[0];
+        const best = [...playable].sort((a, b) => b.value - a.value)[0];
         cards = armMatchCard(cards, best.index);
         stats.used += 1;
         stats.halftime += 1;
         if (match.knockout) stats.usedKnockout += 1;
-        chosen = best.card.effect;
+        chosen = best.effect;
         return chosen;
       };
     },
@@ -278,12 +244,8 @@ const POLICIES: (CardPolicy | null)[] = [
   null,
   { label: "Cartas del juego, uso sensato", use: "smart" },
   { label: "Cartas del juego, en el siguiente partido", use: "next" },
-  // Cartas más fuertes (B) y en el descanso de Copa y Europa (2026-11-12).
-  { label: "Fuerza ×1,5, uso sensato", use: "smart", strength: 1.5 },
-  { label: "Fuerza ×2, uso sensato", use: "smart", strength: 2 },
-  { label: "En el descanso, uso sensato", use: "smart", halftime: true },
-  { label: "En el descanso y fuerza ×1,5, uso sensato", use: "smart", halftime: true, strength: 1.5 },
-  { label: "En el descanso y fuerza ×2, uso sensato", use: "smart", halftime: true, strength: 2 },
+  // v0.25.110: las cartas también en el descanso de Copa y Europa.
+  { label: "Cartas del juego con descanso, uso sensato", use: "smart", halftime: true },
 ];
 
 const CUPS_WELL: Policy = { label: "Decide bien", approach: "best", halfTime: "good" };

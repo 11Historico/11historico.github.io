@@ -74,6 +74,8 @@ export interface SimulateNextUserMatchParams {
   seed?: number;
   /** Carta de partido (v0.25.108); su media ya va en teamRating. */
   card?: MatchCardEffect;
+  /** Con carta (v0.25.110): tu rating sin ella, para la crónica. */
+  teamRatingWithoutCard?: TeamRating;
 }
 
 export interface SimulateFullUserLeagueParams {
@@ -96,6 +98,8 @@ export interface SimulateCupParams {
   regularTimeResult?: MatchResult;
   /** Carta de partido (v0.25.108); su media ya va en teamRating. */
   card?: MatchCardEffect;
+  /** Con carta (v0.25.110): tu rating sin ella, para la crónica. */
+  teamRatingWithoutCard?: TeamRating;
 }
 
 /** Prórroga de Copa con la carta Portero inspirado (v0.25.108, medido en INFORME_TIPOS_CARTAS_v0_25_107). */
@@ -1052,6 +1056,7 @@ export function simulateNextUserLeagueMatch(
     userTeamName = USER_TEAM_NAME,
     seed,
     card,
+    teamRatingWithoutCard,
   } = params;
 
   if (context.state.completed) {
@@ -1097,6 +1102,7 @@ export function simulateNextUserLeagueMatch(
     selectedPlayers,
     seed: typeof seed === "number" ? seed + context.state.results.length : undefined,
     card,
+    teamRatingWithoutCard,
   });
 
   const leagueUserResult: MatchResult = {
@@ -1803,6 +1809,7 @@ export function simulateNextCupMatch(
     approach,
     regularTimeResult,
     card,
+    teamRatingWithoutCard,
   } = params;
 
   const pendingCupFixture = getPendingCupFixture(context);
@@ -1835,6 +1842,11 @@ export function simulateNextCupMatch(
     approach,
     coachSkills: context.selectedCoach?.coachSeason.skills,
     card,
+    // El mismo ajuste de Copa que tu rating con la carta.
+    teamRatingWithoutCard: teamRatingWithoutCard && applyCoachCompetitionBoostToTeamRating(
+      applyCupRivalContext({ rival, userRating: teamRatingWithoutCard, venue, roundId: pendingCupFixture.roundId }).userRating,
+      getCoachCompetitionBoost(context, "cup"),
+    ),
   });
 
   let cupResult: MatchResult = {

@@ -7,6 +7,7 @@
 import type {
   GoalEvent,
   MatchApproachEffect,
+  MatchCardComparison,
   MatchExpectedGoals,
   MatchHalfTimeEffect,
   MatchKeyFactor,
@@ -287,6 +288,31 @@ export function getMatchApproachEffectText(effect: MatchApproachEffect | undefin
   }
 
   return `Planteamiento ${name}: con uno equilibrado también habrías ${verb}, ${score} a los 90 minutos.`;
+}
+
+/**
+ * Qué cambió la carta (v0.25.110), comparando con el mismo partido sin ella. Antes del partido habla
+ * de los 90 minutos; en el descanso, de la segunda parte.
+ */
+export function getMatchCardEffectText(effect: MatchCardComparison | undefined): string | undefined {
+  if (!effect) return undefined;
+
+  const { userGoals, rivalGoals, withoutUserGoals, withoutRivalGoals, halftime } = effect;
+  const card = halftime ? "Tu carta del descanso" : "Tu carta";
+  const when = halftime ? "" : " a los 90 minutos";
+  const score = `${withoutUserGoals}-${withoutRivalGoals}`;
+
+  if (userGoals === withoutUserGoals && rivalGoals === withoutRivalGoals) {
+    return `${card} no cambió el marcador: sin ella también habría acabado ${score}${when}.`;
+  }
+
+  const outcome = Math.sign(userGoals - rivalGoals);
+  const withoutOutcome = Math.sign(withoutUserGoals - withoutRivalGoals);
+  const verb = withoutOutcome > 0 ? "ganado" : withoutOutcome < 0 ? "perdido" : "empatado";
+
+  if (outcome > withoutOutcome) return `${card} cambió el partido: sin ella habrías ${verb} ${score}${when}.`;
+  if (outcome < withoutOutcome) return `${card} te salió cara: sin ella habrías ${verb} ${score}${when}.`;
+  return `${card} cambió el marcador, pero no el resultado: sin ella también habrías ${verb}, ${score}${when}.`;
 }
 
 /** Qué cambió la decisión del descanso (v0.25.78), comparando con seguir igual. */

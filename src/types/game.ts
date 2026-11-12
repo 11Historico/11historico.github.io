@@ -463,6 +463,21 @@ export interface MatchResult {
   lineDuel?: MatchLineDuel;
   /** La carta Remontada se activó: ibas perdiendo al descanso (v0.25.108). */
   comebackActivated?: boolean;
+  /** Qué cambió la carta de partido (v0.25.110). */
+  cardEffect?: MatchCardComparison;
+}
+
+/**
+ * Lo que cambió la carta (v0.25.110): el mismo partido sin ella y con las mismas tiradas. Antes del
+ * partido, a los 90 minutos; en el descanso, la segunda parte con la carta frente a sin ella.
+ */
+export interface MatchCardComparison {
+  userGoals: number;
+  rivalGoals: number;
+  withoutUserGoals: number;
+  withoutRivalGoals: number;
+  /** La carta se jugó en el descanso. */
+  halftime?: boolean;
 }
 
 // ==========================
