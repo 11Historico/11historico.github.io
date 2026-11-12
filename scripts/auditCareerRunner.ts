@@ -237,6 +237,25 @@ export interface CardHook {
   bonusFor(match: CardMatch): number | CardEffect;
   /** Tras el partido: si lo ganó (en una eliminatoria, si pasó) y si lo perdió. */
   afterMatch(match: CardMatch, won: boolean, lost: boolean, cameBack?: boolean): void;
+  /** Copa y Europa: decide en el descanso, con el marcador de la primera parte (audit:game-cards). */
+  halftime?(match: CardMatch): HalftimeDecider | undefined;
+}
+
+/** Una carta jugada en el descanso: actúa sobre los goles de la segunda parte (solo en auditorías). */
+export interface HalftimeCardEffect {
+  /** Probabilidad de marcar un gol más en la segunda parte. */
+  extraGoalChance?: number;
+  /** Probabilidad de que no llegue cada gol del rival en la segunda parte. */
+  cancelRivalChance?: number;
+  /** Portero inspirado: la prórroga o los penaltis. */
+  shootout?: boolean;
+}
+
+/** Con tu ventaja al descanso (tus goles menos los del rival), la carta que juegas o ninguna. */
+export type HalftimeDecider = (margin: number) => HalftimeCardEffect | undefined;
+
+function setHalftimeDecider(decider: HalftimeDecider | undefined): void {
+  (globalThis as { __auditHalftime?: HalftimeDecider }).__auditHalftime = decider;
 }
 
 const LINE_WEIGHTS = { attack: 0.22, defense: 0.22, control: 0.18, physical: 0.1, mentality: 0.13, goalkeeping: 0.15 } as const;
@@ -407,6 +426,7 @@ function playSeason(params: {
         ...(preview ? { venue: preview.venue, userOverall: preview.userOverall, rivalOverall: preview.rivalOverall, roundId: pendingCup.roundId } : {}),
       };
       const card = cards?.bonusFor(cupMatch) ?? 0;
+      const cupHalftime = cards?.halftime?.(cupMatch);
       const before = context;
       const playCup = (extra: number) => {
         const cupRating = withCard(effectiveRating, card, extra);
@@ -416,6 +436,7 @@ function playSeason(params: {
           advanceValue,
         );
         const base = { context: before, teamRating: cupRating, selectedPlayers, approach };
+        setHalftimeDecider(cupHalftime);
         const played = simulateNextCupMatch(base);
         const regular = played.regularTimeResult;
         const choice = regular
@@ -424,6 +445,7 @@ function playSeason(params: {
         const decided = regular && choice !== "keep"
           ? simulateNextCupMatch({ ...base, regularTimeResult: applyHalfTimeChoice({ result: regular, choice, selectedPlayers }) })
           : played;
+        setHalftimeDecider(undefined);
         return { decided, firstHalf: regular ?? played.result };
       };
       const { outcome, cameBack } = playWithComeback(card, playCup, ({ firstHalf }) => (firstHalf ? getHalfTimeMargin(firstHalf) : 0));
@@ -453,6 +475,7 @@ function playSeason(params: {
           : {}),
       };
       const card = cards?.bonusFor(europeMatch) ?? 0;
+      const europeHalftime = cards?.halftime?.(europeMatch);
       const currentTournament = tournament;
       const playEurope = (extra: number) => {
         const profile = withCard(effectiveRating, card, extra);
@@ -471,11 +494,14 @@ function playSeason(params: {
           isKnockout ? advanceValue : pointsValue,
         );
         const input: SimulateEuropeanMatchInput = { ...shared, approach, isKnockout, seed: `${gameId}_${pendingEuropean.id}` };
+        setHalftimeDecider(europeHalftime);
         const base = simulateEuropeanMatch(input);
         const firstHalf = base.goalEvents.filter((goal) => goal.minute <= 45);
         const margin = firstHalf.filter((goal) => goal.isUserGoal).length - firstHalf.filter((goal) => !goal.isUserGoal).length;
         const choice = pickHalfTime(policy.halfTime, margin, (base.expectedGoals?.user ?? 0) < (base.expectedGoals?.rival ?? 0));
-        return { outcome: choice === "keep" ? base : simulateEuropeanMatch({ ...input, halfTimeChoice: choice }), margin };
+        const outcome = choice === "keep" ? base : simulateEuropeanMatch({ ...input, halfTimeChoice: choice });
+        setHalftimeDecider(undefined);
+        return { outcome, margin };
       };
       const { outcome: played, cameBack } = playWithComeback(card, playEurope, ({ margin }) => margin);
 
