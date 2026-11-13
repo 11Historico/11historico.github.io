@@ -342,9 +342,12 @@ describe("cartas: la crónica dice qué cambió la carta", () => {
 
   it("los textos", () => {
     expect(getMatchCardEffectText(undefined)).toBeUndefined();
-    expect(getMatchCardEffectText({ userGoals: 1, rivalGoals: 1, withoutUserGoals: 1, withoutRivalGoals: 1 })).toBe("Tu carta no cambió el marcador: sin ella también habría acabado 1-1 a los 90 minutos.");
+    expect(getMatchCardEffectText({ userGoals: 1, rivalGoals: 1, withoutUserGoals: 1, withoutRivalGoals: 1 })).toBe("Tu carta no cambió el marcador: sin ella habría sido el mismo.");
     expect(getMatchCardEffectText({ userGoals: 2, rivalGoals: 1, withoutUserGoals: 1, withoutRivalGoals: 1 })).toBe("Tu carta cambió el partido: sin ella habrías empatado 1-1 a los 90 minutos.");
     expect(getMatchCardEffectText({ userGoals: 3, rivalGoals: 1, withoutUserGoals: 2, withoutRivalGoals: 1 })).toBe("Tu carta cambió el marcador, pero no el resultado: sin ella también habrías ganado, 2-1 a los 90 minutos.");
-    expect(getMatchCardEffectText({ userGoals: 2, rivalGoals: 2, withoutUserGoals: 1, withoutRivalGoals: 2, halftime: true })).toBe("Tu carta del descanso cambió el partido: sin ella habrías perdido 1-2.");
+    expect(getMatchCardEffectText({ userGoals: 2, rivalGoals: 2, withoutUserGoals: 1, withoutRivalGoals: 2, halftime: true })).toBe("Tu carta del descanso cambió el partido: sin ella habrías perdido 2-1.");
+    // v0.25.116: el que gana, delante, como en el planteamiento y el descanso (la prueba leyó «perdido 0-1» jugando fuera).
+    expect(getMatchCardEffectText({ userGoals: 1, rivalGoals: 1, withoutUserGoals: 0, withoutRivalGoals: 1 })).toBe("Tu carta cambió el partido: sin ella habrías perdido 1-0 a los 90 minutos.");
+    expect(getMatchCardEffectText({ userGoals: 0, rivalGoals: 1, withoutUserGoals: 1, withoutRivalGoals: 0 })).toBe("Tu carta te salió cara: sin ella habrías ganado 1-0 a los 90 minutos.");
   });
 });

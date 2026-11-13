@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.25.116 — La crónica de la carta, con el resultado bien puesto
+
+- **«Sin ella habrías perdido 1-0», con los goles del que gana delante,** como ya hacían el planteamiento y el descanso. Antes ponía «perdido 0-1», con tus goles delante, y jugando fuera se leía al revés que el marcador.
+- **Si la carta no cambió el marcador,** la crónica ya no repite el resultado: «sin ella habría sido el mismo». No cambia nada del juego.
+
 ## v0.25.115 — Tus medias, claras, y el entrenador gestor cuenta en Liga
 
 - **El +1 de Liga del entrenador gestor (Gestión 86+) se aplica.** El juego lo prometía desde la v0.18.3, pero solo contaban el de Copa y el de Europa. **Cambia el balance:** medido con `audit:rating` (4.800 carreras), con un gestor la carrera dura entre un 16 % y un 47 % más, y la puntuación media del ranking sube entre un 7 % y un 19 %. Lo eligió el usuario.
