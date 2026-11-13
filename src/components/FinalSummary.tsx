@@ -16,6 +16,7 @@ import { getEuropeanCompetitionIconKind, getFinalTableEuropeanSpot, type FinalTa
 import type { EuropeanQualificationResult } from "../europe/europeanTypes";
 
 import SelectedTeamBoard from "./SelectedTeamBoard";
+import { applyDifficultyToTeamRating } from "../career/teamPower";
 import PalmaresTrophyCase from "./PalmaresTrophyCase";
 import { CompetitionIcon, type CompetitionIconKind } from "./CompetitionIcon";
 import { TeamKitIcon } from "./TeamKitIcon";
@@ -42,6 +43,8 @@ interface FinalSummaryProps {
   selectedPlayers: SelectedPlayer[];
   selectedCoach: SelectedCoach;
   teamRating: TeamRating;
+  /** v0.25.115: en carrera, el desglose del entrenador va en la escala de LaLiga. */
+  isCareerMode?: boolean;
   careerTrophyCounts?: CareerTrophyCounts;
   europeanQualification?: EuropeanQualificationResult;
   /** Temporada jugada, en formato corto («27/28»). */
@@ -224,10 +227,14 @@ function CoachRatingBreakdown({
   selectedCoach,
   selectedPlayers,
   teamRating,
+  difficulty,
+  isCareerMode,
 }: {
   selectedCoach: SelectedCoach;
   selectedPlayers: SelectedPlayer[];
   teamRating: TeamRating;
+  difficulty: GameDifficulty;
+  isCareerMode: boolean;
 }) {
   const coach = selectedCoach.coachSeason;
   const xiAverage = getSelectedPlayersAverage(selectedPlayers);
@@ -235,11 +242,14 @@ function CoachRatingBreakdown({
   const leagueBonus = getCoachCompetitionBonus(coach, "league");
   const cupBonus = getCoachCompetitionBonus(coach, "cup");
   const europeBonus = getCoachCompetitionBonus(coach, "europe");
+  // v0.25.115: la media con la que se juega, con la dificultad y, en carrera, la escala de LaLiga.
+  const played = applyDifficultyToTeamRating(teamRating, difficulty, isCareerMode).overall;
+  const playedIn = (bonus: number) => (isCareerMode ? Math.round((played + bonus) * 10) / 10 : clampFinalRating(played + bonus));
 
   return (
     <div className="final-coach-breakdown">
       <article>
-        <span>Media XI</span>
+        <span>Media del once</span>
         <strong>{xiAverage}</strong>
       </article>
       <article>
@@ -247,27 +257,28 @@ function CoachRatingBreakdown({
         <strong>+{baseBonus}</strong>
       </article>
       <article>
-        <span>Rating visible equipo</span>
+        <span>{isCareerMode ? "Rating histórico" : "Rating visible equipo"}</span>
         <strong>{teamRating.overall}</strong>
       </article>
       <article className={leagueBonus > 0 ? "final-coach-breakdown-boosted" : ""}>
         <span>Liga</span>
-        <strong>{clampFinalRating(teamRating.overall + leagueBonus)}</strong>
+        <strong>{playedIn(leagueBonus)}</strong>
         <small>{leagueBonus > 0 ? "+1 especialista" : "sin extra"}</small>
       </article>
       <article className={cupBonus > 0 ? "final-coach-breakdown-boosted" : ""}>
         <span>Copa</span>
-        <strong>{clampFinalRating(teamRating.overall + cupBonus)}</strong>
+        <strong>{playedIn(cupBonus)}</strong>
         <small>{cupBonus > 0 ? "+1 especialista" : "sin extra"}</small>
       </article>
       <article className={europeBonus > 0 ? "final-coach-breakdown-boosted" : ""}>
         <span>Europa futura</span>
-        <strong>{clampFinalRating(teamRating.overall + europeBonus)}</strong>
+        <strong>{playedIn(europeBonus)}</strong>
         <small>{europeBonus > 0 ? "+1 especialista" : "sin extra"}</small>
       </article>
       <p>
-        El rating visible ya incluye formación y bonus base. El +1 de especialidad solo se aplica
-        en la competición correspondiente.
+        {isCareerMode
+          ? "El rating histórico ya incluye formación y bonus base. Liga, Copa y Europa se juegan con tu fuerza en LaLiga, con la dificultad, y el +1 de especialidad solo en su competición. En Copa, cada eliminatoria puede sumar o restar algo más."
+          : "El rating visible ya incluye formación y bonus base. Liga y Copa se juegan con la dificultad, y el +1 de especialidad solo en su competición."}
       </p>
     </div>
   );
@@ -695,6 +706,7 @@ export function FinalSummary({
   selectedPlayers,
   selectedCoach,
   teamRating,
+  isCareerMode = false,
   careerTrophyCounts,
   europeanQualification,
   europeanTournament,
@@ -849,11 +861,13 @@ export function FinalSummary({
               selectedCoach={selectedCoach}
               selectedPlayers={selectedPlayers}
               teamRating={teamRating}
+              difficulty={difficulty}
+              isCareerMode={isCareerMode}
             />
           </section>
 
           <section className="final-card">
-            <h2>Rating del equipo</h2>
+            <h2>{isCareerMode ? "Rating histórico del equipo" : "Rating del equipo"}</h2>
             <div className="final-rating-circle">
               <strong>{teamRating.overall}</strong>
               <span>{teamRating.profileLabel}</span>

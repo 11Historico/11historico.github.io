@@ -1,5 +1,6 @@
 import { useState } from "react";
-import type { FinalGameSummary, MatchResult, SelectedPlayer, TeamRating } from "../types/game";
+import type { FinalGameSummary, GameDifficulty, MatchResult, SelectedPlayer, TeamRating } from "../types/game";
+import { applyDifficultyToTeamRating } from "../career/teamPower";
 import { getDecisionBalance, getDecisionBalanceText } from "../simulation/decisionBalance";
 import { getEuropeanSeasonBalanceText } from "../europe/europeanSemifinalChance";
 import type { CareerAchievement } from "../career/shareRetention";
@@ -37,6 +38,8 @@ interface CareerSeasonOutcomeProps {
   rankingEntry?: CareerLocalRankingEntry;
   selectedPlayers?: SelectedPlayer[];
   teamRating?: TeamRating;
+  /** Para la fuerza en LaLiga (v0.25.115). */
+  difficulty?: GameDifficulty;
   completedSeasons?: number;
   trophyCounts?: CareerTrophyCounts;
   europeanQualification?: EuropeanQualificationResult;
@@ -289,6 +292,7 @@ export function CareerSeasonOutcome({
   rankingEntry,
   selectedPlayers = [],
   teamRating,
+  difficulty = "dificil",
   completedSeasons = 0,
   trophyCounts,
   europeanQualification,
@@ -393,9 +397,15 @@ export function CareerSeasonOutcome({
 
         {(xiAverage || teamRating) && (
           <p className="career-outcome-team-rating-note">
-            {xiAverage ? <>Media XI actual: <strong>{xiAverage}</strong></> : null}
+            {/* v0.25.115: con los mismos nombres que el resumen del equipo, y la fuerza con la que se juega. */}
+            {xiAverage ? <>Media del once: <strong>{xiAverage}</strong></> : null}
             {xiAverage && teamRating ? " · " : null}
-            {teamRating ? <>Rating visible equipo: <strong>{teamRating.overall}</strong></> : null}
+            {teamRating ? (
+              <>
+                Rating histórico: <strong>{teamRating.overall}</strong> · Fuerza en LaLiga:{" "}
+                <strong>{applyDifficultyToTeamRating(teamRating, difficulty, true).overall}</strong>
+              </>
+            ) : null}
           </p>
         )}
 

@@ -1740,6 +1740,7 @@ export default function App() {
             rankingEntry={careerCurrentRankingEntry}
             selectedPlayers={selectedPlayers}
             teamRating={teamRating}
+            difficulty={difficulty}
             completedSeasons={careerCompletedSeasons}
             trophyCounts={careerTrophyCounts}
             europeanQualification={careerEuropeanQualification}
@@ -1827,6 +1828,7 @@ export default function App() {
             selectedPlayers={selectedPlayers}
             selectedCoach={selectedCoach}
             teamRating={teamRating}
+            isCareerMode={isCareerMode}
             onRestart={handleRestart}
             onReturnToCareer={isCareerMode && careerSeasonResult && careerObjectiveResult ? () => setScreen(careerObjectiveResult.survives ? "career_season_result" : "career_game_over") : undefined}
             onShare={handleCopyShareText}

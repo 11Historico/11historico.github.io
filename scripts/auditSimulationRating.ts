@@ -59,12 +59,14 @@ for (const { label: difficultyLabel, value: difficulty } of DIFFICULTIES) {
 
   for (const { label: draftLabel, style } of DRAFTS) {
     console.log(`\n### Dificultad ${difficultyLabel} · draft «${draftLabel}»\n`);
-    console.log("| Rating de simulación | Media de simulación | Visible | Temporadas superadas | Pasa la 1.ª | Posición en la 1.ª | Puntos en la 1.ª | Ligas por temporada | Títulos por temporada | Llegan al tope de 25 | Puntuación |");
-    console.log("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+    console.log("| Rating de simulación | Media de simulación | Visible | Temporadas superadas | Pasa la 1.ª | Posición en la 1.ª | Puntos en la 1.ª | Ligas por temporada | Títulos por temporada | Llegan al tope de 25 | Puntuación | Con gestor 86+: carreras · temporadas superadas |");
+    console.log("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
 
     for (const variant of VARIANTS) {
       const simulationOveralls: number[] = [];
       const visibleOveralls: number[] = [];
+      // v0.25.115: el +1 de Liga del entrenador (Gestión 86+) solo cambia estas carreras.
+      const leagueCoach: boolean[] = [];
 
       const careers = Array.from({ length: CAREERS_PER_CELL }, (_, index) => {
         const seed = index + 1;
@@ -75,6 +77,7 @@ for (const { label: difficultyLabel, value: difficulty } of DIFFICULTIES) {
         const coach = perField((field) => teamRating[field] - squadRating[field]);
         const build = variant.build;
         visibleOveralls.push(teamRating.overall);
+        leagueCoach.push(team.selectedCoach.coachSeason.skills.management >= 86);
 
         return playCareer({
           policy: POLICY,
@@ -114,6 +117,7 @@ for (const { label: difficultyLabel, value: difficulty } of DIFFICULTIES) {
         (titles / Math.max(1, seasons)).toFixed(2),
         share(careers.filter((career) => career.reachedCap).length, careers.length),
         meanWithMargin(careers.map((career) => career.score)),
+        `${share(leagueCoach.filter(Boolean).length, careers.length)} · ${meanWithMargin(careers.filter((_, index) => leagueCoach[index]).map((career) => career.completedSeasons))}`,
       ].join(" | ")} |`);
     }
   }

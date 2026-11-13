@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.115 — Tus medias, claras, y el entrenador gestor cuenta en Liga
+
+- **El +1 de Liga del entrenador gestor (Gestión 86+) se aplica.** El juego lo prometía desde la v0.18.3, pero solo contaban el de Copa y el de Europa. **Cambia el balance:** medido con `audit:rating` (4.800 carreras), con un gestor la carrera dura entre un 16 % y un 47 % más, y la puntuación media del ranking sube entre un 7 % y un 19 %. Lo eligió el usuario.
+- **La previa explica tu media:** debajo salen «entrenador +1», «fuera de favorito −1» o «inferior en casa +N», y al pasar el ratón, tu fuerza en LaLiga.
+- **Los resúmenes dicen con qué media juegas:** el de la temporada añade la fuerza en LaLiga, y el desglose del entrenador enseña la Liga, la Copa y Europa en la escala con la que se juegan.
+- **Los mismos nombres en todas partes:** «media del once» y, en carrera, «rating histórico».
+
 ## v0.25.114 — Las cartas cuentan y el rival de Copa se explica
 
 - **El balance de decisiones cuenta las cartas,** también en Liga. Antes, el resumen decía «ningún resultado habría sido distinto» aunque una carta hubiera cambiado un resultado.

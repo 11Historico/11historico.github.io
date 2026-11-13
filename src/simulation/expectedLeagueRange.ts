@@ -6,7 +6,7 @@
 // rivales (que ya están decididos por su semilla) se colarían en el cálculo.
 
 import { getLaliga2526RivalsExcludingAthletic } from "../data/laliga2526Teams";
-import type { LeagueFixture, RivalTeam, SelectedPlayer, TeamRating } from "../types/game";
+import type { LeagueFixture, RivalTeam, SelectedCoach, SelectedPlayer, TeamRating } from "../types/game";
 import { createInitialUserTeamStats, simulateFullUserLeague, type UserLeagueSimulationContext } from "./leagueSimulator";
 import { createLeagueSimulationState, getUserLeagueSummary } from "./leagueTable";
 
@@ -27,9 +27,11 @@ export function estimateExpectedLeagueRange(params: {
   rivals?: RivalTeam[];
   teamRating: TeamRating;
   selectedPlayers: SelectedPlayer[];
+  /** v0.25.115: el entrenador gestor (Gestión 86+) suma +1 en Liga. */
+  selectedCoach?: SelectedCoach;
   seasons?: number;
 }): ExpectedLeagueRange {
-  const { fixtures, teamRating, selectedPlayers, seasons = SIMULATED_SEASONS } = params;
+  const { fixtures, teamRating, selectedPlayers, selectedCoach, seasons = SIMULATED_SEASONS } = params;
   const rivals = params.rivals ?? getLaliga2526RivalsExcludingAthletic();
   const restart: UserLeagueSimulationContext = {
     state: createLeagueSimulationState({ fixtures, rivals }),
@@ -37,6 +39,7 @@ export function estimateExpectedLeagueRange(params: {
     // Sin Copa: la Liga se juega de corrido, y la Copa no cambia sus resultados.
     cupState: { status: "eliminated", currentRoundIndex: 0, fixtures: [], results: [] },
     rivals,
+    selectedCoach,
   };
 
   const positions = Array.from({ length: seasons }, (_, index) => {

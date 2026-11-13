@@ -59,7 +59,7 @@ export function SelectedTeamBoard({
         <div className="team-board-summary">
           <span>{isComplete ? "Completo" : "En construcción"}</span>
           <strong>{averageOverall > 0 ? averageOverall : "--"}</strong>
-          <small>media actual</small>
+          <small>media del once</small>
         </div>
       </header>
 

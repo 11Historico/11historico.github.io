@@ -50,7 +50,7 @@ const STRENGTH_LINES: { label: string; user: keyof TeamRating & ("attack" | "def
  * v0.25.94: la fuerza con la que juega la carrera, en la escala de los rivales de LaLiga.
  * Los 85-88 del once histórico no se comparan con los 74-91 de los rivales; esta sí.
  */
-function LeagueStrengthCard({ rating, rivals }: { rating: TeamRating; rivals: RivalTeam[] }) {
+function LeagueStrengthCard({ rating, rivals, leagueCoachBonus }: { rating: TeamRating; rivals: RivalTeam[]; leagueCoachBonus: boolean }) {
   const byStrength = [...rivals].sort((a, b) => b.ratings.overall - a.ratings.overall);
   const strongest = byStrength[0];
   const leagueAverage = (line: keyof RivalTeamRatings) =>
@@ -99,6 +99,8 @@ function LeagueStrengthCard({ rating, rivals }: { rating: TeamRating; rivals: Ri
           ? `Donde más te saca ${strongest.name}: ${weakest.label.toLowerCase()} (${formatRatingValue(Math.round(gap * 10) / 10)} puntos).`
           : `Igualas o superas a ${strongest.name} en todas las líneas.`}
       </p>
+      {/* v0.25.115: el +1 de Liga del entrenador gestor, que hasta ahora no se aplicaba. */}
+      {leagueCoachBonus && <p>En Liga, tu entrenador suma +1 por su Gestión.</p>}
     </article>
   );
 }
@@ -327,7 +329,7 @@ export function TeamSummary({
 
         <aside className="team-summary-side">
           <article className="team-summary-overall-card">
-            <span>Rating de temporada</span>
+            <span>{isCareerMode ? "Rating histórico" : "Rating de temporada"}</span>
             <strong>{formatRatingValue(displayedRating.overall ?? 0)}</strong>
             <small>
               {(displayedRating.overall ?? 0) >= 90
@@ -342,13 +344,13 @@ export function TeamSummary({
             </div>
             {isCareerMode && (
               <p className="team-summary-overall-note">
-                Es la media histórica del once. En Liga y Copa juegas con tu fuerza en LaLiga.
+                Es la media histórica del once. En Liga, Copa y Europa juegas con tu fuerza en LaLiga.
               </p>
             )}
           </article>
 
           {isCareerMode && leagueRivals && leagueRivals.length > 0 && (
-            <LeagueStrengthCard rating={simulatedRating} rivals={leagueRivals} />
+            <LeagueStrengthCard rating={simulatedRating} rivals={leagueRivals} leagueCoachBonus={coach.skills.management >= 86} />
           )}
 
           <article className="team-summary-coach-card">
