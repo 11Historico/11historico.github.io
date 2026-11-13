@@ -188,17 +188,26 @@ function PlaybackSpeedControl() {
 /**
  * El enfrentamiento de la previa (v0.25.112), como un marcador: el local a la izquierda. Con una
  * carta elegida, tu media enseña de cuánto a cuánto sube. En Liga (v0.25.113), debajo de la media
- * del rival sale su forma de temporada, si no es 0.
+ * del rival sale su forma de temporada, si no es 0. En Copa (v0.25.114), si la carta te hace más
+ * favorito, el rival inferior se crece, y su media enseña también de cuánto a cuánto sube.
  */
-function PreviewTeams({ userIsHome, userOverall, userBaseOverall, rival, rivalOverall, rivalSeasonForm }: {
+function PreviewTeams({ userIsHome, userOverall, userBaseOverall, rival, rivalOverall, rivalBaseOverall, rivalSeasonForm }: {
   userIsHome: boolean;
   userOverall: number;
   userBaseOverall?: number;
   rival: ReactNode;
   rivalOverall: number;
+  /** La media del rival sin tu carta. */
+  rivalBaseOverall?: number;
   rivalSeasonForm?: number;
 }) {
   const form = rivalSeasonForm ? `${rivalSeasonForm > 0 ? "+" : "−"}${Math.abs(rivalSeasonForm)}` : undefined;
+  const rivalGrows = rivalBaseOverall !== undefined && rivalOverall > rivalBaseOverall;
+  const rivalTitle = form
+    ? `${rivalOverall - (rivalSeasonForm ?? 0)} sin la forma; esta temporada, ${form} de forma`
+    : rivalGrows
+      ? `En Copa, el rival inferior se crece cuanto más favorito eres: con tu carta pasa de ${rivalBaseOverall} a ${rivalOverall}.`
+      : undefined;
   const user = (
     <span className="next-match-preview-team next-match-preview-team-user">
       <span className="next-match-preview-team-name">{USER_TEAM_NAME}</span>
@@ -208,9 +217,10 @@ function PreviewTeams({ userIsHome, userOverall, userBaseOverall, rival, rivalOv
   const rivalTeam = (
     <span className="next-match-preview-team">
       <span className="next-match-preview-team-name">{rival}</span>
-      <b title={form && `${rivalOverall - (rivalSeasonForm ?? 0)} sin la forma; esta temporada, ${form} de forma`}>
-        {rivalOverall}
+      <b title={rivalTitle}>
+        {rivalGrows ? `${rivalBaseOverall} → ${rivalOverall}` : rivalOverall}
         {form && <small className="next-match-preview-form">forma {form}</small>}
+        {rivalGrows && <small className="next-match-preview-form">se crece</small>}
       </b>
     </span>
   );
@@ -541,6 +551,8 @@ export function LeagueSimulatorView({
   // v0.25.96: lo que han cambiado tus decisiones esta temporada. Con lo que se ve, para no delatar el partido en juego.
   const decisionBalanceText = getDecisionBalanceText(getDecisionBalance([
     ...(supercopaResults ?? []),
+    // v0.25.114: las cartas de Liga también son decisiones.
+    ...shownContext.state.results,
     ...shownContext.cupState.results,
     ...(shownEuropeanTournament?.matches.filter((match) => match.status === "played") ?? []),
   ]));
@@ -1219,6 +1231,7 @@ export function LeagueSimulatorView({
                   userBaseOverall={cardPlay ? nextMatchInfo?.userOverall : undefined}
                   rival={matchPreview.rivalName}
                   rivalOverall={matchPreview.rivalOverall}
+                  rivalBaseOverall={cardPlay ? matchPreviewWithoutCard?.rivalOverall : undefined}
                   rivalSeasonForm={matchPreview.rivalSeasonForm}
                 />
                 <MatchLineDuelBars duel={matchPreview.lineDuel} />

@@ -297,9 +297,10 @@ export function CareerSeasonOutcome({
   bestLeaguePosition,
   supercopaResults,
 }: CareerSeasonOutcomeProps) {
-  // v0.25.96: lo que cambiaron tus decisiones en Copa, Europa y Supercopa esta temporada.
+  // v0.25.96: lo que cambiaron tus decisiones esta temporada; desde la v0.25.114, también las cartas de Liga.
   const decisionBalanceText = getDecisionBalanceText(getDecisionBalance([
     ...(supercopaResults ?? []),
+    ...(summary.leagueCardResults ?? []),
     ...(summary.cupResults ?? []),
     ...(europeanTournament?.matches.filter((match) => match.status === "played") ?? []),
   ]));

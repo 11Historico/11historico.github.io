@@ -1,19 +1,20 @@
 // src/simulation/decisionBalance.ts
 //
-// Balance de decisiones de la temporada (v0.25.96). Cada partido de Copa, Europa o
-// Supercopa ya guarda qué habría pasado sin tu planteamiento (approachEffect) o sin tu
-// decisión del descanso (halfTimeEffect). Aquí se suman: en cuántos partidos decidiste y
-// cuántos resultados a los 90 minutos cambiaron, a favor o en contra. Solo informa.
+// Balance de decisiones de la temporada (v0.25.96). Cada partido ya guarda qué habría pasado
+// sin tu planteamiento (approachEffect), sin tu decisión del descanso (halfTimeEffect) o, desde
+// la v0.25.114, sin tu carta (cardEffect, también en Liga). Aquí se suman: en cuántos partidos
+// decidiste y cuántos resultados a los 90 minutos cambiaron, a favor o en contra. Solo informa.
 
-import type { MatchApproachEffect, MatchHalfTimeEffect } from "../types/game";
+import type { MatchApproachEffect, MatchCardComparison, MatchHalfTimeEffect } from "../types/game";
 
 interface DecidedMatch {
   approachEffect?: MatchApproachEffect;
   halfTimeEffect?: MatchHalfTimeEffect;
+  cardEffect?: MatchCardComparison;
 }
 
 export interface DecisionBalance {
-  /** Partidos con planteamiento distinto de equilibrado o con cambio en el descanso. */
+  /** Partidos con planteamiento distinto de equilibrado, con cambio en el descanso o con carta. */
   decided: number;
   /** Resultados a los 90 minutos que mejoraron (derrota → empate o victoria, empate → victoria). */
   better: number;
@@ -24,16 +25,37 @@ export interface DecisionBalance {
 /**
  * El resultado con tus decisiones frente al de no tocar nada: equilibrado y seguir igual.
  * Si el descanso cambió el marcador, el partido ya no guarda la comparación del planteamiento
- * (applyHalfTimeChoice la quita), así que se compara con el marcador antes del descanso.
+ * ni la de la carta jugada antes (applyHalfTimeChoice las quita), así que se compara con el
+ * marcador antes del descanso.
+ *
+ * Con carta (v0.25.114): la carta del descanso va después de la decisión del descanso, así que
+ * su marcador es el final. Una carta jugada antes del partido se compara con el partido sin ella;
+ * si además hubo planteamiento, ese partido sin carta lo conserva.
  */
 function getOutcomes(match: DecidedMatch): { final: number; baseline: number } | undefined {
-  const { approachEffect, halfTimeEffect } = match;
+  const { approachEffect, halfTimeEffect, cardEffect } = match;
+
+  if (cardEffect && !cardEffect.halftime) {
+    return {
+      final: Math.sign(cardEffect.userGoals - cardEffect.rivalGoals),
+      baseline: Math.sign(cardEffect.withoutUserGoals - cardEffect.withoutRivalGoals),
+    };
+  }
 
   if (halfTimeEffect) {
     const baseline = approachEffect
       ? approachEffect.balancedUserGoals - approachEffect.balancedRivalGoals
       : halfTimeEffect.keptUserGoals - halfTimeEffect.keptRivalGoals;
-    return { final: Math.sign(halfTimeEffect.userGoals - halfTimeEffect.rivalGoals), baseline: Math.sign(baseline) };
+    const final = cardEffect ? cardEffect.userGoals - cardEffect.rivalGoals : halfTimeEffect.userGoals - halfTimeEffect.rivalGoals;
+    return { final: Math.sign(final), baseline: Math.sign(baseline) };
+  }
+
+  // Carta del descanso sin cambio de planteamiento ni de descanso.
+  if (cardEffect) {
+    const baseline = approachEffect
+      ? approachEffect.balancedUserGoals - approachEffect.balancedRivalGoals
+      : cardEffect.withoutUserGoals - cardEffect.withoutRivalGoals;
+    return { final: Math.sign(cardEffect.userGoals - cardEffect.rivalGoals), baseline: Math.sign(baseline) };
   }
 
   if (approachEffect) {

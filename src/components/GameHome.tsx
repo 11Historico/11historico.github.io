@@ -265,7 +265,7 @@ export function GameHome({
               </article>
               <article>
                 <strong>Cartas</strong>
-                <p>Cada temporada eliges 4 cartas de 6 boca abajo, y ganas más al llegar a cuartos o a la final de Copa, al ganar al líder (desde la jornada 5), con 8 partidos sin perder o al ganar en Europa a un rival con más media. Juegas una por partido: en la previa (más media, más goles, campo neutral…) o, en Copa y Europa, en el descanso, para la segunda parte. Al acabar, la crónica te dice qué habría pasado sin ella. Como mucho tienes 6 en la mano y caducan al acabar la temporada.</p>
+                <p>Cada temporada eliges 4 cartas de 6 boca abajo, y ganas más al llegar a cuartos o a la final de Copa, al ganar al líder (desde la jornada 5), con 8 partidos sin perder o al ganar en Europa a un rival con más media. Juegas una por partido: en la previa (más media, más goles, campo neutral…) o, en Copa y Europa, en el descanso, para la segunda parte. En Copa, si la carta te hace más favorito, el rival inferior se crece: la previa te lo enseña. Al acabar, la crónica te dice qué habría pasado sin ella. Como mucho tienes 6 en la mano y caducan al acabar la temporada.</p>
               </article>
             </div>
           </section>
