@@ -78,10 +78,11 @@ function getCareerOutcomeNote(seasonResult: CareerSeasonResult, objectiveResult:
   }
 
   if (seasonResult.wonSupercopa && objectiveResult.qualifiedForEurope) {
-    return "Temporada salvada por Europa y Supercopa ganada. Premio especial desbloqueado.";
+    return "Supercopa ganada. Premio especial desbloqueado.";
   }
 
-  return "Temporada salvada por Europa. Elige cambiar 1 jugador o cambiar entrenador antes de seguir.";
+  // v0.25.118: clasificar para Europa es el objetivo normal, no un rescate; el titular ya lo dice.
+  return "Elige cambiar 1 jugador o cambiar entrenador antes de seguir.";
 }
 
 function CareerGameOverArcadeSummary({
@@ -313,6 +314,9 @@ export function CareerSeasonOutcome({
     ? getEuropeanSeasonBalanceText(europeanTournament, summary.europeanSemifinalChanceAtStart)
     : undefined;
   const survived = objectiveResult.survives;
+  // `cupRoundReached` trae «Eliminado en Octavos · Campeón: Real Betis» (getCupStatusLabel).
+  const cupChampion = summary.cupChampionTeamName;
+  const cupHeadline = cupChampion ? summary.cupRoundReached?.replace(` · Campeón: ${cupChampion}`, "") : summary.cupRoundReached;
   const [showPalmares, setShowPalmares] = useState(false);
   const xiAverage = getSelectedPlayersAverage(selectedPlayers);
   const finalTrophies = getFinalCareerTrophyCounts(trophyCounts, seasonResult, europeanTournament);
@@ -367,9 +371,13 @@ export function CareerSeasonOutcome({
           </article>
           <article>
             <span>Copa del Rey</span>
-            <strong>{seasonResult.wonCopa ? "Campeón" : summary.cupRoundReached ?? "Sin título"}</strong>
+            {/* v0.25.118: el campeón baja a la línea pequeña; en el titular ocupaba cuatro líneas. */}
+            <strong>{seasonResult.wonCopa ? "Campeón" : cupHeadline ?? "Sin título"}</strong>
             {/* v0.25.92: con el objetivo ya cumplido por la Liga, «No salva la temporada» sonaba a fracaso. */}
-            <small>{seasonResult.wonCopa ? "Objetivo cumplido" : survived ? "Objetivo ya cumplido por la Liga" : "No salva la temporada"}</small>
+            <small>
+              {!seasonResult.wonCopa && cupChampion && `Campeón: ${cupChampion} · `}
+              {seasonResult.wonCopa ? "Objetivo cumplido" : survived ? "Objetivo ya cumplido por la Liga" : "No salva la temporada"}
+            </small>
           </article>
           <article>
             <span>Descenso</span>

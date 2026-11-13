@@ -165,7 +165,8 @@ function EuropeanKnockoutColumn({ title, slot, emptyText }: { title: string; slo
   );
 }
 
-export function EuropeanBracket({ columns }: { columns: EuropeanBracketColumns }) {
+/** `inProgress` (v0.25.118): durante la temporada, lo que falta está «por decidir», no «no llegó». */
+export function EuropeanBracket({ columns, inProgress = false }: { columns: EuropeanBracketColumns; inProgress?: boolean }) {
   const played = columns.leagueMatches.filter((match) => match.status === "played").length;
 
   return (
@@ -182,8 +183,8 @@ export function EuropeanBracket({ columns }: { columns: EuropeanBracketColumns }
         ))}
       </section>
       {columns.playoff && <EuropeanKnockoutColumn title="Previa" slot={columns.playoff} emptyText="" />}
-      <EuropeanKnockoutColumn title="Semifinal" slot={columns.semifinal} emptyText="No llegó a semifinal." />
-      <EuropeanKnockoutColumn title="Final" slot={columns.final} emptyText="No llegó a la final." />
+      <EuropeanKnockoutColumn title="Semifinal" slot={columns.semifinal} emptyText={inProgress ? "Por decidir." : "No llegó a semifinal."} />
+      <EuropeanKnockoutColumn title="Final" slot={columns.final} emptyText={inProgress ? "Por decidir." : "No llegó a la final."} />
     </div>
   );
 }

@@ -93,7 +93,8 @@ import { CompetitionIcon } from "./CompetitionIcon";
 import { EuropeanCrest } from "./EuropeanCrest";
 import EuropeanLeagueTable from "./EuropeanLeagueTable";
 import { estimateExpectedLeagueRange, getExpectedLeagueRangeText, type ExpectedLeagueRange } from "../simulation/expectedLeagueRange";
-import { CupMirrorBracket } from "./SeasonBrackets";
+import { CupMirrorBracket, EuropeanBracket } from "./SeasonBrackets";
+import { buildEuropeanBracketColumns } from "../career/seasonBrackets";
 import { MatchApproachControl } from "./MatchApproachControl";
 import { MatchOddsBar } from "./MatchOddsBar";
 import { MatchSequence } from "./MatchSequence";
@@ -319,6 +320,8 @@ export function LeagueSimulatorView({
   const [tournamentBeforeMatch, setTournamentBeforeMatch] = useState<EuropeanTournamentState | undefined>();
   const [isEuropeanSequencePlaying, setIsEuropeanSequencePlaying] = useState(false);
   const shownEuropeanTournament = isEuropeanSequencePlaying && tournamentBeforeMatch ? tournamentBeforeMatch : europeanTournament;
+  // v0.25.118: con previa, semifinal o final, la pestaña de Europa enseña el cuadro.
+  const hasEuropeanKnockout = shownEuropeanTournament?.matches.some((match) => match.phase !== "league_phase") ?? false;
   const isMatchPlaying = isSequencePlaying || isEuropeanSequencePlaying;
   // El siguiente partido no se enseña hasta que acaba el actual (v0.25.82).
   // En la simulación automática tampoco entre jornadas: la página daría un salto en cada una.
@@ -1338,7 +1341,7 @@ export function LeagueSimulatorView({
                 aria-selected={consultTab === "europa"}
                 onClick={() => setConsultTab("europa")}
               >
-                Clasificación europea
+                {hasEuropeanKnockout ? "Cuadro europeo" : "Clasificación europea"}
               </button>
             )}
             {isCareerMode && careerTrophyCounts && (
@@ -1364,7 +1367,16 @@ export function LeagueSimulatorView({
           )}
 
           {consultTab === "europa" && shownEuropeanTournament && (
-            <div role="tabpanel" aria-label="Clasificación europea">
+            <div role="tabpanel" aria-label={hasEuropeanKnockout ? "Cuadro europeo" : "Clasificación europea"}>
+              {hasEuropeanKnockout && (
+                <section className="table-card">
+                  <h2>Cuadro europeo</h2>
+                  <EuropeanBracket
+                    columns={buildEuropeanBracketColumns(shownEuropeanTournament)}
+                    inProgress={shownEuropeanTournament.phase !== "completed" && shownEuropeanTournament.phase !== "eliminated"}
+                  />
+                </section>
+              )}
               <EuropeanLeagueTable tournament={shownEuropeanTournament} chanceText={semifinalChanceText} />
             </div>
           )}
