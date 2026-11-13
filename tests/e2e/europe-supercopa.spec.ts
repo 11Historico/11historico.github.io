@@ -425,7 +425,10 @@ test("el 3.º de la fase inicial juega la previa a partido único por las semifi
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await loadSave(page, playoffSave());
 
-  await page.getByRole("tab", { name: "Clasificación europea" }).click();
+  // v0.25.118: con la previa, la pestaña enseña el cuadro, y debajo, la tabla.
+  await page.getByRole("tab", { name: "Cuadro europeo" }).click();
+  const bracket = page.getByLabel("Cuadro del torneo europeo");
+  await expect(bracket.getByRole("region", { name: "Previa", exact: true })).toContainText("Sin jugar");
   const table = page.getByRole("region", { name: "Clasificación de la competición europea" });
   await expect(table.locator(".league-table-row-playoff.league-table-row-user")).toHaveCount(1);
   // Con la fase inicial acabada ya no hay probabilidad que calcular.

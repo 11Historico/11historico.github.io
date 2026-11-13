@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.25.118 — El cuadro europeo, en la temporada
+
+- **Al llegar a la previa, la semifinal o la final, la pestaña de Europa pasa a «Cuadro europeo»** y enseña el cuadro: la fase inicial, la previa si la hubo, la semifinal y la final. Debajo sigue la tabla de la fase de liga. Antes solo se veía la tabla, aunque ya estuvieras en semifinales.
+- **Resumen de la temporada:** sin «Temporada salvada por Europa», que sonaba a rescate cuando clasificarse es el objetivo normal. En la tarjeta de Copa, el campeón baja a la línea pequeña: «Eliminado en Octavos» y debajo «Campeón: Real Betis · Objetivo ya cumplido por la Liga».
+
 ## v0.25.117 — La tabla europea, jornada a jornada
 
 - **Ningún rival lleva más partidos que tú en la fase de liga europea.** Los partidos entre rivales se repartían mal por jornadas: tras dos jornadas, un rival podía llevar cuatro partidos y salir con 5 puntos. Ahora siguen el calendario de una liga de 7 equipos: cada jornada, cada rival juega un partido o descansa.
