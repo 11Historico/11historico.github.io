@@ -298,7 +298,16 @@
   flex: none;
   color: #ffffff;
   font-size: 1.25rem;
+  text-align: center;
   white-space: nowrap;
+}
+
+/* v0.25.113: la forma de temporada del rival, debajo de su media. */
+.next-match-preview-form {
+  display: block;
+  color: #f2d2d7;
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 
 .next-match-preview-vs {
