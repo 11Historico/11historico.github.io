@@ -292,7 +292,8 @@ export function getMatchApproachEffectText(effect: MatchApproachEffect | undefin
 
 /**
  * Qué cambió la carta (v0.25.110), comparando con el mismo partido sin ella. Antes del partido habla
- * de los 90 minutos; en el descanso, de la segunda parte.
+ * de los 90 minutos; en el descanso, de la segunda parte. Desde la v0.25.116, el resultado va con
+ * los goles del que gana delante, como en el planteamiento y el descanso: «habrías perdido 1-0».
  */
 export function getMatchCardEffectText(effect: MatchCardComparison | undefined): string | undefined {
   if (!effect) return undefined;
@@ -300,10 +301,10 @@ export function getMatchCardEffectText(effect: MatchCardComparison | undefined):
   const { userGoals, rivalGoals, withoutUserGoals, withoutRivalGoals, halftime } = effect;
   const card = halftime ? "Tu carta del descanso" : "Tu carta";
   const when = halftime ? "" : " a los 90 minutos";
-  const score = `${withoutUserGoals}-${withoutRivalGoals}`;
+  const score = `${Math.max(withoutUserGoals, withoutRivalGoals)}-${Math.min(withoutUserGoals, withoutRivalGoals)}`;
 
   if (userGoals === withoutUserGoals && rivalGoals === withoutRivalGoals) {
-    return `${card} no cambió el marcador: sin ella también habría acabado ${score}${when}.`;
+    return `${card} no cambió el marcador: sin ella habría sido el mismo.`;
   }
 
   const outcome = Math.sign(userGoals - rivalGoals);
