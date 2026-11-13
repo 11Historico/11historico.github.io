@@ -10,6 +10,7 @@ import {
   getCoachCompetitionBoost,
   getInitialCareerLeagueRivals,
   getNextUserMatchPreview,
+  simulateNextUserLeagueMatch,
 } from "../../src/simulation/leagueSimulator";
 import type { CoachSkills, MatchApproach, RivalTeam, SelectedCoach, SelectedPlayer, TeamRating } from "../../src/types/game";
 
@@ -145,6 +146,51 @@ describe("forma del rival en la previa", () => {
     }
 
     expect(forms.size).toBeGreaterThan(2);
+  });
+});
+
+// v0.25.115: el «+1 solo en Liga» del entrenador (Gestión 86+) se prometía desde la v0.18.3 y no se aplicaba.
+describe("entrenador gestor en Liga", () => {
+  const withManagement = (management: number) => ({
+    ...createUserLeagueSimulation({ rivals }),
+    leagueSeasonSalt: 1,
+    selectedCoach: { coachSeason: { skills: { ...plainCoach, management } } } as SelectedCoach,
+  });
+  const rating = uniformTeam(83.9);
+
+  it("suma +1 en el partido y la previa lo enseña", () => {
+    const gestor = getNextUserMatchPreview({ context: withManagement(86), teamRating: rating, selectedPlayers })!;
+    const plain = getNextUserMatchPreview({ context: withManagement(85), teamRating: rating, selectedPlayers })!;
+
+    expect(plain.userOverall).toBe(84);
+    expect(plain.userAdjustments).toBeUndefined();
+    expect(gestor.userOverall).toBe(85);
+    expect(gestor.userAdjustments).toEqual([{ label: "entrenador", value: 1 }]);
+    expect(gestor.odds.win).toBeGreaterThan(plain.odds.win);
+
+    // Los goles esperados van a una décima: el +1 se ve en muchos partidos, no en uno.
+    const wins = (management: number) =>
+      Array.from({ length: 300 }, (_, seed) =>
+        simulateNextUserLeagueMatch({ context: withManagement(management), teamRating: rating, selectedPlayers, seed }).result!.userTeamWon,
+      ).filter(Boolean).length;
+    expect(wins(86)).toBeGreaterThan(wins(85));
+  });
+
+  it("en Copa, la previa explica el −1 de jugar fuera de favorito", () => {
+    // La Copa espera a que se jueguen unas jornadas; el campo se fija fuera para el caso.
+    let context = createUserLeagueSimulation({ rivals });
+    for (let guard = 0; guard < 38; guard += 1) {
+      const next = simulateNextUserLeagueMatch({ context, teamRating: uniformTeam(90), selectedPlayers, seed: 1 });
+      if (next.stoppedForCup) break;
+      context = next.context;
+    }
+    const { cupState } = context;
+    const fixtures = cupState.fixtures.map((fixture, index) => (index === cupState.currentRoundIndex ? { ...fixture, venue: "away" as const } : fixture));
+    const preview = getNextUserMatchPreview({ context: { ...context, cupState: { ...cupState, fixtures } }, teamRating: uniformTeam(90), selectedPlayers })!;
+
+    expect(preview.competition).toBe("cup");
+    expect(preview.userOverall).toBe(89);
+    expect(preview.userAdjustments).toEqual([{ label: "fuera de favorito", value: -1 }]);
   });
 });
 

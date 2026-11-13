@@ -30,6 +30,7 @@ import {
   getPendingCupFixture,
   simulateNextCupMatch,
   simulateNextUserLeagueMatch,
+  type MatchRatingAdjustment,
   type UserLeagueSimulationContext,
   type UserMatchInfo,
 } from "../simulation/leagueSimulator";
@@ -190,11 +191,15 @@ function PlaybackSpeedControl() {
  * carta elegida, tu media enseña de cuánto a cuánto sube. En Liga (v0.25.113), debajo de la media
  * del rival sale su forma de temporada, si no es 0. En Copa (v0.25.114), si la carta te hace más
  * favorito, el rival inferior se crece, y su media enseña también de cuánto a cuánto sube.
+ * Desde la v0.25.115, debajo de tu media sale lo que el partido suma o resta a tu fuerza en LaLiga.
  */
-function PreviewTeams({ userIsHome, userOverall, userBaseOverall, rival, rivalOverall, rivalBaseOverall, rivalSeasonForm }: {
+function PreviewTeams({ userIsHome, userOverall, userBaseOverall, userStrength, userAdjustments, rival, rivalOverall, rivalBaseOverall, rivalSeasonForm }: {
   userIsHome: boolean;
   userOverall: number;
   userBaseOverall?: number;
+  /** Tu fuerza en LaLiga, con su décima. */
+  userStrength: number;
+  userAdjustments?: MatchRatingAdjustment[];
   rival: ReactNode;
   rivalOverall: number;
   /** La media del rival sin tu carta. */
@@ -208,10 +213,18 @@ function PreviewTeams({ userIsHome, userOverall, userBaseOverall, rival, rivalOv
     : rivalGrows
       ? `En Copa, el rival inferior se crece cuanto más favorito eres: con tu carta pasa de ${rivalBaseOverall} a ${rivalOverall}.`
       : undefined;
+  const signed = (value: number) => `${value > 0 ? "+" : "−"}${Math.abs(value)}`;
+  const adjustments = userAdjustments?.map((adjustment) => `${adjustment.label} ${signed(adjustment.value)}`);
+  const userTitle = adjustments
+    ? `Tu fuerza en LaLiga es ${userStrength}; en este partido, ${adjustments.join(" y ")}.`
+    : undefined;
   const user = (
     <span className="next-match-preview-team next-match-preview-team-user">
       <span className="next-match-preview-team-name">{USER_TEAM_NAME}</span>
-      <b>{userBaseOverall !== undefined && userBaseOverall !== userOverall ? `${userBaseOverall} → ${userOverall}` : userOverall}</b>
+      <b title={userTitle}>
+        {userBaseOverall !== undefined && userBaseOverall !== userOverall ? `${userBaseOverall} → ${userOverall}` : userOverall}
+        {adjustments?.map((text) => <small key={text} className="next-match-preview-form">{text}</small>)}
+      </b>
     </span>
   );
   const rivalTeam = (
@@ -377,10 +390,10 @@ export function LeagueSimulatorView({
   const seasonRivals = context.rivals;
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      setExpectedRange(estimateExpectedLeagueRange({ fixtures: seasonFixtures, rivals: seasonRivals, teamRating: effectiveTeamRating, selectedPlayers }));
+      setExpectedRange(estimateExpectedLeagueRange({ fixtures: seasonFixtures, rivals: seasonRivals, teamRating: effectiveTeamRating, selectedPlayers, selectedCoach }));
     }, 0);
     return () => window.clearTimeout(timeoutId);
-  }, [seasonFixtures, seasonRivals, effectiveTeamRating, selectedPlayers]);
+  }, [seasonFixtures, seasonRivals, effectiveTeamRating, selectedPlayers, selectedCoach]);
   // Con shownContext: mientras se juega tu cruce, el cuadro no enseña la ronda (v0.25.87).
   const cupBracketRounds = useMemo(
     () => (consultTab === "copa" ? buildCupBracket(shownContext.cupState, shownMatchesPlayed) : []),
@@ -390,7 +403,8 @@ export function LeagueSimulatorView({
   const pendingEuropeanMatch = shouldPlayEuropeanMatchAtLeagueMatchday(europeanTournament, leagueMatchesPlayed + 1);
   const europeanEventMatch = justPlayedEuropeanMatch ?? (hideNextMatch ? undefined : pendingEuropeanMatch);
   // Un entrenador especialista en Europa suma +1, como el de Copa en la Copa (v0.25.75).
-  const europeanUserRating = effectiveTeamRating.overall + getCoachCompetitionBoost(context, "europe");
+  const europeanCoachBoost = getCoachCompetitionBoost(context, "europe");
+  const europeanUserRating = effectiveTeamRating.overall + europeanCoachBoost;
 
   // Cartas (v0.25.108): el siguiente partido tal como lo enseña la previa, sin la carta. Es el
   // que se juega antes: Copa pendiente, después Europa y después Liga.
@@ -1229,6 +1243,8 @@ export function LeagueSimulatorView({
                   userIsHome={matchPreview.venue === "home"}
                   userOverall={matchPreview.userOverall}
                   userBaseOverall={cardPlay ? nextMatchInfo?.userOverall : undefined}
+                  userStrength={effectiveTeamRating.overall}
+                  userAdjustments={matchPreview.userAdjustments}
                   rival={matchPreview.rivalName}
                   rivalOverall={matchPreview.rivalOverall}
                   rivalBaseOverall={cardPlay ? matchPreviewWithoutCard?.rivalOverall : undefined}
@@ -1261,6 +1277,8 @@ export function LeagueSimulatorView({
                   userIsHome={pendingEuropeanMatch.isHome}
                   userOverall={Math.round(europeanMatchUserRating)}
                   userBaseOverall={cardPlay ? Math.round(europeanUserRating) : undefined}
+                  userStrength={effectiveTeamRating.overall}
+                  userAdjustments={europeanCoachBoost ? [{ label: "entrenador", value: europeanCoachBoost }] : undefined}
                   rival={(
                     <span className="next-match-preview-rival">
                       <EuropeanCrest opponent={pendingEuropeanMatch.opponent} compact />

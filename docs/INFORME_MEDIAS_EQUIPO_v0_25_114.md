@@ -72,3 +72,7 @@ En carrera, enseñar como número principal la fuerza en LaLiga, y dejar el rati
   - 80 + 7 × 0,55 = 83,85, que se ve como 83,9 (lo comprueba `tests/unit/careerSimulationRating.test.ts`) y como 84 en la previa;
   - 83,9 − 1 por jugar fuera de favorito en Copa da 83, la previa de la semifinal con el Betis.
 - **Para el +1 de Liga:** se ha buscado en `src` y en el historial de git (`git log -G`) cualquier llamada a `getCoachCompetitionBoost` con `"league"`. No hay ninguna.
+
+## Decisión
+
+El usuario eligió «la A y la B1». Medida la B1, eligió aplicar el +1 tal cual. Está hecho en la v0.25.115 (`docs/v0_25_115_TEAM_RATINGS_COACH_LEAGUE.md`, con la medición).

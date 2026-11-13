@@ -1091,6 +1091,7 @@ export function simulateNextUserLeagueMatch(
   const { rival, venue } = getRivalFromFixture(userFixture, context.rivals);
   const leagueSeasonSalt = context.leagueSeasonSalt ?? SIMULATION_SESSION_SALT;
   const formAdjustedRival = applySeasonFormToRival(rival, leagueSeasonSalt);
+  const leagueBoost = getCoachCompetitionBoost(context, "league");
 
   const userResult = simulateMatch({
     fixtureId: userFixture.id,
@@ -1098,11 +1099,11 @@ export function simulateNextUserLeagueMatch(
     userTeamName,
     rival: formAdjustedRival,
     venue,
-    teamRating,
+    teamRating: applyCoachCompetitionBoostToTeamRating(teamRating, leagueBoost),
     selectedPlayers,
     seed: typeof seed === "number" ? seed + context.state.results.length : undefined,
     card,
-    teamRatingWithoutCard,
+    teamRatingWithoutCard: teamRatingWithoutCard && applyCoachCompetitionBoostToTeamRating(teamRatingWithoutCard, leagueBoost),
   });
 
   const leagueUserResult: MatchResult = {
@@ -2181,9 +2182,25 @@ export interface UserMatchPreview {
   /** Liga (v0.25.113): lo que la forma de temporada suma o resta a la media del rival. Solo se enseña. */
   rivalSeasonForm?: number;
   userOverall: number;
+  /** v0.25.115: lo que este partido suma o resta a tu fuerza en LaLiga, y por qué. Solo se enseña. */
+  userAdjustments?: MatchRatingAdjustment[];
   venue: MatchVenue;
   odds: MatchOdds;
   lineDuel: MatchLineDuel;
+}
+
+export interface MatchRatingAdjustment {
+  label: string;
+  value: number;
+}
+
+/** El +1 del entrenador especialista (v0.18.3) y, en Copa, el contexto de la eliminatoria. */
+function getUserAdjustments(coachBoost: number, cupContextDelta = 0): MatchRatingAdjustment[] | undefined {
+  const adjustments: MatchRatingAdjustment[] = [];
+  if (cupContextDelta < 0) adjustments.push({ label: "fuera de favorito", value: cupContextDelta });
+  if (cupContextDelta > 0) adjustments.push({ label: "inferior en casa", value: cupContextDelta });
+  if (coachBoost) adjustments.push({ label: "entrenador", value: coachBoost });
+  return adjustments.length > 0 ? adjustments : undefined;
 }
 
 /**
@@ -2240,7 +2257,7 @@ export function getNextUserMatchInfo(params: { context: UserLeagueSimulationCont
     venue,
     rivalId: rival.id,
     rivalOverall: Math.round(formAdjustedRival.ratings.overall),
-    userOverall: Math.round(teamRating.overall),
+    userOverall: Math.round(teamRating.overall + getCoachCompetitionBoost(context, "league")),
     rivalIsLeader: Boolean(leaderId && leaderId === rival.id && leaderId !== USER_TEAM_ID),
     leagueMatchday: userFixture.matchday,
   };
@@ -2261,7 +2278,8 @@ export function getNextUserMatchPreview(params: {
   if (pendingCupFixture) {
     const { rival, venue } = getCupRivalFromFixture(pendingCupFixture, card?.neutralVenue);
     const cupContext = applyCupRivalContext({ rival, userRating: teamRating, venue, roundId: pendingCupFixture.roundId });
-    const userRating = applyCoachCompetitionBoostToTeamRating(cupContext.userRating, getCoachCompetitionBoost(context, "cup"));
+    const cupBoost = getCoachCompetitionBoost(context, "cup");
+    const userRating = applyCoachCompetitionBoostToTeamRating(cupContext.userRating, cupBoost);
 
     return {
       competition: "cup",
@@ -2269,6 +2287,7 @@ export function getNextUserMatchPreview(params: {
       rivalName: cupContext.rival.name,
       rivalOverall: Math.round(cupContext.rival.ratings.overall),
       userOverall: Math.round(userRating.overall),
+      userAdjustments: getUserAdjustments(cupBoost, Math.round(cupContext.userRating.overall - teamRating.overall)),
       venue,
       odds: estimateMatchOdds({
         userTeamName: USER_TEAM_NAME,
@@ -2292,6 +2311,8 @@ export function getNextUserMatchPreview(params: {
   const { rival, venue } = getRivalFromFixture(userFixture, context.rivals);
   const formAdjustedRival = applySeasonFormToRival(rival, context.leagueSeasonSalt ?? SIMULATION_SESSION_SALT);
   const rivalOverall = Math.round(formAdjustedRival.ratings.overall);
+  const leagueBoost = getCoachCompetitionBoost(context, "league");
+  const userRating = applyCoachCompetitionBoostToTeamRating(teamRating, leagueBoost);
 
   return {
     competition: "league",
@@ -2300,10 +2321,11 @@ export function getNextUserMatchPreview(params: {
     rivalOverall,
     // La diferencia que se ve: la media sin la forma ya lleva la progresión de carrera.
     rivalSeasonForm: rivalOverall - Math.round(rival.ratings.overall),
-    userOverall: Math.round(teamRating.overall),
+    userOverall: Math.round(userRating.overall),
+    userAdjustments: getUserAdjustments(leagueBoost),
     venue,
-    odds: estimateMatchOdds({ userTeamName: USER_TEAM_NAME, rival: formAdjustedRival, venue, teamRating, selectedPlayers, card }),
-    lineDuel: getMatchLineDuel(teamRating, formAdjustedRival),
+    odds: estimateMatchOdds({ userTeamName: USER_TEAM_NAME, rival: formAdjustedRival, venue, teamRating: userRating, selectedPlayers, card }),
+    lineDuel: getMatchLineDuel(userRating, formAdjustedRival),
   };
 }
 
