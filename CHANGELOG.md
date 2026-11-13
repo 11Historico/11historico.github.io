@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.117 — La tabla europea, jornada a jornada
+
+- **Ningún rival lleva más partidos que tú en la fase de liga europea.** Los partidos entre rivales se repartían mal por jornadas: tras dos jornadas, un rival podía llevar cuatro partidos y salir con 5 puntos. Ahora siguen el calendario de una liga de 7 equipos: cada jornada, cada rival juega un partido o descansa.
+- **La tabla final no cambia,** ni quién pasa a semifinales o a la previa: cada partido entre rivales da el mismo resultado; solo cambia en qué jornada cuenta.
+- **La tabla europea enseña los partidos jugados (PJ).**
+
 ## v0.25.116 — La crónica de la carta, con el resultado bien puesto
 
 - **«Sin ella habrías perdido 1-0», con los goles del que gana delante,** como ya hacían el planteamiento y el descanso. Antes ponía «perdido 0-1», con tus goles delante, y jugando fuera se leía al revés que el marcador.

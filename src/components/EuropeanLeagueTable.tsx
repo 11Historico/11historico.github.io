@@ -28,6 +28,7 @@ export function EuropeanLeagueTable({ tournament, chanceText }: { tournament: Eu
         <div className="league-table-head">
           <span>#</span>
           <span>Equipo</span>
+          <span title="Partidos jugados">PJ</span>
           <span>Pts</span>
           <span>DG</span>
         </div>
@@ -48,6 +49,7 @@ export function EuropeanLeagueTable({ tournament, chanceText }: { tournament: Eu
               {row.isUser ? <TeamKitIcon teamName={row.teamName} compact /> : opponents.has(row.teamId) && <EuropeanCrest opponent={opponents.get(row.teamId)!} compact />}
               <span>{row.teamName}</span>
             </span>
+            <span>{row.played}</span>
             <strong>{row.points}</strong>
             <span>{row.goalDifference > 0 ? `+${row.goalDifference}` : row.goalDifference}</span>
           </div>

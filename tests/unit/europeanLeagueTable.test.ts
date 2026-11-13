@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildEuropeanLeaguePhaseTable } from "../../src/europe/europeanLeagueTable";
+import { buildEuropeanLeaguePhaseTable, getEuropeanRivalPairs } from "../../src/europe/europeanLeagueTable";
 import type { EuropeanTournamentMatch, EuropeanTournamentState } from "../../src/europe/europeanTypes";
 
 const opponents = [
@@ -56,6 +56,32 @@ describe("clasificación de la fase de liga europea", () => {
     expect(table.every((row) => row.played <= 6)).toBe(true);
     for (let i = 1; i < table.length; i += 1) {
       expect(table[i - 1].points).toBeGreaterThanOrEqual(table[i].points);
+    }
+  });
+
+  // v0.25.117: antes, tras 2 jornadas un rival podía llevar 4 partidos.
+  it("tras la jornada k nadie lleva más de k partidos, y al final todos llevan 6", () => {
+    for (let played = 1; played <= 5; played += 1) {
+      const table = buildEuropeanLeaguePhaseTable(tournamentWithPlayed(played), "Once Histórico");
+      for (const row of table) {
+        expect(row.played, `${row.teamName} tras la jornada ${played}`).toBeGreaterThanOrEqual(played - 1);
+        expect(row.played, `${row.teamName} tras la jornada ${played}`).toBeLessThanOrEqual(played);
+      }
+    }
+
+    const final = buildEuropeanLeaguePhaseTable(tournamentWithPlayed(6), "Once Histórico");
+    expect(final.every((row) => row.played === 6)).toBe(true);
+  });
+
+  it("cada pareja de rivales se enfrenta una vez, y el rival de tu jornada no juega otro partido en ella", () => {
+    const pairs = getEuropeanRivalPairs(opponents);
+    expect(pairs).toHaveLength(15);
+    expect(new Set(pairs.map((pair) => `${pair.home.id}-${pair.away.id}`)).size).toBe(15);
+
+    for (let round = 1; round <= 5; round += 1) {
+      const teams = pairs.filter((pair) => pair.round === round).flatMap((pair) => [pair.home.id, pair.away.id]);
+      expect(new Set(teams).size, `jornada ${round}`).toBe(teams.length);
+      expect(teams, `jornada ${round}`).not.toContain(opponents[round - 1].id);
     }
   });
 

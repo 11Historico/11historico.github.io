@@ -4,7 +4,8 @@
 // del usuario, así que la tabla añade los partidos entre rivales, simulados con el mismo
 // motor y con semilla fija. Con el usuario y sus rivales hay 7 equipos y cada uno juega
 // 6 partidos: todos contra todos una vez. Los partidos entre rivales se reparten en las
-// jornadas del usuario y solo cuentan cuando esa jornada ya se ha jugado.
+// jornadas del usuario y solo cuentan cuando esa jornada ya se ha jugado (v0.25.117: sin
+// ningún rival con dos partidos en la misma jornada).
 
 import { simulateEuropeanMatch } from "./europeanMatchEngine";
 import type { EuropeanOpponent, EuropeanTournamentState } from "./europeanTypes";
@@ -85,15 +86,22 @@ export function compareRows(a: EuropeanLeagueTableRow, b: EuropeanLeagueTableRow
 /**
  * Partidos entre rivales: todos contra todos una vez, repartidos en las jornadas del usuario.
  * `round` es la jornada del usuario tras la que cuenta el partido.
+ *
+ * v0.25.117: calendario de una liga de 7 equipos (el usuario es el 0 y el rival i-ésimo, el i + 1).
+ * En la jornada r se enfrentan los que suman r módulo 7: el usuario juega contra el rival r, que
+ * no juega otro partido esa jornada, y uno de los demás descansa. Los tres partidos de la jornada
+ * en que descansaría el usuario (suma 0) cuentan con su sexta. Así, tras la jornada k nadie lleva
+ * más de k partidos. Antes había rivales con dos partidos en la misma jornada.
  */
 export function getEuropeanRivalPairs(
   opponents: EuropeanOpponent[],
 ): { home: EuropeanOpponent; away: EuropeanOpponent; round: number }[] {
   const pairs: { home: EuropeanOpponent; away: EuropeanOpponent; round: number }[] = [];
+  const teams = opponents.length + 1;
 
   for (let i = 0; i < opponents.length; i += 1) {
     for (let j = i + 1; j < opponents.length; j += 1) {
-      pairs.push({ home: opponents[i], away: opponents[j], round: (pairs.length % opponents.length) + 1 });
+      pairs.push({ home: opponents[i], away: opponents[j], round: (i + 1 + j + 1) % teams || opponents.length });
     }
   }
 

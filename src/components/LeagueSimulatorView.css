@@ -884,6 +884,16 @@
   opacity: 0.8;
 }
 
+/* v0.25.117: la tabla europea añade los partidos jugados (PJ) antes de los puntos. */
+.european-league-table .league-table-head,
+.european-league-table .league-table-row {
+  grid-template-columns: 34px minmax(0, 1fr) 36px 44px 44px;
+}
+
+.european-league-table .league-table-row span:nth-child(5) {
+  text-align: right;
+}
+
 .european-league-table .league-table-row-qualify {
   box-shadow: inset 4px 0 0 #3ddc84;
   background-color: rgba(61, 220, 132, 0.1);
