@@ -27,6 +27,24 @@ describe("balance de decisiones de la temporada (v0.25.96)", () => {
     expect(getDecisionBalance([match])).toEqual({ decided: 1, better: 1, worse: 0 });
   });
 
+  // v0.25.114: la temporada de prueba dijo «ningún resultado habría sido distinto» con una Revancha que salvó un empate.
+  it("cuenta las cartas, antes del partido y en el descanso", () => {
+    const card = (userGoals: number, rivalGoals: number, withoutUserGoals: number, withoutRivalGoals: number, halftime?: boolean) => ({
+      cardEffect: { userGoals, rivalGoals, withoutUserGoals, withoutRivalGoals, ...(halftime ? { halftime } : {}) },
+    });
+
+    expect(getDecisionBalance([
+      card(1, 1, 0, 1), // derrota → empate: a favor
+      card(2, 0, 1, 0), // victoria → victoria: sin cambio
+      card(2, 1, 1, 1, true), // descanso, empate → victoria: a favor
+    ])).toEqual({ decided: 3, better: 2, worse: 0 });
+
+    // Carta del descanso tras arriesgar: se compara con el marcador de antes del descanso.
+    expect(getDecisionBalance([{ ...halfTime(1, 1, 1, 1), ...card(2, 1, 1, 1, true) }])).toEqual({ decided: 1, better: 1, worse: 0 });
+    // Con planteamiento, la carta del descanso se compara con el partido equilibrado.
+    expect(getDecisionBalance([{ ...approach(1, 1, 1, 2), ...card(2, 1, 1, 1, true) }])).toEqual({ decided: 1, better: 1, worse: 0 });
+  });
+
   it("lo cuenta en una frase, y no dice nada si no has decidido", () => {
     expect(getDecisionBalanceText({ decided: 0, better: 0, worse: 0 })).toBeUndefined();
     expect(getDecisionBalanceText({ decided: 5, better: 2, worse: 1 })).toBe(

@@ -2101,6 +2101,7 @@ export function createFinalLeagueSummary(params: {
     cupStatus: context.cupState.status,
     cupRoundReached,
     cupResults: context.cupState.results,
+    leagueCardResults: context.state.results.filter((result) => result.userTeamPlayed && result.cardEffect),
     cupTrophyWon,
     cupChampionTeamId: context.cupState.championTeamId,
     cupChampionTeamName: context.cupState.championTeamName,

@@ -602,6 +602,8 @@ export interface FinalGameSummary {
   cupStatus?: CupStatus;
   cupRoundReached?: string;
   cupResults?: MatchResult[];
+  /** Tus partidos de Liga con carta (v0.25.114), para el balance de decisiones. */
+  leagueCardResults?: MatchResult[];
   cupTrophyWon?: boolean;
   cupChampionTeamId?: string;
   cupChampionTeamName?: string;

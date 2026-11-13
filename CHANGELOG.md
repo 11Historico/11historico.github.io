@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.25.114 — Las cartas cuentan y el rival de Copa se explica
+
+- **El balance de decisiones cuenta las cartas,** también en Liga. Antes, el resumen decía «ningún resultado habría sido distinto» aunque una carta hubiera cambiado un resultado.
+- **En Copa, si la carta te hace más favorito, el rival inferior se crece, y ahora se ve:** «78 → 79, se crece», con la explicación al pasar el ratón y en la ayuda. Es solo interfaz: no cambia ninguna media.
+
 ## v0.25.113 — La forma del rival, en la previa
 
 - **En la previa de Liga, la forma de temporada del rival:** debajo de su media sale «forma +5» o «forma −4», y al pasar el ratón, la media sin la forma. Así se entiende que el Real Oviedo, de 77, salga con 82 en una temporada buena.
