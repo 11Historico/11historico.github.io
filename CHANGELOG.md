@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.113 — La forma del rival, en la previa
+
+- **En la previa de Liga, la forma de temporada del rival:** debajo de su media sale «forma +5» o «forma −4», y al pasar el ratón, la media sin la forma. Así se entiende que el Real Oviedo, de 77, salga con 82 en una temporada buena.
+- Si la forma es 0 no sale nada. La Copa y Europa no tienen forma de temporada.
+- La ayuda de la portada lo explica. Es solo interfaz: no cambia ninguna media ni el balance.
+
 ## v0.25.112 — La previa, ordenada
 
 - **Arriba, el estado y los botones:** el título y el diagnóstico a la izquierda; a la derecha, Simular, Saltar y la velocidad, juntos.

@@ -187,15 +187,18 @@ function PlaybackSpeedControl() {
 
 /**
  * El enfrentamiento de la previa (v0.25.112), como un marcador: el local a la izquierda. Con una
- * carta elegida, tu media enseña de cuánto a cuánto sube.
+ * carta elegida, tu media enseña de cuánto a cuánto sube. En Liga (v0.25.113), debajo de la media
+ * del rival sale su forma de temporada, si no es 0.
  */
-function PreviewTeams({ userIsHome, userOverall, userBaseOverall, rival, rivalOverall }: {
+function PreviewTeams({ userIsHome, userOverall, userBaseOverall, rival, rivalOverall, rivalSeasonForm }: {
   userIsHome: boolean;
   userOverall: number;
   userBaseOverall?: number;
   rival: ReactNode;
   rivalOverall: number;
+  rivalSeasonForm?: number;
 }) {
+  const form = rivalSeasonForm ? `${rivalSeasonForm > 0 ? "+" : "−"}${Math.abs(rivalSeasonForm)}` : undefined;
   const user = (
     <span className="next-match-preview-team next-match-preview-team-user">
       <span className="next-match-preview-team-name">{USER_TEAM_NAME}</span>
@@ -205,7 +208,10 @@ function PreviewTeams({ userIsHome, userOverall, userBaseOverall, rival, rivalOv
   const rivalTeam = (
     <span className="next-match-preview-team">
       <span className="next-match-preview-team-name">{rival}</span>
-      <b>{rivalOverall}</b>
+      <b title={form && `${rivalOverall - (rivalSeasonForm ?? 0)} sin la forma; esta temporada, ${form} de forma`}>
+        {rivalOverall}
+        {form && <small className="next-match-preview-form">forma {form}</small>}
+      </b>
     </span>
   );
 
@@ -1213,6 +1219,7 @@ export function LeagueSimulatorView({
                   userBaseOverall={cardPlay ? nextMatchInfo?.userOverall : undefined}
                   rival={matchPreview.rivalName}
                   rivalOverall={matchPreview.rivalOverall}
+                  rivalSeasonForm={matchPreview.rivalSeasonForm}
                 />
                 <MatchLineDuelBars duel={matchPreview.lineDuel} />
                 {matchPreview.competition === "cup" && (

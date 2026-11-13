@@ -244,7 +244,7 @@ export function GameHome({
             <div className="how-to-play-steps">
               <article><strong>Objetivo</strong><p>Clasifícate para Europa o gana la Copa del Rey. Ese es el mínimo para seguir vivo.</p></article>
               <article><strong>Game Over</strong><p>Si fallas el objetivo o desciendes, la carrera termina y se guarda tu resultado.</p></article>
-              <article><strong>Supervivencia</strong><p>Si sobrevives, avanzas otra temporada con recompensas, prestigio y más presión.</p></article>
+              <article><strong>Supervivencia</strong><p>Si sobrevives, avanzas otra temporada con recompensas, prestigio y más presión. En Liga, cada rival tiene además una forma de temporada que sube o baja su media: la previa te la enseña («forma +5»).</p></article>
               <article>
                 <strong>Palmarés</strong>
                 <p>Liga, Copa, Supercopa y títulos europeos suman puntos para el ranking.</p>

@@ -2177,6 +2177,8 @@ export interface UserMatchPreview {
   label: string;
   rivalName: string;
   rivalOverall: number;
+  /** Liga (v0.25.113): lo que la forma de temporada suma o resta a la media del rival. Solo se enseña. */
+  rivalSeasonForm?: number;
   userOverall: number;
   venue: MatchVenue;
   odds: MatchOdds;
@@ -2288,12 +2290,15 @@ export function getNextUserMatchPreview(params: {
 
   const { rival, venue } = getRivalFromFixture(userFixture, context.rivals);
   const formAdjustedRival = applySeasonFormToRival(rival, context.leagueSeasonSalt ?? SIMULATION_SESSION_SALT);
+  const rivalOverall = Math.round(formAdjustedRival.ratings.overall);
 
   return {
     competition: "league",
     label: `Jornada ${userFixture.matchday}`,
     rivalName: formAdjustedRival.name,
-    rivalOverall: Math.round(formAdjustedRival.ratings.overall),
+    rivalOverall,
+    // La diferencia que se ve: la media sin la forma ya lleva la progresión de carrera.
+    rivalSeasonForm: rivalOverall - Math.round(rival.ratings.overall),
     userOverall: Math.round(teamRating.overall),
     venue,
     odds: estimateMatchOdds({ userTeamName: USER_TEAM_NAME, rival: formAdjustedRival, venue, teamRating, selectedPlayers, card }),

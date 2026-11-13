@@ -130,6 +130,24 @@ describe("planteamiento", () => {
   });
 });
 
+// v0.25.113: la previa de Liga enseña la forma de temporada del rival, sin cambiar su media.
+describe("forma del rival en la previa", () => {
+  it("la media de la previa es la del rival más su forma, y la forma cambia con la temporada", () => {
+    const context = createUserLeagueSimulation({ rivals });
+    const forms = new Set<number>();
+
+    for (let salt = 1; salt <= 40; salt += 1) {
+      const preview = getNextUserMatchPreview({ context: { ...context, leagueSeasonSalt: salt }, teamRating, selectedPlayers })!;
+      const rival = rivals.find((team) => team.name === preview.rivalName)!;
+
+      expect(preview.rivalOverall - preview.rivalSeasonForm!).toBe(Math.round(rival.ratings.overall));
+      forms.add(preview.rivalSeasonForm!);
+    }
+
+    expect(forms.size).toBeGreaterThan(2);
+  });
+});
+
 describe("perfil del entrenador", () => {
   it("el ataque refuerza el ofensivo y la defensa el defensivo, desde 86", () => {
     expect(coachReinforcesApproach("attacking", { ...plainCoach, attack: 86 })).toBe(true);
