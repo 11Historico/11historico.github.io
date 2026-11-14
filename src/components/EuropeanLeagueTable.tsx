@@ -25,7 +25,8 @@ export function EuropeanLeagueTable({ tournament, chanceText }: { tournament: Eu
       ) : (
         <p className="european-league-table-note">
           Pasan a semifinales los {EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS} primeros, marcados en verde. El 3.º y el 4.º, en ámbar,
-          juegan una previa a partido único por entrar, en casa del 3.º.
+          juegan una previa a partido único por entrar, en casa del 3.º. Con empate a puntos, diferencia y goles, decide el
+          enfrentamiento directo y, si sigue, un sorteo.
         </p>
       )}
       {/* v0.25.95: la probabilidad solo existe mientras queda fase de liga por jugar. */}

@@ -100,3 +100,7 @@ La auditoría de recorridos (`docs/INFORME_EUROPA_RECORRIDOS_v0_25_118.md`) vio 
 - **B,** si quieres que el desempate sea justo. Es el cambio pequeño, se explica en una línea y apenas mueve la probabilidad de semifinales.
 - **A,** si prefieres no tocar la regla. Con la v0.25.119 la tabla ya no engaña, y el coste real es pequeño.
 - **C no lo recomiendo:** mueve mucho la tabla para el mismo resultado.
+
+## Decisión
+
+El usuario eligió «la b». Está hecha en la v0.25.120 (`docs/v0_25_120_EUROPE_TIEBREAK_HEAD_TO_HEAD.md`). Al volver a ejecutar `npm run audit:europe-tiebreak` con la regla nueva salen las mismas tablas, y la regla «directo» del script da el mismo puesto que el juego en los 45.000 torneos.

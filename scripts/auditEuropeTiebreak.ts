@@ -1,12 +1,13 @@
 // scripts/auditEuropeTiebreak.ts
 //
-// Mide el desempate de la fase de liga europea («mide el desempate», 2026-11-14). Hoy, con
-// empate a puntos, diferencia de goles y goles a favor, decide el nombre, y el usuario se llama
-// "user" (getEuropeanLeaguePhaseUserPosition), así que pierde casi todos esos empates. Juega los
-// mismos torneos que el juego y ordena la tabla final con tres reglas:
-//   - Nombre (la de hoy).
+// Mide el desempate de la fase de liga europea («mide el desempate», 2026-11-14). Hasta la
+// v0.25.119, con empate a puntos, diferencia de goles y goles a favor, decidía el nombre, y el
+// usuario se llama "user", así que perdía casi todos esos empates. Juega los mismos torneos que
+// el juego y ordena la tabla final con cuatro reglas:
+//   - Nombre (la de hasta la v0.25.119).
 //   - Directo: enfrentamiento directo entre los empatados (puntos, diferencia y goles en esos
-//     partidos) y, si sigue el empate, sorteo con semilla del torneo.
+//     partidos) y, si sigue el empate, sorteo con semilla del torneo. Es la del juego desde la
+//     v0.25.120: el script comprueba que da el mismo puesto.
 //   - Sorteo: solo el sorteo con semilla, como referencia neutral.
 //   - Directo primero: con empate a puntos, primero el enfrentamiento directo y luego la
 //     diferencia y los goles de toda la fase; al final, sorteo. Así lo hacía la UEFA en la
@@ -14,7 +15,12 @@
 // No cambia el juego. Reproducible: npm run audit:europe-tiebreak (--tournaments=N).
 
 import { simulateEuropeanMatch } from "../src/europe/europeanMatchEngine";
-import { buildEuropeanLeaguePhaseTable, getEuropeanRivalPairs, type EuropeanLeagueTableRow } from "../src/europe/europeanLeagueTable";
+import {
+  buildEuropeanLeaguePhaseTable,
+  getEuropeanLeagueTieSeed,
+  getEuropeanRivalPairs,
+  type EuropeanLeagueTableRow,
+} from "../src/europe/europeanLeagueTable";
 import {
   applyEuropeanMatchResult,
   createEuropeanTournamentForQualification,
@@ -81,9 +87,13 @@ function getMiniTable(group: string[], results: Result[]): Map<string, [number, 
 const totalKey = (row: EuropeanLeagueTableRow) => `${row.points}_${row.goalDifference}_${row.goalsFor}`;
 const pointsKey = (row: EuropeanLeagueTableRow) => String(row.points);
 
-/** La tabla final ordenada con la regla dada. `rows` viene de buildEuropeanLeaguePhaseTable (regla de hoy). */
+/** La tabla final ordenada con la regla dada. `rows` viene de buildEuropeanLeaguePhaseTable, con el usuario llamado "user". */
 function sortWith(rule: Rule, rows: EuropeanLeagueTableRow[], results: Result[], seed: string): string[] {
-  if (rule === "name") return rows.map((row) => row.teamId);
+  if (rule === "name") {
+    return [...rows]
+      .sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor || a.teamName.localeCompare(b.teamName, "es"))
+      .map((row) => row.teamId);
+  }
   const order: string[] = [];
   const key = rule === "directFirst" ? pointsKey : totalKey;
   const byId = new Map(rows.map((row) => [row.teamId, row]));
@@ -158,7 +168,6 @@ for (const { label, value: competition } of COMPETITIONS) {
 
       const rows = buildEuropeanLeaguePhaseTable(tournament, USER);
       const results = getResults(tournament);
-      // La regla «nombre» de este script tiene que ser la del juego.
       if (rows.findIndex((row) => row.isUser) + 1 !== getEuropeanLeaguePhaseUserPosition(tournament)) throw new Error("La tabla no coincide con la regla.");
       for (const row of rows) {
         const own = results.filter((r) => r.home === row.teamId || r.away === row.teamId);
@@ -171,8 +180,10 @@ for (const { label, value: competition } of COMPETITIONS) {
 
       const user = rows.find((row) => row.isUser)!;
       const tied = rows.filter((row) => totalKey(row) === totalKey(user));
-      const orders = Object.fromEntries(RULES.map((rule) => [rule, sortWith(rule, rows, results, tournament!.drawSeed ?? String(index))])) as Record<Rule, string[]>;
+      const orders = Object.fromEntries(RULES.map((rule) => [rule, sortWith(rule, rows, results, getEuropeanLeagueTieSeed(tournament!))])) as Record<Rule, string[]>;
       const position = (rule: Rule) => orders[rule].indexOf(USER) + 1;
+      // La regla «directo» de este script tiene que ser la del juego (v0.25.120).
+      if (position("direct") !== getEuropeanLeaguePhaseUserPosition(tournament)) throw new Error("La regla «directo» no coincide con el juego.");
 
       if (tied.length > 1) {
         ties += 1;

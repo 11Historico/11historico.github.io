@@ -6,7 +6,14 @@
 // adelanta resultados: los partidos entre rivales tienen semilla fija en la tabla y aquí se
 // simulan con otras.
 
-import { buildEuropeanLeaguePhaseTable, compareRows, getEuropeanRivalPairs, recordResult } from "./europeanLeagueTable";
+import {
+  buildEuropeanLeaguePhaseTable,
+  getEuropeanLeaguePhaseResults,
+  getEuropeanLeagueTieSeed,
+  getEuropeanRivalPairs,
+  recordResult,
+  sortEuropeanLeagueRows,
+} from "./europeanLeagueTable";
 import { simulateEuropeanMatch } from "./europeanMatchEngine";
 import { getEuropeanCompetitionLabel } from "./europeanQualification";
 import {
@@ -17,7 +24,7 @@ import {
 import type { EuropeanTournamentState } from "./europeanTypes";
 import type { TeamRating } from "../types/game";
 
-// Mismo nombre que la regla de clasificación (getEuropeanLeaguePhaseUserPosition): decide los desempates.
+// Id del usuario en la tabla de la fase de liga.
 const USER_ROW_ID = "user";
 // Con esta probabilidad o más, «pasas casi seguro».
 const SAFE_CHANCE = 0.9;
@@ -44,6 +51,9 @@ export function estimateEuropeanSemifinalChance(params: {
 
   const played = leagueMatches.length - pending.length;
   const current = buildEuropeanLeaguePhaseTable(tournament, USER_ROW_ID);
+  // v0.25.120: el desempate mira los partidos entre los empatados, así que se guardan todos.
+  const currentResults = getEuropeanLeaguePhaseResults(tournament);
+  const tieSeed = getEuropeanLeagueTieSeed(tournament);
   const futurePairs = getEuropeanRivalPairs(leagueMatches.map((match) => match.opponent)).filter((pair) => pair.round > played);
   // Por puntos sumados en lo que falta: cuántas veces se pasa con esos puntos.
   const byPoints = new Map<number, { qualified: number; total: number }>();
@@ -51,6 +61,7 @@ export function estimateEuropeanSemifinalChance(params: {
 
   for (let sample = 0; sample < samples; sample += 1) {
     const rows = new Map(current.map((row) => [row.teamId, { ...row }]));
+    const results = [...currentResults];
     let gained = 0;
 
     for (const match of pending) {
@@ -65,6 +76,7 @@ export function estimateEuropeanSemifinalChance(params: {
       });
       gained += outcome.result === "win" ? 3 : outcome.result === "draw" ? 1 : 0;
       recordResult(rows, USER_ROW_ID, match.opponent.id, outcome.userGoals, outcome.opponentGoals);
+      results.push({ homeId: USER_ROW_ID, awayId: match.opponent.id, homeGoals: outcome.userGoals, awayGoals: outcome.opponentGoals });
     }
 
     for (const { home, away } of futurePairs) {
@@ -76,9 +88,10 @@ export function estimateEuropeanSemifinalChance(params: {
         seed: `chance_${sample}_${home.id}_${away.id}`,
       });
       recordResult(rows, home.id, away.id, outcome.userGoals, outcome.opponentGoals);
+      results.push({ homeId: home.id, awayId: away.id, homeGoals: outcome.userGoals, awayGoals: outcome.opponentGoals });
     }
 
-    const table = [...rows.values()].sort(compareRows);
+    const table = sortEuropeanLeagueRows([...rows.values()], results, tieSeed);
     const position = table.findIndex((row) => row.isUser) + 1;
     let passed = position <= EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS;
 

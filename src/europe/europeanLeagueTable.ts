@@ -74,13 +74,71 @@ export function recordResult(
   }
 }
 
-export function compareRows(a: EuropeanLeagueTableRow, b: EuropeanLeagueTableRow): number {
-  return (
-    b.points - a.points ||
-    b.goalDifference - a.goalDifference ||
-    b.goalsFor - a.goalsFor ||
-    a.teamName.localeCompare(b.teamName, "es")
-  );
+/** Un partido de la fase de liga que ya cuenta en la tabla. */
+export interface EuropeanLeagueResult {
+  homeId: string;
+  awayId: string;
+  homeGoals: number;
+  awayGoals: number;
+}
+
+function compareTotals(a: EuropeanLeagueTableRow, b: EuropeanLeagueTableRow): number {
+  return b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor;
+}
+
+/** FNV-1a: orden de sorteo fijo para cada torneo y equipo. */
+function drawKey(seed: string, teamId: string): number {
+  const text = `${seed}_${teamId}`;
+  let hash = 2_166_136_261;
+  for (let i = 0; i < text.length; i += 1) hash = Math.imul(hash ^ text.charCodeAt(i), 16_777_619);
+  return hash >>> 0;
+}
+
+/** Semilla del sorteo de desempate: la del sorteo de rivales del torneo. */
+export function getEuropeanLeagueTieSeed(tournament: Pick<EuropeanTournamentState, "drawSeed" | "seasonNumber" | "competition">): string {
+  return tournament.drawSeed ?? `${tournament.seasonNumber}_${tournament.competition}`;
+}
+
+/**
+ * Orden de la fase de liga: puntos, diferencia de goles y goles a favor. v0.25.120: con empate en
+ * los tres, el enfrentamiento directo (puntos, diferencia y goles en los partidos entre los
+ * empatados, una sola vez) y, si sigue, un sorteo con la semilla del torneo. Antes decidía el
+ * nombre, y el usuario, que para la regla se llama "user", perdía casi todos esos empates
+ * (docs/INFORME_DESEMPATE_EUROPEO_v0_25_119.md).
+ */
+export function sortEuropeanLeagueRows(
+  rows: EuropeanLeagueTableRow[],
+  results: EuropeanLeagueResult[],
+  seed: string,
+): EuropeanLeagueTableRow[] {
+  const sorted = [...rows].sort(compareTotals);
+  const order: EuropeanLeagueTableRow[] = [];
+
+  for (let start = 0; start < sorted.length; ) {
+    let end = start + 1;
+    while (end < sorted.length && compareTotals(sorted[start], sorted[end]) === 0) end += 1;
+    const group = sorted.slice(start, end);
+
+    if (group.length > 1) {
+      const mini = new Map(group.map((row) => [row.teamId, createRow(row.teamId, row.teamName, row.isUser)]));
+      for (const result of results) {
+        if (mini.has(result.homeId) && mini.has(result.awayId)) {
+          recordResult(mini, result.homeId, result.awayId, result.homeGoals, result.awayGoals);
+        }
+      }
+      group.sort(
+        (a, b) =>
+          compareTotals(mini.get(a.teamId)!, mini.get(b.teamId)!) ||
+          drawKey(seed, a.teamId) - drawKey(seed, b.teamId) ||
+          a.teamId.localeCompare(b.teamId),
+      );
+    }
+
+    order.push(...group);
+    start = end;
+  }
+
+  return order;
 }
 
 /**
@@ -109,33 +167,20 @@ export function getEuropeanRivalPairs(
 }
 
 /**
- * Tabla de la fase de liga: partidos del usuario ya jugados y partidos entre rivales
- * de las jornadas ya jugadas. Ordenada por puntos, diferencia de goles y goles a favor.
+ * Partidos que ya cuentan en la tabla: los del usuario ya jugados (el usuario es "user") y los
+ * de los rivales en las jornadas ya jugadas, simulados con semilla fija.
  */
-export function buildEuropeanLeaguePhaseTable(
-  tournament: EuropeanTournamentState,
-  userTeamName: string,
-): EuropeanLeagueTableRow[] {
+export function getEuropeanLeaguePhaseResults(tournament: EuropeanTournamentState): EuropeanLeagueResult[] {
   const leagueMatches = tournament.matches.filter((match) => match.phase === "league_phase");
-  if (leagueMatches.length === 0) return [];
-
   const playedUserMatches = leagueMatches.filter((match) => match.status === "played");
-  const opponents: EuropeanOpponent[] = leagueMatches.map((match) => match.opponent);
+  const results: EuropeanLeagueResult[] = playedUserMatches.map((match) => ({
+    homeId: USER_ROW_ID,
+    awayId: match.opponent.id,
+    homeGoals: match.userGoals ?? 0,
+    awayGoals: match.opponentGoals ?? 0,
+  }));
 
-  // v0.25.119: se ordena con el nombre interno, como la regla de quién pasa
-  // (getEuropeanLeaguePhaseUserPosition), porque el último desempate es el nombre.
-  // El nombre visible se pone después de ordenar.
-  const rows = new Map<string, EuropeanLeagueTableRow>();
-  rows.set(USER_ROW_ID, createRow(USER_ROW_ID, USER_ROW_ID, true));
-  for (const opponent of opponents) {
-    rows.set(opponent.id, createRow(opponent.id, opponent.name, false));
-  }
-
-  for (const match of playedUserMatches) {
-    recordResult(rows, USER_ROW_ID, match.opponent.id, match.userGoals ?? 0, match.opponentGoals ?? 0);
-  }
-
-  for (const { home, away, round } of getEuropeanRivalPairs(opponents)) {
+  for (const { home, away, round } of getEuropeanRivalPairs(leagueMatches.map((match) => match.opponent))) {
     if (round > playedUserMatches.length) continue;
 
     const outcome = simulateEuropeanMatch({
@@ -145,8 +190,34 @@ export function buildEuropeanLeaguePhaseTable(
       competition: tournament.competition,
       seed: `${tournament.seasonNumber}_${tournament.competition}_${home.id}_${away.id}`,
     });
-    recordResult(rows, home.id, away.id, outcome.userGoals, outcome.opponentGoals);
+    results.push({ homeId: home.id, awayId: away.id, homeGoals: outcome.userGoals, awayGoals: outcome.opponentGoals });
   }
 
-  return [...rows.values()].sort(compareRows).map((row) => (row.isUser ? { ...row, teamName: userTeamName } : row));
+  return results;
+}
+
+/**
+ * Tabla de la fase de liga: partidos del usuario ya jugados y partidos entre rivales
+ * de las jornadas ya jugadas, ordenada con sortEuropeanLeagueRows.
+ */
+export function buildEuropeanLeaguePhaseTable(
+  tournament: EuropeanTournamentState,
+  userTeamName: string,
+): EuropeanLeagueTableRow[] {
+  const leagueMatches = tournament.matches.filter((match) => match.phase === "league_phase");
+  if (leagueMatches.length === 0) return [];
+
+  const opponents: EuropeanOpponent[] = leagueMatches.map((match) => match.opponent);
+  const rows = new Map<string, EuropeanLeagueTableRow>();
+  rows.set(USER_ROW_ID, createRow(USER_ROW_ID, userTeamName, true));
+  for (const opponent of opponents) {
+    rows.set(opponent.id, createRow(opponent.id, opponent.name, false));
+  }
+
+  const results = getEuropeanLeaguePhaseResults(tournament);
+  for (const result of results) {
+    recordResult(rows, result.homeId, result.awayId, result.homeGoals, result.awayGoals);
+  }
+
+  return sortEuropeanLeagueRows([...rows.values()], results, getEuropeanLeagueTieSeed(tournament));
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.120 — El desempate europeo, a enfrentamiento directo
+
+- **Con empate total en la fase de liga europea ya no decide el nombre.** Si empatas en puntos, diferencia de goles y goles a favor, decide el enfrentamiento directo entre los empatados y, si sigue el empate, un sorteo fijo para cada torneo. Antes perdías entre el 72 y el 100 % de esos empates por cómo se llamaba tu equipo por dentro; ahora ganas más o menos la mitad.
+- **Pasa en 2-4 de cada 100 torneos.** Tu puesto cambia en 1-2 de cada 100 y la probabilidad de llegar a semifinales sube entre 0 y 0,5 puntos. La nota de la tabla dice cómo se desempata.
+- **La probabilidad de semifinales** usa la misma regla. Al empezar la fase de liga, con todos a cero, la tabla sale en el orden del sorteo.
+
 ## v0.25.119 — Europa, contada entera
 
 - **La tabla europea te pone donde te pone el juego.** Con empate total (puntos, diferencia de goles y goles a favor) decide el nombre, y la tabla te llamaba «Athletic Club Histórico» mientras la regla de quién pasa te llama de otra forma. En cerca de 1 de cada 100 torneos, la tabla te ponía 2.º en verde y el juego te mandaba a la previa como 3.º. No cambia quién pasa.
