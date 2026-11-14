@@ -80,3 +80,7 @@ El bloque del cuadro se titula «Fase inicial, previa, semifinal y final · Torn
 - **A y C.** La A arregla una contradicción que se ve y la C cuenta lo más importante de la temporada europea. Las dos son solo pantalla.
 - **D,** si quieres, en la misma versión: es poco.
 - **B solo si decides tocar la regla.** Con la A, al menos la tabla dirá la verdad.
+
+## Decisión
+
+El usuario eligió «la a, c y d». Están hechas en la v0.25.119 (`docs/v0_25_119_EUROPE_TABLE_TIES_SUMMARY.md`). La B (el desempate en sí) no se toca.

@@ -8,6 +8,7 @@
 
 import { buildEuropeanLeaguePhaseTable, compareRows, getEuropeanRivalPairs, recordResult } from "./europeanLeagueTable";
 import { simulateEuropeanMatch } from "./europeanMatchEngine";
+import { getEuropeanCompetitionLabel } from "./europeanQualification";
 import {
   EUROPEAN_LEAGUE_PHASE_PLAYOFF_POSITIONS,
   EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS,
@@ -161,8 +162,17 @@ export function getEuropeanSeasonBalanceText(tournament: EuropeanTournamentState
   const leaguePhase = tournament.matches.filter((match) => match.phase === "league_phase");
   if (leaguePhase.some((match) => match.status !== "played")) return undefined;
 
-  const expected = `Con tu equipo, lo normal era pasar ${getChanceInWords(chanceAtStart)}.`;
-  if (tournament.qualifiedForSemifinal) return `Europa: pasaste a semifinales. ${expected}`;
+  const expected = `Con tu equipo, lo normal era pasar a semifinales ${getChanceInWords(chanceAtStart)}.`;
+  if (tournament.qualifiedForSemifinal) {
+    // v0.25.119: también cómo acabaron las eliminatorias, no solo que pasaste.
+    const semifinal = tournament.matches.find((match) => match.phase === "semifinal" && match.status === "played");
+    const final = tournament.matches.find((match) => match.phase === "final" && match.status === "played");
+    if (final && tournament.champion) return `Europa: campeón de la ${getEuropeanCompetitionLabel(tournament.competition)}. ${expected}`;
+    if (final) return `Europa: llegaste a la final y la perdiste ante ${final.opponent.name}. ${expected}`;
+    // Con la semifinal jugada y sin final, la perdiste (también si fue en los penaltis).
+    if (semifinal) return `Europa: pasaste a semifinales y caíste ante ${semifinal.opponent.name}. ${expected}`;
+    return `Europa: pasaste a semifinales. ${expected}`;
+  }
 
   const position = getEuropeanLeaguePhaseUserPosition(tournament);
   const round = tournament.matches.some((match) => match.phase === "playoff") ? "la previa" : "la fase inicial";

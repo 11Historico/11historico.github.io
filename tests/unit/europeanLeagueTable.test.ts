@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { buildEuropeanLeaguePhaseTable, getEuropeanRivalPairs } from "../../src/europe/europeanLeagueTable";
-import type { EuropeanTournamentMatch, EuropeanTournamentState } from "../../src/europe/europeanTypes";
+import { simulateEuropeanMatch } from "../../src/europe/europeanMatchEngine";
+import { applyEuropeanMatchResult, createEuropeanTournamentForQualification, getEuropeanLeaguePhaseUserPosition } from "../../src/europe/europeanTournament";
+import type { EuropeanQualificationResult, EuropeanTournamentMatch, EuropeanTournamentState } from "../../src/europe/europeanTypes";
 
 const opponents = [
   { id: "r1", name: "Rival 1", country: "A", rating: 80, tier: "conference_league" as const },
@@ -83,6 +85,29 @@ describe("clasificación de la fase de liga europea", () => {
       expect(new Set(teams).size, `jornada ${round}`).toBe(teams.length);
       expect(teams, `jornada ${round}`).not.toContain(opponents[round - 1].id);
     }
+  });
+
+  // v0.25.119: con empate total decide el nombre, y la tabla te llamaba distinto que la regla.
+  it("tu puesto en la tabla es siempre el que usa el juego para decidir quién pasa", () => {
+    let mismatches = 0;
+    for (const competition of ["conference_league", "europa_league", "champions_league"] as const) {
+      for (let seed = 0; seed < 300; seed += 1) {
+        let tournament = createEuropeanTournamentForQualification({
+          seasonNumber: 1 + (seed % 20),
+          qualification: { qualified: true, competition } as EuropeanQualificationResult,
+          seed: `tabla_regla_${seed}`,
+          totalLeagueMatchdays: 38,
+        })!;
+        for (const match of tournament.matches.filter((candidate) => candidate.phase === "league_phase")) {
+          const outcome = simulateEuropeanMatch({ userTeamRating: 85, opponentRating: match.opponent.rating, isHome: match.isHome, competition, seed: `tabla_regla_${seed}_${match.id}` });
+          tournament = applyEuropeanMatchResult(tournament, match.id, { userGoals: outcome.userGoals, opponentGoals: outcome.opponentGoals, result: outcome.result }, 38);
+        }
+        const shown = buildEuropeanLeaguePhaseTable(tournament, "Athletic Club Histórico").findIndex((row) => row.isUser) + 1;
+        if (shown !== getEuropeanLeaguePhaseUserPosition(tournament)) mismatches += 1;
+      }
+    }
+
+    expect(mismatches).toBe(0);
   });
 
   it("es determinista: la misma temporada da la misma tabla", () => {

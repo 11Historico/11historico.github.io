@@ -75,15 +75,30 @@ describe("probabilidad de pasar a semifinales europeas (v0.25.95)", () => {
   it("al cerrar la temporada cuenta qué pasó y qué era lo normal (v0.25.97)", () => {
     const lost = play(newTournament(), 6, 0, 3);
     expect(getEuropeanSeasonBalanceText(lost, 0.36)).toMatch(
-      /^Europa: caíste en la fase inicial \(\d\.º de 7\)\. Con tu equipo, lo normal era pasar 1 de cada 3 veces\.$/,
+      /^Europa: caíste en la fase inicial \(\d\.º de 7\)\. Con tu equipo, lo normal era pasar a semifinales 1 de cada 3 veces\.$/,
     );
     expect(getEuropeanSeasonBalanceText(play(newTournament(), 6, 3, 0), 0.57)).toBe(
-      "Europa: pasaste a semifinales. Con tu equipo, lo normal era pasar 6 de cada 10 veces.",
+      "Europa: pasaste a semifinales. Con tu equipo, lo normal era pasar a semifinales 6 de cada 10 veces.",
     );
-    expect(getEuropeanSeasonBalanceText(lost, 0.02)).toMatch(/lo normal era pasar casi nunca\.$/);
+    expect(getEuropeanSeasonBalanceText(lost, 0.02)).toMatch(/lo normal era pasar a semifinales casi nunca\.$/);
     // Sin la probabilidad (partidas guardadas antes) o con la fase sin acabar, no dice nada.
     expect(getEuropeanSeasonBalanceText(lost, undefined)).toBeUndefined();
     expect(getEuropeanSeasonBalanceText(play(newTournament(), 3, 1, 0), 0.5)).toBeUndefined();
+  });
+
+  // v0.25.119: antes decía «pasaste a semifinales» también si eras campeón.
+  it("al cerrar la temporada cuenta también cómo acabaron las eliminatorias", () => {
+    const knockout = (state: EuropeanTournamentState, userGoals: number, opponentGoals: number) =>
+      applyEuropeanMatchResult(state, state.currentMatchId!, { userGoals, opponentGoals, result: userGoals > opponentGoals ? "win" : "loss" }, 38);
+    const semifinalists = play(newTournament(), 6, 3, 0);
+    const semifinalOpponent = semifinalists.matches.find((match) => match.phase === "semifinal")!.opponent.name;
+    const finalists = knockout(semifinalists, 2, 1);
+    const finalOpponent = finalists.matches.find((match) => match.phase === "final")!.opponent.name;
+    const expected = " Con tu equipo, lo normal era pasar a semifinales 6 de cada 10 veces.";
+
+    expect(getEuropeanSeasonBalanceText(knockout(semifinalists, 1, 2), 0.57)).toBe(`Europa: pasaste a semifinales y caíste ante ${semifinalOpponent}.${expected}`);
+    expect(getEuropeanSeasonBalanceText(knockout(finalists, 0, 1), 0.57)).toBe(`Europa: llegaste a la final y la perdiste ante ${finalOpponent}.${expected}`);
+    expect(getEuropeanSeasonBalanceText(knockout(finalists, 1, 0), 0.57)).toBe(`Europa: campeón de la Europa League.${expected}`);
   });
 
   it("dice la probabilidad y, si los hay, los puntos con los que pasas casi seguro", () => {

@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.25.119 — Europa, contada entera
+
+- **La tabla europea te pone donde te pone el juego.** Con empate total (puntos, diferencia de goles y goles a favor) decide el nombre, y la tabla te llamaba «Athletic Club Histórico» mientras la regla de quién pasa te llama de otra forma. En cerca de 1 de cada 100 torneos, la tabla te ponía 2.º en verde y el juego te mandaba a la previa como 3.º. No cambia quién pasa.
+- **El resumen de la temporada cuenta Europa entera:** «pasaste a semifinales y caíste ante Qarabağ», «llegaste a la final y la perdiste ante…» o «campeón de la Conference League». Antes decía «pasaste a semifinales» también si eras campeón.
+- **Fuera en la fase de liga, la pestaña lo dice:** «Quedaste 7.º: fuera de Europa esta temporada.»
+- **El resumen completo nombra la competición** y cómo acabó («Conference League · Subcampeón»), como ya hacía con la Copa.
+
 ## v0.25.118 — El cuadro europeo, en la temporada
 
 - **Al llegar a la previa, la semifinal o la final, la pestaña de Europa pasa a «Cuadro europeo»** y enseña el cuadro: la fase inicial, la previa si la hubo, la semifinal y la final. Debajo sigue la tabla de la fase de liga. Antes solo se veía la tabla, aunque ya estuvieras en semifinales.

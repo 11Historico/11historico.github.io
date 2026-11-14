@@ -122,8 +122,11 @@ export function buildEuropeanLeaguePhaseTable(
   const playedUserMatches = leagueMatches.filter((match) => match.status === "played");
   const opponents: EuropeanOpponent[] = leagueMatches.map((match) => match.opponent);
 
+  // v0.25.119: se ordena con el nombre interno, como la regla de quién pasa
+  // (getEuropeanLeaguePhaseUserPosition), porque el último desempate es el nombre.
+  // El nombre visible se pone después de ordenar.
   const rows = new Map<string, EuropeanLeagueTableRow>();
-  rows.set(USER_ROW_ID, createRow(USER_ROW_ID, userTeamName, true));
+  rows.set(USER_ROW_ID, createRow(USER_ROW_ID, USER_ROW_ID, true));
   for (const opponent of opponents) {
     rows.set(opponent.id, createRow(opponent.id, opponent.name, false));
   }
@@ -145,5 +148,5 @@ export function buildEuropeanLeaguePhaseTable(
     recordResult(rows, home.id, away.id, outcome.userGoals, outcome.opponentGoals);
   }
 
-  return [...rows.values()].sort(compareRows);
+  return [...rows.values()].sort(compareRows).map((row) => (row.isUser ? { ...row, teamName: userTeamName } : row));
 }
