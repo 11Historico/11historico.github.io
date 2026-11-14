@@ -12,7 +12,8 @@ import type {
   TeamRating,
 } from "../types/game";
 import type { CareerTrophyCounts } from "../types/career";
-import { getEuropeanCompetitionIconKind, getFinalTableEuropeanSpot, type FinalTableEuropeanSpot } from "../europe/europeanQualification";
+import { getEuropeanCompetitionIconKind, getEuropeanCompetitionLabel, getFinalTableEuropeanSpot, type FinalTableEuropeanSpot } from "../europe/europeanQualification";
+import { getEuropeanLeaguePhaseUserPosition } from "../europe/europeanTournament";
 import type { EuropeanQualificationResult } from "../europe/europeanTypes";
 
 import SelectedTeamBoard from "./SelectedTeamBoard";
@@ -163,6 +164,19 @@ function getLeagueZoneClass(info: LeagueQualificationInfo): string {
   if (info.zone === "relegation") return "final-zone-relegation";
 
   return "final-zone-middle";
+}
+
+/** Como el de la Copa (v0.25.119): cómo acabó el torneo europeo, en vez de una frase fija. */
+function getEuropeanSummaryText(tournament: EuropeanTournamentState): string {
+  if (tournament.champion) return "Campeón";
+  if (tournament.matches.some((match) => match.phase === "final" && match.status === "played")) return "Subcampeón";
+  if (tournament.matches.some((match) => match.phase === "semifinal" && match.status === "played")) return "Eliminado en semifinal";
+  if (tournament.matches.some((match) => match.phase === "playoff" && match.status === "played")) return "Eliminado en la previa";
+  if (tournament.eliminated) {
+    const teams = tournament.matches.filter((match) => match.phase === "league_phase").length + 1;
+    return `Eliminado en la fase inicial (${getEuropeanLeaguePhaseUserPosition(tournament)}.º de ${teams})`;
+  }
+  return "Torneo sin terminar";
 }
 
 function getCupSummaryText(summary: FinalGameSummary): string {
@@ -803,8 +817,8 @@ export function FinalSummary({
 
           {europeanTournament && europeanTournament.matches.length > 0 && (
             <FinalAccordion
-              title="Torneo europeo"
-              eyebrow="Fase inicial, previa, semifinal y final"
+              title={getEuropeanCompetitionLabel(europeanTournament.competition)}
+              eyebrow={getEuropeanSummaryText(europeanTournament)}
               competition={getEuropeanCompetitionIconKind(europeanTournament.competition)}
               defaultOpen
             >

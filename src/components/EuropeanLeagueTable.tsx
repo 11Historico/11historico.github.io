@@ -13,14 +13,21 @@ export function EuropeanLeagueTable({ tournament, chanceText }: { tournament: Eu
   const rows = useMemo(() => buildEuropeanLeaguePhaseTable(tournament, USER_TEAM_NAME), [tournament]);
   // Las filas solo traen el id: el país para el escudo sale de los rivales del torneo.
   const opponents = new Map(tournament.matches.map((match) => [match.opponent.id, match.opponent]));
+  const outInLeaguePhase = tournament.eliminated && tournament.matches.every((match) => match.phase === "league_phase");
+  const userPosition = rows.findIndex((row) => row.isUser) + 1;
 
   return (
     <section className="table-card european-league-table" aria-label="Clasificación de la competición europea">
       <h2>Clasificación europea · fase de liga</h2>
-      <p className="european-league-table-note">
-        Pasan a semifinales los {EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS} primeros, marcados en verde. El 3.º y el 4.º, en ámbar,
-        juegan una previa a partido único por entrar, en casa del 3.º.
-      </p>
+      {/* v0.25.119: fuera en la fase de liga, la nota lo dice en vez de repetir las reglas. */}
+      {outInLeaguePhase ? (
+        <p className="european-league-table-note">Quedaste {userPosition}.º: fuera de Europa esta temporada.</p>
+      ) : (
+        <p className="european-league-table-note">
+          Pasan a semifinales los {EUROPEAN_LEAGUE_PHASE_QUALIFYING_POSITIONS} primeros, marcados en verde. El 3.º y el 4.º, en ámbar,
+          juegan una previa a partido único por entrar, en casa del 3.º.
+        </p>
+      )}
       {/* v0.25.95: la probabilidad solo existe mientras queda fase de liga por jugar. */}
       {chanceText && <p className="european-semifinal-chance">{chanceText}</p>}
 
