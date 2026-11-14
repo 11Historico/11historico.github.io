@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildEuropeanLeaguePhaseTable, getEuropeanRivalPairs } from "../../src/europe/europeanLeagueTable";
+import {
+  buildEuropeanLeaguePhaseTable,
+  getEuropeanRivalPairs,
+  sortEuropeanLeagueRows,
+  type EuropeanLeagueTableRow,
+} from "../../src/europe/europeanLeagueTable";
 import { simulateEuropeanMatch } from "../../src/europe/europeanMatchEngine";
 import { applyEuropeanMatchResult, createEuropeanTournamentForQualification, getEuropeanLeaguePhaseUserPosition } from "../../src/europe/europeanTournament";
 import type { EuropeanQualificationResult, EuropeanTournamentMatch, EuropeanTournamentState } from "../../src/europe/europeanTypes";
@@ -30,6 +35,35 @@ function tournamentWithPlayed(playedCount: number): EuropeanTournamentState {
   });
 
   return { seasonNumber: 1, competition: "conference_league", phase: "league_phase", matches } as unknown as EuropeanTournamentState;
+}
+
+/** 900 torneos con la fase de liga jugada entera, en las tres competiciones. */
+function playedTournaments(): EuropeanTournamentState[] {
+  const tournaments: EuropeanTournamentState[] = [];
+  for (const competition of ["conference_league", "europa_league", "champions_league"] as const) {
+    for (let seed = 0; seed < 300; seed += 1) {
+      let tournament = createEuropeanTournamentForQualification({
+        seasonNumber: 1 + (seed % 20),
+        qualification: { qualified: true, competition } as EuropeanQualificationResult,
+        seed: `tabla_regla_${seed}`,
+        totalLeagueMatchdays: 38,
+      })!;
+      for (const match of tournament.matches.filter((candidate) => candidate.phase === "league_phase")) {
+        const outcome = simulateEuropeanMatch({ userTeamRating: 85, opponentRating: match.opponent.rating, isHome: match.isHome, competition, seed: `tabla_regla_${seed}_${match.id}` });
+        tournament = applyEuropeanMatchResult(tournament, match.id, { userGoals: outcome.userGoals, opponentGoals: outcome.opponentGoals, result: outcome.result }, 38);
+      }
+      tournaments.push(tournament);
+    }
+  }
+  return tournaments;
+}
+
+/** Dos filas con los mismos puntos, diferencia y goles. */
+function tiedRows(): EuropeanLeagueTableRow[] {
+  const row = (teamId: string, teamName: string) => ({
+    teamId, teamName, isUser: teamId === "user", played: 6, won: 2, drawn: 2, lost: 2, goalsFor: 8, goalsAgainst: 8, goalDifference: 0, points: 8,
+  });
+  return [row("alfa", "Alfa"), row("user", "Zeta")];
 }
 
 describe("clasificación de la fase de liga europea", () => {
@@ -87,27 +121,50 @@ describe("clasificación de la fase de liga europea", () => {
     }
   });
 
-  // v0.25.119: con empate total decide el nombre, y la tabla te llamaba distinto que la regla.
+  // v0.25.119: con empate total decidía el nombre, y la tabla te llamaba distinto que la regla.
   it("tu puesto en la tabla es siempre el que usa el juego para decidir quién pasa", () => {
-    let mismatches = 0;
-    for (const competition of ["conference_league", "europa_league", "champions_league"] as const) {
-      for (let seed = 0; seed < 300; seed += 1) {
-        let tournament = createEuropeanTournamentForQualification({
-          seasonNumber: 1 + (seed % 20),
-          qualification: { qualified: true, competition } as EuropeanQualificationResult,
-          seed: `tabla_regla_${seed}`,
-          totalLeagueMatchdays: 38,
-        })!;
-        for (const match of tournament.matches.filter((candidate) => candidate.phase === "league_phase")) {
-          const outcome = simulateEuropeanMatch({ userTeamRating: 85, opponentRating: match.opponent.rating, isHome: match.isHome, competition, seed: `tabla_regla_${seed}_${match.id}` });
-          tournament = applyEuropeanMatchResult(tournament, match.id, { userGoals: outcome.userGoals, opponentGoals: outcome.opponentGoals, result: outcome.result }, 38);
-        }
-        const shown = buildEuropeanLeaguePhaseTable(tournament, "Athletic Club Histórico").findIndex((row) => row.isUser) + 1;
-        if (shown !== getEuropeanLeaguePhaseUserPosition(tournament)) mismatches += 1;
-      }
+    const mismatches = playedTournaments().filter(
+      (tournament) => buildEuropeanLeaguePhaseTable(tournament, "Athletic Club Histórico").findIndex((row) => row.isUser) + 1 !== getEuropeanLeaguePhaseUserPosition(tournament),
+    );
+
+    expect(mismatches).toHaveLength(0);
+  });
+
+  // v0.25.120: con empate total decide el enfrentamiento directo y, si sigue, un sorteo; no el nombre.
+  it("con empate total gana el enfrentamiento directo, aunque el otro vaya antes por nombre", () => {
+    const results = [{ homeId: "alfa", awayId: "user", homeGoals: 0, awayGoals: 1 }];
+
+    expect(sortEuropeanLeagueRows(tiedRows(), results, "semilla").map((row) => row.teamId)).toEqual(["user", "alfa"]);
+    expect(sortEuropeanLeagueRows(tiedRows().reverse(), results, "otra").map((row) => row.teamId)).toEqual(["user", "alfa"]);
+  });
+
+  it("con el directo empatado decide un sorteo fijo por torneo, no el nombre", () => {
+    const results = [{ homeId: "alfa", awayId: "user", homeGoals: 1, awayGoals: 1 }];
+    const firsts = new Set<string>();
+    for (let seed = 0; seed < 20; seed += 1) {
+      const order = sortEuropeanLeagueRows(tiedRows(), results, `semilla_${seed}`).map((row) => row.teamId);
+      expect(sortEuropeanLeagueRows(tiedRows().reverse(), results, `semilla_${seed}`).map((row) => row.teamId)).toEqual(order);
+      firsts.add(order[0]);
     }
 
-    expect(mismatches).toBe(0);
+    expect(firsts).toEqual(new Set(["alfa", "user"]));
+  });
+
+  it("ganas más o menos la mitad de los empates totales", () => {
+    let ties = 0;
+    let won = 0;
+    for (const tournament of playedTournaments()) {
+      const table = buildEuropeanLeaguePhaseTable(tournament, "Athletic Club Histórico");
+      const user = table.find((row) => row.isUser)!;
+      const tied = table.filter((row) => row.points === user.points && row.goalDifference === user.goalDifference && row.goalsFor === user.goalsFor);
+      if (tied.length < 2) continue;
+      ties += 1;
+      if (tied[0].isUser) won += 1;
+    }
+
+    expect(ties).toBeGreaterThanOrEqual(15);
+    expect(won / ties).toBeGreaterThan(0.3);
+    expect(won / ties).toBeLessThan(0.7);
   });
 
   it("es determinista: la misma temporada da la misma tabla", () => {

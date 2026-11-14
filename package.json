@@ -1,7 +1,7 @@
 {
   "name": "futbol11",
   "private": true,
-  "version": "0.25.119",
+  "version": "0.25.120",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -18,6 +18,7 @@
     "audit:rating": "vite build --ssr scripts/auditSimulationRating.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditSimulationRating.js",
     "audit:european-opponents": "vite build --ssr scripts/auditEuropeanOpponents.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditEuropeanOpponents.js",
     "audit:europe": "vite build --ssr scripts/auditEuropePhase.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditEuropePhase.js",
+    "audit:europe-tiebreak": "vite build --ssr scripts/auditEuropeTiebreak.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditEuropeTiebreak.js",
     "audit:supercopa": "vite build --ssr scripts/auditSupercopaRating.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditSupercopaRating.js",
     "audit:european-styles": "vite build --ssr scripts/auditEuropeanRivalStyles.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditEuropeanRivalStyles.js",
     "audit:approach": "vite build --ssr scripts/auditMatchApproach.ts --outDir .audit-dist --emptyOutDir false && node .audit-dist/auditMatchApproach.js",

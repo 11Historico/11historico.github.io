@@ -126,6 +126,8 @@ test("la liga permite consultar la clasificación europea y el palmarés", async
   // v0.25.107: el 3.º y el 4.º juegan la previa.
   await expect(table.locator(".league-table-row-playoff")).toHaveCount(2);
   await expect(table).toContainText("El 3.º y el 4.º, en ámbar, juegan una previa a partido único por entrar, en casa del 3.º.");
+  // v0.25.120: cómo se deshace un empate total.
+  await expect(table).toContainText("Con empate a puntos, diferencia y goles, decide el enfrentamiento directo y, si sigue, un sorteo.");
   // v0.25.102: los seis rivales llevan escudo genérico, con su país como nombre accesible.
   await expect(table.locator(".european-crest")).toHaveCount(6);
   await expect(table.locator(".european-crest").first()).toHaveAttribute("role", "img");
