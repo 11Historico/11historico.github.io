@@ -1,7 +1,7 @@
-import packageJson from "../../package.json";
+import { version } from "../../package.json";
 
 // Fuente única: package.json. Para subir de versión, usar `npm version <x.y.z> --no-git-tag-version`.
-export const APP_VERSION = `v${packageJson.version}`;
+export const APP_VERSION = `v${version}`;
 export const APP_VERSION_NAME = "Stable Public Release";
 export const APP_STATUS = "Versión pública estable: Modo carrera completo (Liga, Copa y Supercopa), Europa Career (clasificación, torneo jugable con prórroga y penaltis, títulos y prestigio en el palmarés), secuencia de partido en Liga, Copa y Europa con velocidad ajustable, ruleta de temporada, cartas de partido, ranking local y global. Liga y Copa mantienen su balance aceptado.";
 
@@ -11,4 +11,4 @@ export const APP_STATUS = "Versión pública estable: Modo carrera completo (Lig
 // que hacía fácil dejar alguno desactualizado al publicar una fase nueva;
 // ver v0.24.7 — Europa Career Release Stabilization).
 export const CURRENT_RELEASE_TAG = `${APP_VERSION}_STABLE_PUBLIC_RELEASE`;
-export const CURRENT_RELEASE_DOC = "docs/v0_25_120_EUROPE_TIEBREAK_HEAD_TO_HEAD.md";
+export const CURRENT_RELEASE_DOC = "docs/v0_25_121_VERSION_ONLY_IN_BUNDLE.md";

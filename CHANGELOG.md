@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.25.121 — Solo la versión, en el juego publicado
+
+- **El juego publicado ya no lleva el `package.json` entero,** solo el número de versión: unos 13 KB menos para descargar. Antes iban también los scripts y las versiones de las herramientas de desarrollo.
+- **Las subidas de herramientas dejan el juego igual:** como ya no van dentro, un PR de Dependabot que solo sube herramientas no cambia el juego publicado. No cambia nada que se vea al jugar.
+
 ## v0.25.120 — El desempate europeo, a enfrentamiento directo
 
 - **Con empate total en la fase de liga europea ya no decide el nombre.** Si empatas en puntos, diferencia de goles y goles a favor, decide el enfrentamiento directo entre los empatados y, si sigue el empate, un sorteo fijo para cada torneo. Antes perdías entre el 72 y el 100 % de esos empates por cómo se llamaba tu equipo por dentro; ahora ganas más o menos la mitad.
