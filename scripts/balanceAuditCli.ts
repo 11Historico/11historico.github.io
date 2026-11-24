@@ -21,11 +21,15 @@ import type {
   SelectedPlayer,
   TeamRating,
 } from "../src/types/game";
+// Sustituye Math.random y Date.now por versiones con semilla (como audit:cards o audit:oviedo):
+// la forma de los rivales y el cuadro de Copa los decide el juego con ellos.
+import { seedCareer } from "./auditCareerRunner";
 
 type AuditProfile = "legendary" | "strong" | "balanced" | "weak" | "random";
 
 interface CliOptions {
   simulations: number;
+  seed: number;
   difficulty: "facil" | "normal" | "leyenda";
   range: EasyModeSeasonRangeId;
   formationId: string;
@@ -64,6 +68,7 @@ interface BalanceAuditAggregate {
 
 const DEFAULT_OPTIONS: CliOptions = {
   simulations: 100,
+  seed: 1,
   difficulty: "normal",
   range: "all",
   formationId: "4-3-3",
@@ -90,6 +95,15 @@ function parseArgs(argv: string[]): CliOptions {
         throw new Error("--sims debe ser un número positivo. Ejemplo: --sims=50");
       }
       options.simulations = Math.round(parsed);
+      continue;
+    }
+
+    if (rawKey === "seed") {
+      const parsed = Number(value);
+      if (!Number.isInteger(parsed) || parsed <= 0) {
+        throw new Error("--seed debe ser un entero positivo. Ejemplo: --seed=2");
+      }
+      options.seed = parsed;
       continue;
     }
 
@@ -148,7 +162,7 @@ function parseArgs(argv: string[]): CliOptions {
 }
 
 function printHelp() {
-  console.log(`\nFutbol11 · Auditoría de balance por PowerShell\n\nUso:\n  npm run audit:balance\n  npm run audit:balance -- --sims=100 --profile=balanced --difficulty=normal --range=recent\n\nOpciones:\n  --sims=100             Número de temporadas completas a simular\n  --difficulty=normal    facil | normal | leyenda\n  --range=all            all | classic | transition | modern | recent\n  --formation=4-3-3      Formación usada para construir el once automático\n  --profile=balanced     legendary | strong | balanced | weak | random\n  --out=reports/x.json   Guarda informe JSON\n  --csv=reports/x.csv    Guarda resultados por simulación en CSV\n  --json                 Imprime solo JSON por consola\n\nPerfiles:\n  legendary              Once histórico top, útil para probar techo de rendimiento\n  balanced               Once competitivo normal, mejor perfil por defecto para balance\n  random                 Once aleatorio viable, útil para detectar varianza real de partidas\n`);
+  console.log(`\nFutbol11 · Auditoría de balance por PowerShell\n\nUso:\n  npm run audit:balance\n  npm run audit:balance -- --sims=100 --profile=balanced --difficulty=normal --range=recent\n\nOpciones:\n  --sims=100             Número de temporadas completas a simular\n  --seed=1               Semilla: con la misma, sale siempre lo mismo\n  --difficulty=normal    facil | normal | leyenda\n  --range=all            all | classic | transition | modern | recent\n  --formation=4-3-3      Formación usada para construir el once automático\n  --profile=balanced     legendary | strong | balanced | weak | random\n  --out=reports/x.json   Guarda informe JSON\n  --csv=reports/x.csv    Guarda resultados por simulación en CSV\n  --json                 Imprime solo JSON por consola\n\nPerfiles:\n  legendary              Once histórico top, útil para probar techo de rendimiento\n  balanced               Once competitivo normal, mejor perfil por defecto para balance\n  random                 Once aleatorio viable, útil para detectar varianza real de partidas\n\nRuido:\n  Con 100 temporadas, las ligas del Athletic varían unas ±3 según la semilla.\n  Para medir si cambia el balance entre versiones, usa --sims=2000 (unos 10 s).\n  Ver docs/INFORME_BALANCE_DETERMINISTA_v0_25_121.md.\n`);
 }
 
 function normalizeName(value: string): string {
@@ -537,7 +551,7 @@ function printHumanReport(params: {
 
   console.log("\nFutbol11 · Auditoría de balance por PowerShell");
   console.log("================================================");
-  console.log(`Simulaciones: ${options.simulations}`);
+  console.log(`Simulaciones: ${options.simulations} · semilla ${options.seed}`);
   console.log(`Dificultad: ${options.difficulty}`);
   console.log(`Perfil auditoría: ${options.profile}`);
   console.log(`Rango: ${range.label} (${range.from}-${range.to})`);
@@ -594,6 +608,7 @@ function printHumanReport(params: {
 
 function main() {
   const options = parseArgs(process.argv.slice(2));
+  seedCareer(options.seed);
   const formation = findFormation(options.formationId);
   const selectedPlayers = createAutomaticEleven({
     formation,
