@@ -2,7 +2,7 @@
 
 El usuario pidió medir por qué `npm run audit:balance:100` da resultados distintos cada vez. En el informe del #178, en dos ejecuciones seguidas, el Athletic ganó 14 y 8 ligas de 100.
 
-**Es solo una auditoría:** no cambia el juego ni los scripts.
+**Es una auditoría:** no cambia el juego. Después, el usuario eligió la opción A, que solo toca el script (ver «Decisión»).
 
 ## Cómo se ha medido
 
@@ -75,3 +75,31 @@ Para medir si cambia el balance entre versiones, no basta con 100 temporadas: ha
 
 - **En `src/simulation/` hay una copia antigua:** `leagueSimulator.ts.backup_before_v0_12_25_cleanup`. No se compila ni entra en el bundle, pero aparece en las búsquedas.
 - **El panel de auditoría del juego** (`src/components/BalanceAuditPanel.tsx`) también usa la hora como semilla. Es una herramienta interna del juego y no se ha medido.
+
+## Decisión
+
+El usuario eligió **A** y aprobó el plan con «sí».
+
+- **Cambio, solo en `scripts/balanceAuditCli.ts`:**
+  - importa `seedCareer` de `scripts/auditCareerRunner.ts` y lo llama al empezar;
+  - opción nueva `--seed=N`, por defecto 1; con 0 o un valor no entero da error;
+  - la cabecera del informe dice qué semilla se ha usado;
+  - la ayuda explica el ruido y que para medir el balance hay que usar `--sims=2000`.
+- **No cambia:** el juego, los nombres de los comandos ni el número de temporadas por defecto. El `generatedAt` del JSON sigue llevando la fecha real.
+
+### Comprobación
+
+- **`npm run audit:balance:100`, dos veces:** salida idéntica. Lo mismo con `audit:copa:100`.
+- **Con otra semilla cambia:** las ligas del Athletic son 18 de 100 con `--seed=1` y 11 de 100 con `--seed=2`.
+  - El 18 por defecto es una muestra alta, no un cambio de balance. Por eso, para medir cambios, hay que usar 2.000 temporadas.
+- **Con `--sims=2000` (9 s)** sale cerca de la referencia de 10.000:
+
+  | Dato | 2.000 (semilla 1) | 10.000 |
+  | --- | --- | --- |
+  | Ligas del Athletic | 11,9 % | 11,5 % |
+  | Copas del Athletic | 15,9 % | 16,2 % |
+  | Top 4 | 71,4 % | 72,9 % |
+  | Copas de la élite | 26,7 % | 26,1 % |
+  | Descensos del Villarreal | 2,7 % | 2,8 % |
+
+- **Comprobaciones:** pasan `npm run typecheck`, `npx eslint src scripts`, `npm test` (272) y `npm run qa:ci` (30 scripts).
